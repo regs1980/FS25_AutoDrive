@@ -383,6 +383,7 @@ function AutoDrivePlaceableData.readGraphFromXml(xmlFile, placeable)
 		for _, wp in pairs(AutoDrivePlaceableData.wayPoints) do
 			ADGraphManager:createWayPointWithConnections(wp.x, wp.y, wp.z, wp.out, wp.incoming, wp.flags)
 		end
+		AutoDrive:notifyDestinationListeners()
 	end
 	return 0 -- OK
 end
