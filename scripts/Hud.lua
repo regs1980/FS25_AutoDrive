@@ -448,7 +448,7 @@ function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
 		end
 
 		if self.isMoving then
-			if button == 1 and isUp then
+			if (button == 1 and isUp) or (g_inGameMenu.isOpen and not AutoDrive.aiFrameOpen) then
 				self:stopMovingHud()
 			else
 				self:moveHud(posX, posY)

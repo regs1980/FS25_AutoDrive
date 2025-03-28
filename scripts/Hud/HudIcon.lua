@@ -178,8 +178,10 @@ end
 function ADHudIcon:act(vehicle, posX, posY, isDown, isUp, button)
     if self.name == "header" then
         if button == 1 and isDown and AutoDrive.pullDownListExpanded == 0 then
-            AutoDrive.Hud:startMovingHud(posX, posY)
-            return true
+            if (not g_inGameMenu.isOpen or AutoDrive.aiFrameOpen) then
+                AutoDrive.Hud:startMovingHud(posX, posY)
+                return true
+            end
         end
     end
     return false

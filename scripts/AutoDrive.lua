@@ -283,11 +283,19 @@ function AutoDrive:drawBaseMission()
 	local isNewJobTab =  g_inGameMenu.mapOverviewSelector ~= nil and g_inGameMenu.mapOverviewSelector.state == g_inGameMenu.pageMapOverview.AI_CREATE_JOB
 	local isWorkerListTab =  g_inGameMenu.mapOverviewSelector ~= nil and g_inGameMenu.mapOverviewSelector.state == g_inGameMenu.pageMapOverview.AI_WORKER_LIST
 
-	if menuOpen and correctPage then
+	if menuOpen and correctPage and isNewJobTab then
 		if not AutoDrive.aiFrameOpen then
 			AutoDrive.aiFrameOpen = true
 			AutoDrive.aiFrameVehicle = AutoDrive.getControlledVehicle()
-			AutoDrive.aiNetworkOnMapCache = nil
+        end
+    else
+        AutoDrive.aiFrameOpen = false
+        AutoDrive.aiFrameVehicle = nil
+    end
+    if menuOpen and correctPage then
+        if not AutoDrive.hasMapCache then
+            AutoDrive.hasMapCache = true
+            AutoDrive.aiNetworkOnMapCache = nil
 		end
 		if isWorkerListTab then
 			AutoDrive:drawRouteOnMap()
@@ -305,8 +313,7 @@ function AutoDrive:drawBaseMission()
 		    end
 		end
 	else
-		AutoDrive.aiFrameOpen = false
-		AutoDrive.aiFrameVehicle = nil
+        AutoDrive.hasMapCache = false
 		AutoDrive.aiNetworkOnMapCache = nil
 	end
 end
@@ -339,9 +346,6 @@ function AutoDrive:MapHotspotGetRenderLast(superFunc)
 end
 
 function AutoDrive.drawRouteOnMap()
-	if not AutoDrive.aiFrameOpen then
-		return
-	end
 	local vehicle = AutoDrive.getADFocusVehicle()
 	if vehicle == nil then
 		return
@@ -441,10 +445,6 @@ function AutoDrive.createNetworkOnMapCache()
 end
 
 function AutoDrive.drawNetworkOnMap()
-	if not AutoDrive.aiFrameOpen then
-		return
-	end
-
 	if not AutoDrive.isEditorModeEnabled() then
 		return
 	end
