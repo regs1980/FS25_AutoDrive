@@ -960,8 +960,8 @@ function AutoDrive:ingameMapElementMouseEvent(superFunc, posX, posY, isDown, isU
     if isUp and button == Input.MOUSE_BUTTON_RIGHT then
         for _, hotspot in pairs(self.ingameMap.hotspots) do
             if hotspot.isADMarker then
-                local hotspotPosX, hotspotPosY =  hotspot.icon:getPosition()
-                if GuiUtils.checkOverlayOverlap(posX, posY, hotspotPosX, hotspotPosY, hotspot:getWidth(), hotspot:getHeight(), nil) then
+                local hotspotPosX, hotspotPosY =  hotspot.lastScreenPositionX, hotspot.lastScreenPositionY
+                if hotspotPosX and GuiUtils.checkOverlayOverlap(posX, posY, hotspotPosX, hotspotPosY, hotspot:getWidth(), hotspot:getHeight(), nil) then
                     local targetVehicle = AutoDrive.getADFocusVehicle()
                     if targetVehicle ~= nil and AutoDrive.getSetting("showMarkersOnMap") and AutoDrive.getSetting("switchToMarkersOnMap") then
                         AutoDriveHudInputEventEvent:sendSecondMarkerEvent(targetVehicle, hotspot.markerID)
