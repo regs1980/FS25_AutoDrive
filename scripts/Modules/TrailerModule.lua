@@ -129,7 +129,7 @@ function ADTrailerModule:getBunkerSiloSpeed()
                         drivenDistance = MathUtil.vector2Length(hitX - x3, hitZ - z3)
                     end
 
-                    remainingDistance = vecHLength - drivenDistance
+                    remainingDistance = vecHLength - drivenDistance - 2  -- finish 2m before the end of the silo
                 end
 
                 local speed = ((math.max(1, remainingDistance) / unloadTimeInMS) * 1000) * 3.6 * 1
