@@ -591,7 +591,7 @@ end
 
 function AutoDrive:mouseEvent(posX, posY, isDown, isUp, button)
 	local vehicle = AutoDrive.getADFocusVehicle()
-	local mouseActiveForAutoDrive = (g_gui.currentGui == nil or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
+	local mouseActiveForAutoDrive = (not g_gui:getIsGuiVisible() or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
 
 	if not mouseActiveForAutoDrive then
 		AutoDrive.lastButtonDown = nil
@@ -638,7 +638,7 @@ function AutoDrive:handleScanDialog()
 			return true
 		elseif g_server ~= nil and g_dedicatedServer == nil then
 			-- open dialog
-			if g_gui.currentGui == nil then
+			if not g_gui:getIsGuiVisible() then
 				--AutoDrive.debugMsg(nil, "[AD] AutoDrive:update SCAN_DIALOG_OPEN")
 				AutoDrive.onOpenScanConfirmation()
 				AutoDrive.scanDialogState = AutoDrive.SCAN_DIALOG_OPEN
@@ -709,6 +709,10 @@ function AutoDrive:update(dt)
 	ADMessagesManager:update(dt)
 	ADTriggerManager:update(dt)
 	ADRoutesManager:update(dt)
+
+    if AutoDrive.devOnUpdate then
+        AutoDrive.devOnUpdate(dt)
+    end
 end
 
 function AutoDrive:draw()

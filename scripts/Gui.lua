@@ -118,7 +118,7 @@ end
 function AutoDrive.onOpenSettings()
 	if AutoDrive.gui.ADSettings.isOpen then
 		AutoDrive.gui.ADSettings:onClickBack()
-	elseif g_gui.currentGui == nil then
+	elseif not g_gui:getIsGuiVisible() then
 		g_gui:showGui("ADSettings")
 	end
 end

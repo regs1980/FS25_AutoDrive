@@ -418,7 +418,7 @@ function AutoDriveHud:isMouseOverHud( x, y)
 end
 
 function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
-	local mouseActiveForAutoDrive = (g_gui.currentGui == nil or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
+	local mouseActiveForAutoDrive = (not g_gui:getIsGuiVisible() or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
 
 	if mouseActiveForAutoDrive then
 		local mouseEventHandled = false
@@ -456,7 +456,7 @@ function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
 			mouseEventHandled = true
 		end
 
-        if g_gui.currentGui ~= nil then
+        if g_gui:getIsGuiVisible() then
             -- do not allow waypoint manipulation if any GUI is open
             AutoDrive.resetMouseSelections(vehicle)
         end
@@ -465,7 +465,7 @@ function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
         vehicle.ad.sectionWayPoints = {}
         vehicle.ad.selectionRange = vehicle.ad.selectionRange or 1	-- start with 1m range
         local adjustedPaths = false
-        if (not mouseEventHandled) and AutoDrive.isInExtendedEditorMode() and g_gui.currentGui == nil then
+        if (not mouseEventHandled) and AutoDrive.isInExtendedEditorMode() and not g_gui:getIsGuiVisible() then
             if
                 not AutoDrive.leftLSHIFTmodifierKeyPressed
                 and not AutoDrive.leftCTRLmodifierKeyPressed
@@ -601,9 +601,10 @@ function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
                             if colorPoint ~= nil and colorPoint.colors ~= nil then
                                 AutoDriveHud.debugMsg(vehicle, "AutoDriveHud:mouseEvent point.colors %.3f %.3f %.3f", colorPoint.colors[1], colorPoint.colors[2], colorPoint.colors[3])
                                 vehicle.ad.selectedColorNodeId = vehicle.ad.selectedNodeId
-                                    -- only allowed in single player game
+                                vehicle.ad.selectedNodeId = nil
+                                -- only allowed in single player game
                                 ADInputManager:input_openColorSettings()
-							end
+                            end
                         end
 					end
 				end
