@@ -1665,7 +1665,8 @@ function AutoDrive:updateAutoDriveLights(switchOff)
         if self.setTurnLightState then
             if AutoDrive.getSetting("useHazardLightReverse", self) then
                 local drivingReverse = (self.lastSpeedReal * self.movingDirection) < 0
-                if drivingReverse then
+                local isReverseDrivingMode = AutoDrive.isReverseDriving(self)
+                if drivingReverse ~= isReverseDrivingMode then
                     self:setTurnLightState(Lights.TURNLIGHT_HAZARD, true)
                 elseif self.lastSpeedReal * 3600 < 0.1 then
                     self:setTurnLightState(Lights.TURNLIGHT_OFF)
