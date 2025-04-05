@@ -150,10 +150,16 @@ function ADCollSensorSplit:getBoxShapes()
     local numberOfBoxes = 5
     local boxWidth = width / numberOfBoxes
     local boxes = {}
+    local locationZ = self.location.z
+    if self.position == ADSensor.POS_FRONT then
+        if vehicle.ad and vehicle.ad.adDimensions and vehicle.ad.adDimensions.maxLengthFront and vehicle.ad.adDimensions.maxLengthFront > 0 then
+            locationZ = vehicle.ad.adDimensions.maxLengthFront
+        end
+    end
     for i=1, numberOfBoxes do
         local xOffset = (-width / 2) + (i - 0.5) * boxWidth
         boxes[i] = self:buildBoxShape(
-            self.location.x + xOffset, boxYPos, self.location.z,
+            self.location.x + xOffset, boxYPos, locationZ,
             boxWidth, boxHeight, lookAheadDistance,
             vecZ, vecX
         )

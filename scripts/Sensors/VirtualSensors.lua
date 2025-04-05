@@ -234,14 +234,19 @@ function ADSensor:getLocationByPosition()
         --local frontToolLength = 0 --AutoDrive.getFrontToolLength(self.vehicle)
         --lengthOffset = frontToolLength / 2
         --end
-        local front = self:getRotatedFront()
-        if front == nil then
-            location = {x = 0, z = vehicle.size.length / 2}
+
+        if vehicle.ad and vehicle.ad.adDimensions and vehicle.ad.adDimensions.maxLengthFront and vehicle.ad.adDimensions.maxLengthFront > 0 then
+            location = {x = 0, z = vehicle.ad.adDimensions.maxLengthFront}
         else
-            location = front
+            local front = self:getRotatedFront()
+            if front == nil then
+                location = {x = 0, z = vehicle.size.length / 2}
+                location.z = location.z + 0.5
+            else
+                location = front
+                location.z = location.z + 0.5
+            end
         end
-        --location.z = location.z + AutoDrive.getVehicleLeadingEdge(vehicle)
-        location.z = location.z + 0.5
     elseif self.position == ADSensor.POS_REAR then
         location.z = - vehicle.size.length / 2
         self.frontFactor = -1

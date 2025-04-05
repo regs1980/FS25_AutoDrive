@@ -345,6 +345,39 @@ function AutoDrive.getAllImplements(vehicle, includeVehicle)
     return allImp
 end
 
+function AutoDrive.getFrontImplements(vehicle)
+    if vehicle == nil then
+        return nil, nil
+    end
+    local rootVehicle = vehicle.getRootVehicle and vehicle:getRootVehicle()
+    if rootVehicle == nil then
+        return nil, nil
+    end
+    local frontImplements = nil
+    local mostFrontImplement = nil
+    local frontDistance = 0
+    if rootVehicle == vehicle then
+        -- consider only attachments to root vehicle
+        for _, implement in pairs(AutoDrive.getAllImplements(rootVehicle)) do
+            if implement ~= nil and implement ~= rootVehicle then
+                local implementX, implementY, implementZ = getWorldTranslation(implement.components[1].node)
+                local _, _, diffZ = AutoDrive.worldToLocal(rootVehicle, implementX, implementY, implementZ)
+                if diffZ > 0 then
+                    if frontImplements == nil then
+                        frontImplements = {}
+                    end
+                    table.insert(frontImplements,implement)
+                end
+                if diffZ > frontDistance then
+                    frontDistance = diffZ
+                    mostFrontImplement = implement
+                end
+            end
+        end
+    end
+    return frontImplements, mostFrontImplement
+end
+
 function AutoDrive.foldAllImplements(vehicle)
     local implements = AutoDrive.getAllImplements(vehicle, true)
     local spec

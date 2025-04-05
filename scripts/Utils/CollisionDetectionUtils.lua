@@ -258,7 +258,7 @@ function ADDimensionSensor:getRealVehicleDimensions()
     maxWidthLeft = leftright(0, measureRange) -- measure to left
     maxWidthRight = leftright(0, -measureRange) -- measure to right
 
-    local function frontback(dimStart, dimEnd)
+    local function frontback(dimStart, dimEnd, includeImplements)
         local ret = self.vehicle.size.length / 2
         local selfHitCount = 0
         local minDistance = math.huge
@@ -266,6 +266,11 @@ function ADDimensionSensor:getRealVehicleDimensions()
         local step = 0.1
         if diff < 0 then
             step = -step
+        end
+        if includeImplements == 1 then
+            self.frontImplements, self.mostFrontImplement = AutoDrive.getFrontImplements(self.vehicle)
+        else
+            self.frontImplements, self.mostFrontImplement = nil, nil
         end
         for distance = dimStart, dimEnd, step do
             local x,y,z = AutoDrive.localToWorld(self.vehicle, 0, self.vehicle.size.height / 2, distance)
@@ -292,9 +297,8 @@ function ADDimensionSensor:getRealVehicleDimensions()
         end
         return ret
     end
-    maxLengthFront = frontback(0, measureRange) -- measure to front
+    maxLengthFront = frontback(0, measureRange + 20, 1) -- measure to front
     maxLengthBack = frontback(0, -measureRange) -- measure to back
-
     self.vehicle.ad.adDimensions.maxWidthLeft = maxWidthLeft + AutoDrive.DIMENSION_ADDITION
     self.vehicle.ad.adDimensions.maxWidthRight = maxWidthRight + AutoDrive.DIMENSION_ADDITION
     self.vehicle.ad.adDimensions.maxLengthFront = maxLengthFront + AutoDrive.DIMENSION_ADDITION
@@ -305,10 +309,14 @@ function ADDimensionSensor:getRealVehicleDimensions()
 end
 
 function ADDimensionSensor:getRealVehicleDimensions_Callback(transformId)
-    if transformId ~= nil then
+    if transformId ~= 0 and transformId ~= g_currentMission.terrainRootNode then
         local collisionObject = g_currentMission.nodeToObject[transformId]
-        if collisionObject ~= nil and collisionObject == self.vehicle then
-            self.selfHits = self.selfHits + 1
+        if collisionObject ~= nil then
+            if self.frontImplements and table.contains(self.frontImplements, collisionObject) then
+                self.selfHits = self.selfHits + 1
+            elseif collisionObject == self.vehicle then
+                self.selfHits = self.selfHits + 1
+            end
         end
     end
 end
