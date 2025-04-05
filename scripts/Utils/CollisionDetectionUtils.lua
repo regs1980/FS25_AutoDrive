@@ -273,7 +273,7 @@ function ADDimensionSensor:getRealVehicleDimensions()
             if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_SENSORINFO) then
                 -- DebugUtil.drawOverlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, 1, 1, 1)
             end
-            self.collisionHits = overlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, "getRealVehicleDimensions_Callback", self, self.mask, true, true, true)
+            self.collisionHits = overlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, "getRealVehicleDimensions_Callback", self, self.mask, true, true, true, true)
             if self.selfHits == 0 then
                 -- found no collision with vehicle itself
                 if selfHitCount < 5 then
