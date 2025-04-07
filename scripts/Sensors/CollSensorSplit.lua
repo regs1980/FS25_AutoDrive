@@ -139,7 +139,7 @@ function ADCollSensorSplit:getBoxShapes()
 
     local width, length = AutoDrive.getVehicleDimensions(vehicle, false)
 
-    local lookAheadDistance = math.clamp(vehicle.lastSpeedReal * 3600 * 15.5 / 40, self.minDynamicLength, 16)
+    local lookAheadDistance = math.clamp(vehicle.lastSpeedReal * 3600 * 15.5 / 40, self.minDynamicLength, 50)
     
     local vecZ = {x = math.sin(vehicle.rotatedTime), z = math.cos(vehicle.rotatedTime)}
     local vecX = {x = vecZ.z, z = -vecZ.x}

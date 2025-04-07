@@ -287,7 +287,7 @@ function ADSensor:getBoxShape()
     self.location = self:getLocationByPosition()
     local lookAheadDistance = self.length
     if self.dynamicLength then
-        lookAheadDistance = math.clamp(vehicle.lastSpeedReal * 3600 * 15.5 / 40, self.minDynamicLength, 16)
+        lookAheadDistance = math.clamp(vehicle.lastSpeedReal * 3600 * 15.5 / 40, self.minDynamicLength, 50)
     end
 
     local vecZ = {x = 0, z = 1}
