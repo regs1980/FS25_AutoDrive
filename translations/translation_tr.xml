@@ -277,9 +277,9 @@
 		<text name="gui_ad_RecordWhileNotInVehicle"					text="Record without driver" />
 		<text name="gui_ad_RecordWhileNotInVehicle_tooltip"			text="AutoDrive will keep recording if driver leaves the vehicle" />
 		<text name="gui_ad_RecordDriveDirectionOffset"					text="Record offset in driving direction" />
-		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Move recording from vehicle to the left (-0.1 .. -5m) or right (0.1 .. 5m). Driving reverse wil stop recording!" />
+		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Record offset in opposite driving direction" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Move recording from vehicle to the left (-0.1 .. -5m) or right (0.1 .. 5m). Driving reverse wil stop recording!" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
 		<text name="gui_ad_settingsPage_title"							text="Ayarlar - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="Kullanıcı Ayarları - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Araç Ayarları - AutoDrive" />

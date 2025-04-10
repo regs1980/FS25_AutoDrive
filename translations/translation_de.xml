@@ -277,9 +277,9 @@
 		<text name="gui_ad_RecordWhileNotInVehicle"					text="Aufnahme ohne Fahrer" />
 		<text name="gui_ad_RecordWhileNotInVehicle_tooltip"			text="AutoDrive wird die Aufnahme nicht beenden, wenn der Fahrer das Fahrzeug verlässt.  Diese Einstellung wird absichtlich nicht gespeichert!" />
 		<text name="gui_ad_RecordDriveDirectionOffset"					text="Aufzeichnung Versatz Fahrtrichtung" />
-		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -5m) oder rechts (0.1 .. 5m). Rückwärts fahren deaktiviert die Aufnahme!" />
+		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -6m) oder rechts (0.1 .. 6m). Rückwärts fahren deaktiviert die Aufnahme!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Aufzeichnung Versatz Gegenrichtung" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -5m) oder rechts (0.1 .. 5m). Rückwärts fahren deaktiviert die Aufnahme!" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -6m) oder rechts (0.1 .. 6m). Rückwärts fahren deaktiviert die Aufnahme!" />
 		<text name="gui_ad_settingsPage_title"							text="Einstellungen - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="Benutzereinstellungen - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Fahrzeugeinstellungen - AutoDrive" />

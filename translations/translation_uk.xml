@@ -277,9 +277,9 @@
 		<text name="gui_ad_RecordWhileNotInVehicle"					text="Запис без водія" />
 		<text name="gui_ad_RecordWhileNotInVehicle_tooltip"			text="AutoDrive буде продовжувати запис, якщо водій покине автомобіль." />
 		<text name="gui_ad_RecordDriveDirectionOffset"					text="Record offset in driving direction" />
-		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Move recording from vehicle to the left (-0.1 .. -5m) or right (0.1 .. 5m). Driving reverse wil stop recording!" />
+		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Record offset in opposite driving direction" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Move recording from vehicle to the left (-0.1 .. -5m) or right (0.1 .. 5m). Driving reverse wil stop recording!" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
 		<text name="gui_ad_settingsPage_title"							text="Загальні налаштування - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="Користувацькі налаштування - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Налаштування техніки - AutoDrive" />

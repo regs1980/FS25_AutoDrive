@@ -277,9 +277,9 @@
 		<text name="gui_ad_RecordWhileNotInVehicle"					text="Registrazione senza conducente" />
 		<text name="gui_ad_RecordWhileNotInVehicle_tooltip"			text="AutoDrive continuerà a registrare se il conducente abbandona il veicolo" />
 		<text name="gui_ad_RecordDriveDirectionOffset"					text="Registrare lo scostamento nella direzione di guida" />
-		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Sposta la registrazione dal veicolo a sinistra (-0.1 .. -5m) or right (0.1 .. 5m). Guidando in retromarcia si interrompe la registrazione!" />
+		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Sposta la registrazione dal veicolo a sinistra (-0.1 .. -6m) or right (0.1 .. 6m). Guidando in retromarcia si interrompe la registrazione!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Registrare lo spostamento nella direzione di marcia opposta" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Sposta la registrazione dal veicolo a sinistra (-0.1 .. -5m) or right (0.1 .. 5m). Guidando in retromarcia si interrompe la registrazione!" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Sposta la registrazione dal veicolo a sinistra (-0.1 .. -6m) or right (0.1 .. 6m). Guidando in retromarcia si interrompe la registrazione!" />
 		<text name="gui_ad_settingsPage_title"							text="Impostazioni" />
 		<text name="gui_ad_userSettingsPage_title"						text="Impostazioni Utente" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Impostazioni Veicolo" />
