@@ -1456,8 +1456,7 @@ AutoDrive.settings.RecordDriveDirectionOffset = {
     text = "gui_ad_RecordTwoRoads",
     tooltip = "gui_ad_RecordTwoRoads_tooltip",
     translate = true,
-    isVehicleSpecific = false,
-    isUserSpecific = true
+    isVehicleSpecific = false
 }
 
 AutoDrive.settings.RecordOppositeDriveDirectionOffset = {
@@ -1712,8 +1711,7 @@ AutoDrive.settings.RecordOppositeDriveDirectionOffset = {
     text = "gui_ad_RecordTwoRoads",
     tooltip = "gui_ad_RecordTwoRoads_tooltip",
     translate = true,
-    isVehicleSpecific = false,
-    isUserSpecific = true
+    isVehicleSpecific = false
 }
 
 function AutoDrive.getSetting(settingName, vehicle)

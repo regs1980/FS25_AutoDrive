@@ -99,6 +99,18 @@
 				</BinaryOption>
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_autostartHelpers"/>
 			</Bitmap>
+			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
+				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="RecordDriveDirectionOffset" id="RecordDriveDirectionOffset">
+					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_RecordDriveDirectionOffset_tooltip"/>
+				</MultiTextOption>
+				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_RecordDriveDirectionOffset"/>
+			</Bitmap>
+			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
+				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="RecordOppositeDriveDirectionOffset" id="RecordOppositeDriveDirectionOffset">
+					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_RecordOppositeDriveDirectionOffset_tooltip"/>
+				</MultiTextOption>
+				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_RecordOppositeDriveDirectionOffset"/>
+			</Bitmap>
 		</ScrollingLayout>
 	</GuiElement>
 	<ThreePartBitmap profile="fs25_sliderDockedBg">
