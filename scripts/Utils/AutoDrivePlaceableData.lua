@@ -165,7 +165,11 @@ function AutoDrivePlaceableData:onFinalizePlacement()
                                 -- AutoDrivePlaceableData.showConfirmation()
                                 local ret = AutoDrivePlaceableData.readGraphFromXml(AutoDrivePlaceableData.xmlFile, AutoDrivePlaceableData.placeable)
                                 if ret < 0 then
-                                    AutoDrivePlaceableData.showError(ret)
+                                    if self.isClient then
+                                        AutoDrivePlaceableData.showError(ret)
+                                    else
+                                        Logging.error(g_i18n:getText("gui_ad_adpd_showError") .. " " .. ret)
+                                    end
                                     return
                                 end
                             end
