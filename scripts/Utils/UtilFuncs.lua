@@ -481,10 +481,10 @@ function AutoDrive:setDebugChannel(newDebugChannel)
 		if newDebugChannel == 0 then
 			AutoDrive.currentDebugChannelMask = 0
 		else
-			if bitAND(AutoDrive.currentDebugChannelMask, newDebugChannel) == newDebugChannel then
+			if bit32.band(AutoDrive.currentDebugChannelMask, newDebugChannel) == newDebugChannel then
 				AutoDrive.currentDebugChannelMask = AutoDrive.currentDebugChannelMask - newDebugChannel
 			else
-				AutoDrive.currentDebugChannelMask = bitOR(AutoDrive.currentDebugChannelMask, newDebugChannel)
+				AutoDrive.currentDebugChannelMask = bit32.bor(AutoDrive.currentDebugChannelMask, newDebugChannel)
 			end
 		end
 	else
@@ -803,7 +803,7 @@ function ADVectorUtils.linterp(inMin, inMax, inValue, outMin, outMax)
 end
 
 function AutoDrive.getDebugChannelIsSet(debugChannel)
-	return bitAND(AutoDrive.currentDebugChannelMask, debugChannel) > 0
+	return bit32.band(AutoDrive.currentDebugChannelMask, debugChannel) > 0
 end
 
 function AutoDrive.debugPrint(vehicle, debugChannel, debugText, ...)
@@ -960,7 +960,7 @@ function AutoDrive.checkIsOnField(worldX, worldY, worldZ)	-- kept only for refer
 	end
 
 	local bits = getDensityAtWorldPos(g_currentMission.terrainDetailId, worldX, worldY, worldZ)
-	densityBits = bitOR(densityBits, bits)
+	densityBits = bit32.bor(densityBits, bits)
 	if densityBits ~= 0 then
 		return true
 	end
@@ -1237,7 +1237,7 @@ end
 function AutoDrive.stringToNumberList(text, sep)
 	sep = sep or ','
 	local list = {}
-	for _, v in pairs(text:split(sep)) do
+	for _, v in pairs(string.split(text, sep)) do
 		local num = tonumber(v)
 		if num ~= nil then
 			table.insert(list, num)

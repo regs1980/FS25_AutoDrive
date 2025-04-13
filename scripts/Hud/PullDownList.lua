@@ -295,7 +295,7 @@ function ADPullDownList:getListElementByIndex(vehicle, index)
             end
             if vehicle.ad.groups[self:groupIDToGroupName(self.fakeGroupIDs[groupID])] == true or (not useFolders) then
                 for _, entry in pairs(entries) do
-                    if vehicle.ad.destinationFilterText == "" or string.match(entry.displayName:lower(), vehicle.ad.destinationFilterText:lower()) then
+                    if vehicle.ad.destinationFilterText == "" or string.match(string.lower(entry.displayName), string.lower(vehicle.ad.destinationFilterText)) then
                         if counter == index then
                             return {displayName = entry.displayName, returnValue = entry.returnValue, isFolder = false}
                         end
@@ -447,8 +447,8 @@ function ADPullDownList:sortGroups()
     self.options = {}
 
     local sort_func = function(a, b)
-        a = tostring(a):lower()
-        b = tostring(b):lower()
+        a = string.lower(tostring(a))
+        b = string.lower(tostring(b))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)
@@ -900,8 +900,8 @@ end
 
 function ADPullDownList:sortCurrentItems()
     local sort_func = function(a, b)
-        a = tostring(a.displayName):lower()
-        b = tostring(b.displayName):lower()
+        a = string.lower(tostring(a.displayName))
+        b = string.lower(tostring(b.displayName))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)

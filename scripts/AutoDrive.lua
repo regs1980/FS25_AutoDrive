@@ -400,7 +400,7 @@ function AutoDrive.createNetworkOnMapCache()
 	local dx, dz, dx2D, dy2D, width, rotation, r, g, b
 
 	local isSubPrio = function(pointToTest)
-		return bitAND(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
+		return bit32.band(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
 	end
 
 	local network = ADGraphManager:getWayPoints()
@@ -567,12 +567,12 @@ function AutoDrive:deleteMap()
 end
 
 function AutoDrive:keyEvent(unicode, sym, modifier, isDown)
-	AutoDrive.leftCTRLmodifierKeyPressed = bitAND(modifier, Input.MOD_LCTRL) > 0
-	AutoDrive.leftALTmodifierKeyPressed = bitAND(modifier, Input.MOD_LALT) > 0
-	AutoDrive.leftLSHIFTmodifierKeyPressed = bitAND(modifier, Input.MOD_LSHIFT) > 0
-	AutoDrive.isCAPSKeyActive = bitAND(modifier, Input.MOD_CAPS) > 0
-	AutoDrive.rightCTRLmodifierKeyPressed = bitAND(modifier, Input.MOD_RCTRL) > 0
-	AutoDrive.rightSHIFTmodifierKeyPressed = bitAND(modifier, Input.MOD_RSHIFT) > 0
+	AutoDrive.leftCTRLmodifierKeyPressed = bit32.band(modifier, Input.MOD_LCTRL) > 0
+	AutoDrive.leftALTmodifierKeyPressed = bit32.band(modifier, Input.MOD_LALT) > 0
+	AutoDrive.leftLSHIFTmodifierKeyPressed = bit32.band(modifier, Input.MOD_LSHIFT) > 0
+	AutoDrive.isCAPSKeyActive = bit32.band(modifier, Input.MOD_CAPS) > 0
+	AutoDrive.rightCTRLmodifierKeyPressed = bit32.band(modifier, Input.MOD_RCTRL) > 0
+	AutoDrive.rightSHIFTmodifierKeyPressed = bit32.band(modifier, Input.MOD_RSHIFT) > 0
 
 	if AutoDrive.isInExtendedEditorMode() then
 		if (AutoDrive.rightCTRLmodifierKeyPressed and AutoDrive.toggleSphere == true) then

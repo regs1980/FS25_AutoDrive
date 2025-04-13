@@ -138,7 +138,7 @@ end
 
 function ADHudIcon:splitTextByLength(text, fontSize, maxLength)
     local lines = {}
-    local textParts = text:split("-")
+    local textParts = string.split(text, "-")
     local line = textParts[1]
     local index = 2
     while index <= #textParts do

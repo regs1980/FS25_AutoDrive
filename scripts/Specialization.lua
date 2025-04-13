@@ -247,9 +247,9 @@ function AutoDrive:onPostLoad(savegame)
             if xmlFile:hasProperty(key) then
                 local groupString = xmlFile:getValue(key .. "#groups")
                 if groupString ~= nil then
-                    local groupTable = groupString:split(";")
+                    local groupTable = string.split(groupString, ";")
                     for _, groupCombined in pairs(groupTable) do
-                        local groupNameAndBool = groupCombined:split(",")
+                        local groupNameAndBool = string.split(groupCombined, ",")
                         if tonumber(groupNameAndBool[2]) >= 1 then
                             self.ad.groups[groupNameAndBool[1]] = true
                         else
@@ -429,7 +429,7 @@ function AutoDrive:onWriteUpdateStream(streamId, connection, dirtyMask)
         return
     end
     if not connection:getIsServer() then
-        if streamWriteBool(streamId, bitAND(dirtyMask, self.ad.dirtyFlag) ~= 0) then
+        if streamWriteBool(streamId, bit32.band(dirtyMask, self.ad.dirtyFlag) ~= 0) then
             self.ad.stateModule:writeUpdateStream(streamId)
         end
     end

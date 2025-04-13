@@ -774,8 +774,8 @@ function AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(vehicle)
     end
 
 	local sort_func = function(a, b)
-        a = tostring(g_fillTypeManager:getFillTypeByIndex(a).title):lower()
-        b = tostring(g_fillTypeManager:getFillTypeByIndex(b).title):lower()
+        a = string.lower(tostring(g_fillTypeManager:getFillTypeByIndex(a).title))
+        b = string.lower(tostring(g_fillTypeManager:getFillTypeByIndex(b).title))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)
