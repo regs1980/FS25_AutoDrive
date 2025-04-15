@@ -201,7 +201,7 @@ function AutoDrivePlaceableData.readGraphFromXml(xmlFile, placeable)
                 AutoDrive.debugMsg(nil, "ERROR AutoDrivePlaceableData.readGraphFromXml no value for key %s ", tostring(key))
                 return -2
             end
-            local xTable = tempString:split(",")
+            local xTable = string.split(tempString, ",")
             if #xTable == 0 then
                 AutoDrive.debugMsg(nil, "ERROR AutoDrivePlaceableData.readGraphFromXml no values for key %s ", tostring(key))
                 return -3
@@ -218,27 +218,27 @@ function AutoDrivePlaceableData.readGraphFromXml(xmlFile, placeable)
         key = "placeable.AutoDrive.waypoints.x"
         checkProperty(key)
         checkString(key)
-        local xt = getXMLString(xmlFile, key):split(",")
-        key = "placeable.AutoDrive.waypoints.y" -- not required, only for consitency check
+        local xt = string.split(getXMLString(xmlFile, key), ",")
+        key = "placeable.AutoDrive.waypoints.y" -- not required, only for consistency check
         checkProperty(key)
         checkString(key)
-        local yt = getXMLString(xmlFile, key):split(",")
+        local yt = string.split(getXMLString(xmlFile, key), ",")
         key = "placeable.AutoDrive.waypoints.z"
         checkProperty(key)
         checkString(key)
-        local zt = getXMLString(xmlFile, key):split(",")
+        local zt = string.split(getXMLString(xmlFile, key), ",")
         key = "placeable.AutoDrive.waypoints.out"
         checkProperty(key)
         -- checkString(key)
-        local ot = getXMLString(xmlFile, key):split(";")
+        local ot = string.split(getXMLString(xmlFile, key), ";")
         key = "placeable.AutoDrive.waypoints.incoming"
         checkProperty(key)
         -- checkString(key)
-        local it = getXMLString(xmlFile, key):split(";")
+        local it = string.split(getXMLString(xmlFile, key), ";")
         key = "placeable.AutoDrive.waypoints.flags"
         checkProperty(key)
         checkString(key)
-        local ft = getXMLString(xmlFile, key):split(",")
+        local ft = string.split(getXMLString(xmlFile, key), ",")
 
         if #xt == 0 or #yt == 0 or #zt == 0 or #ot == 0 or #it == 0 or #ft == 0 or #xt ~= #yt or #xt ~= #zt or #xt ~= #ot or #xt ~= #it or #xt ~= #ft then
             if #xt == 0 then

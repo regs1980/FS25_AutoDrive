@@ -667,7 +667,7 @@ function AutoDrive:onDrawPreviews()
     end
 end
 
-function AutoDrive:onPostAttachImplement(attachable, inputJointDescIndex, jointDescIndex)
+function AutoDrive:onPostAttachImplement(attachable, inputJointDescIndex, jointDescIndex, loadFromSavegame)
     if attachable["spec_FS19_addon_strawHarvest.strawHarvestPelletizer"] ~= nil then
         attachable.isPremos = true
     end
