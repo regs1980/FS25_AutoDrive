@@ -601,16 +601,15 @@ end
 
 function AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
     local grainDoorSideIndex = 0
-    local backDoorSideIndex = 0
     if vehicle == nil or trailer == nil then
-        return grainDoorSideIndex, backDoorSideIndex
+        return grainDoorSideIndex
     end
-    if trailer.ad ~= nil and trailer.ad.grainDoorSideIndex ~= nil and trailer.ad.backDoorSideIndex ~= nil then
-        return trailer.ad.grainDoorSideIndex, trailer.ad.backDoorSideIndex
+    if trailer.ad ~= nil and trailer.ad.grainDoorSideIndex ~= nil then
+        return trailer.ad.grainDoorSideIndex
     end
     local spec = trailer.spec_trailer
     if spec == nil then
-        return grainDoorSideIndex, backDoorSideIndex
+        return grainDoorSideIndex
     end
     if trailer.ad == nil then
         trailer.ad = {}
@@ -631,28 +630,28 @@ function AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
                 local _, _, diffZ = AutoDrive.worldToLocal(trailer, tx, ty, tz + 50)
                 -- get the 2 most back doors
                 if (diffZ <= backDistance1 or math.abs(diffZ - backDistance1) < 1) and currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
-                    backDistance2 = backDistance1
-                    dischargeSpeed2 = dischargeSpeed1
-                    tipSideIndex2 = tipSideIndex1
-                    backDistance1 = diffZ
-                    dischargeSpeed1 = currentDischargeNode.emptySpeed
-                    tipSideIndex1 = i
+                    if currentDischargeNode.emptySpeed < dischargeSpeed1 then
+                        backDistance2 = backDistance1
+                        dischargeSpeed2 = dischargeSpeed1
+                        tipSideIndex2 = tipSideIndex1
+                        backDistance1 = diffZ
+                        dischargeSpeed1 = currentDischargeNode.emptySpeed
+                        tipSideIndex1 = i
+                    end
                 end
             end
         end
     end
+
     local foundTwoBackDoors = (backDistance1 ~= math.huge) and (math.abs(backDistance2 - backDistance1) < 1)
     if foundTwoBackDoors then
         grainDoorSideIndex = tipSideIndex1
-        backDoorSideIndex = tipSideIndex2
         if dischargeSpeed2 < dischargeSpeed1 then
             grainDoorSideIndex = tipSideIndex2
-            backDoorSideIndex = tipSideIndex1
         end
     end
     trailer.ad.grainDoorSideIndex = grainDoorSideIndex
-    trailer.ad.backDoorSideIndex = backDoorSideIndex
-    return trailer.ad.grainDoorSideIndex, trailer.ad.backDoorSideIndex
+    return trailer.ad.grainDoorSideIndex
 end
 
 function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
@@ -671,7 +670,7 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
         if canDischargeToObject then
             local currentDischargeNodeIndex = trailer:getCurrentDischargeNodeIndex()
             local tipSide = spec.dischargeNodeIndexToTipSide[currentDischargeNodeIndex]
-            if tipSide and tipSide.index then
+            if tipSide and tipSide.index and not tipSide.manualTipToggle then
                 if tipSide.index ~= spec.preferedTipSideIndex then
                     trailer:setPreferedTipSide(tipSide.index)
                 end
@@ -679,7 +678,7 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
         end
     end
     if (AutoDrive.getSetting("autoTipSide", vehicle) == true) and dischargeCondition and (not vehicle.ad.isLoading) and (not vehicle.ad.isUnloading) and trailer.getCurrentDischargeNode ~= nil and trailer:getCurrentDischargeNode() ~= nil then
-        local grainDoorSideIndex, backDoorSideIndex = AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
+        local grainDoorSideIndex = AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
         if trailer:getCanTogglePreferdTipSide() then
             local dischargeObject, dischargeFillUnitIndex = trailer:getDischargeTargetObject(trailer:getCurrentDischargeNode())
             if dischargeFillUnitIndex == nil then
@@ -710,19 +709,21 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
                     end
                     trailer.ad.lastTipSideIndex = tipSideIndex
                     local tipSide = spec.tipSides[tipSideIndex]
-                    trailer:setCurrentDischargeNodeIndex(tipSide.dischargeNodeIndex)
-                    -- check Dischargeable triggers if already discharge target available
-                    local currentDischargeNode = trailer:getCurrentDischargeNode()
-                    if currentDischargeNode then
-                        local trigger = currentDischargeNode.trigger
-                        if trigger and trigger.numObjects > 0 then
-                            if currentDischargeNode.dischargeObject then
-                                -- already suitable target available
-                                if currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
-                                    if trailer:getCanDischargeToObject(currentDischargeNode) then
-                                        if tipSideIndex ~= spec.preferedTipSideIndex then
-                                            trailer:setPreferedTipSide(tipSideIndex)
-                                            AutoDrive.debugPrint(vehicle, AutoDrive.DC_VEHICLEINFO, "AutoDrive.findAndSetBestTipPoint: trigger found Changed tip side to %s", tipSideIndex)
+                    if not tipSide.manualTipToggle then
+                        trailer:setCurrentDischargeNodeIndex(tipSide.dischargeNodeIndex)
+                        -- check Dischargeable triggers if already discharge target available
+                        local currentDischargeNode = trailer:getCurrentDischargeNode()
+                        if currentDischargeNode then
+                            local trigger = currentDischargeNode.trigger
+                            if trigger and trigger.numObjects > 0 then
+                                if currentDischargeNode.dischargeObject then
+                                    -- already suitable target available
+                                    if currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
+                                        if trailer:getCanDischargeToObject(currentDischargeNode) then
+                                            if tipSideIndex ~= spec.preferedTipSideIndex then
+                                                trailer:setPreferedTipSide(tipSideIndex)
+                                                AutoDrive.debugPrint(vehicle, AutoDrive.DC_TRAILERINFO, "AutoDrive.findAndSetBestTipPoint: trigger found Changed tip side to %s", tipSideIndex)
+                                            end
                                         end
                                     end
                                 end
