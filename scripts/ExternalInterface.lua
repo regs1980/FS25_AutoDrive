@@ -458,7 +458,7 @@ function AutoDrive:onCpFinished()
                 AutoDriveMessageEvent.sendMessageOrNotification(self, ADMessagesManager.messageTypes.ERROR, "$l10n_AD_Driver_of; %s $l10n_AD_parkVehicle_noPosSet;", 5000, self.ad.stateModule:getName())
                 -- stop vehicle movement
                 self.ad.trailerModule:handleTrailerReversing(false)
-                AutoDrive.driveInDirection(self, 16, 30, 0, 0.2, 20, false, false, 0, 0, 0, 1)
+                -- AutoDrive.driveInDirection(self, 16, 30, 0, 0.2, 20, false, false, 0, 0, 0, 1) -- not to call here #222!
                 self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
                 if self.stopMotor ~= nil then
                     self:stopMotor()
@@ -617,10 +617,10 @@ function AutoDrive:hasAL(object)
     end
     local ret = false
     ret = ret or (object.spec_aPalletAutoLoader ~= nil and object.spec_aPalletAutoLoader.loadArea ~= nil and object.spec_aPalletAutoLoader.loadArea["baseNode"] ~= nil)
-    if (object.spec_universalAutoload ~= nil) then
+    if object.spec_universalAutoload ~= nil then
         local rootVehicle = object.getRootVehicle and object:getRootVehicle()
         if rootVehicle and not rootVehicle.spec_locomotive then
-            ret = ret or object.spec_universalAutoload.isAutoloadAvailable
+            ret = ret or (object.spec_universalAutoload.isAutoloadAvailable and not object.spec_universalAutoload.autoloadDisabled)
         end
     end
     return ret

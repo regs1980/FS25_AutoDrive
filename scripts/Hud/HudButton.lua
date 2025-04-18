@@ -1,12 +1,16 @@
 ADHudButton = ADInheritsFrom(ADGenericHudElement)
 
-function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, toolTip, state, visible)
+function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, visible)
     local o = ADHudButton:create()
     o:init(posX, posY, width, height)
     o.primaryAction = primaryAction
     o.secondaryAction = secondaryAction
     o.tertiaryAction = tertiaryAction
     o.quatenaryAction = quatenaryAction
+    o.fithAction = fithAction
+    o.sixthAction = sixthAction
+    o.seventhAction = seventhAction
+    o.eightthAction = eightthAction
     o.toolTip = toolTip
     o.state = state
     o.isVisible = visible
@@ -83,6 +87,18 @@ function ADHudButton:getNewState(vehicle)
             end
             if vehicle.ad.stateModule:isInSubPrioDualCreationMode() then
                 newState = 5
+            end
+            if vehicle.ad.stateModule:isInNormalTwoWayCreationMode() then
+                newState = 6
+            end
+            if vehicle.ad.stateModule:isInDualTwoWayCreationMode() then
+                newState = 7
+            end
+            if vehicle.ad.stateModule:isInSubPrioTwoWayCreationMode() then
+                newState = 8
+            end
+            if vehicle.ad.stateModule:isInSubPrioDualTwoWayCreationMode() then
+                newState = 9
             end
         else
             newState = 1
@@ -249,17 +265,29 @@ function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
             return
         end
 
-        if button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed then
+        if button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
             ADInputManager:onInputCall(vehicle, self.primaryAction)
             return true
-        elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed then
+        elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
             ADInputManager:onInputCall(vehicle, self.secondaryAction)
             return true
-        elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed then
+        elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
             ADInputManager:onInputCall(vehicle, self.tertiaryAction)
             return true
-        elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed then
+        elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
             ADInputManager:onInputCall(vehicle, self.quatenaryAction)
+            return true
+        elseif button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+            ADInputManager:onInputCall(vehicle, self.fithAction)
+            return true
+        elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+            ADInputManager:onInputCall(vehicle, self.sixthAction)
+            return true
+        elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+            ADInputManager:onInputCall(vehicle, self.seventhAction)
+            return true
+        elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+            ADInputManager:onInputCall(vehicle, self.eightthAction)
             return true
         end
 

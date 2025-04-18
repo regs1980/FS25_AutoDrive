@@ -57,7 +57,7 @@ function ADHarvestManager:registerAsUnloader(vehicle)
 end
 
 function ADHarvestManager:unregisterAsUnloader(vehicle)
-    if vehicle.ad.modes ~= nil and vehicle.ad.modes[AutoDrive.MODE_UNLOAD] ~= nil then
+    if vehicle.ad and vehicle.ad.modes ~= nil and vehicle.ad.modes[AutoDrive.MODE_UNLOAD] ~= nil then
         local followingUnloder = vehicle.ad.modes[AutoDrive.MODE_UNLOAD]:getFollowingUnloader()
         if followingUnloder ~= nil then
             --promote following unloader to current unloader
@@ -348,19 +348,28 @@ function ADHarvestManager:getClosestIdleUnloader(harvester)
 end
 
 function ADHarvestManager:hasHarvesterAvailableUnloader(harvester)
-    for _, unloader in pairs(self.idleUnloaders) do
-        local targetsMatch = unloader.ad.stateModule:getFirstMarker() == harvester.ad.stateModule:getFirstMarker()
-        if targetsMatch then
-            return true
+    local rootHarvester = harvester and harvester.getRootVehicle and harvester:getRootVehicle()
+    if rootHarvester and rootHarvester.ad and rootHarvester.ad.stateModule then
+        for _, unloader in pairs(self.idleUnloaders) do
+            local targetsMatch = unloader.ad.stateModule:getFirstMarker() == rootHarvester.ad.stateModule:getFirstMarker()
+            if targetsMatch then
+                return true
+            end
         end
-    end
-    for _, unloader in pairs(self.activeUnloaders) do
-        local targetsMatch = unloader.ad.stateModule:getFirstMarker() == harvester.ad.stateModule:getFirstMarker()
-        if targetsMatch then
-            return true
+        for _, unloader in pairs(self.activeUnloaders) do
+            if unloader.ad.modes[AutoDrive.MODE_UNLOAD].combine == rootHarvester then
+                return true
+            end
         end
     end
     return false
+end
+
+function ADHarvestManager:adHasHarvesterAvailableUnloader()
+    AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "ADHarvestManager:adHasHarvesterAvailableUnloader hasHarvesterAvailableUnloader %s "
+    , tostring(ADHarvestManager:hasHarvesterAvailableUnloader(self))
+    )
+    return ADHarvestManager:hasHarvesterAvailableUnloader(self)
 end
 
 function ADHarvestManager:hasHarvesterPotentialUnloaders(harvester)

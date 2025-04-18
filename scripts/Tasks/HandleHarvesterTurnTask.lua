@@ -394,7 +394,7 @@ function HandleHarvesterTurnTask:doCollisionCheck(waypoints)
 
             local angleX = -MathUtil.getYRotationFromDirection(deltaY, length*2)
 
-            local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallback", self, mask, true, true, true)
+            local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallback", self, mask, true, true, true, true)
             if shapes > 0 then
                 self.expectedColliCallbacks = self.expectedColliCallbacks + 1
                 --print("Expecting collisionTestCallbacks: " .. self.expectedColliCallbacks)

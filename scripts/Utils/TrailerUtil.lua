@@ -149,6 +149,8 @@ function AutoDrive.getObjectFillLevels(object)
                 updateFillLevels(fillUnitIndex)
             elseif object.spec_saltSpreader and object.spec_saltSpreader.fillUnitIndex and object.spec_saltSpreader.fillUnitIndex > 0 and object.spec_saltSpreader.fillUnitIndex == fillUnitIndex then
                 updateFillLevels(fillUnitIndex)
+            elseif object.spec_treePlanter and object.spec_treePlanter.fillUnitIndex and object.spec_treePlanter.fillUnitIndex > 0 and object.spec_treePlanter.fillUnitIndex == fillUnitIndex then
+                updateFillLevels(fillUnitIndex)
             elseif object.spec_baleLoader and object.spec_baleLoader.fillUnitIndex and object.spec_baleLoader.fillUnitIndex > 0 and object.spec_baleLoader.fillUnitIndex == fillUnitIndex then
                 updateFillLevels(fillUnitIndex)
             elseif spec_dischargeable and fillUnit and fillUnit.exactFillRootNode then
@@ -599,16 +601,15 @@ end
 
 function AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
     local grainDoorSideIndex = 0
-    local backDoorSideIndex = 0
     if vehicle == nil or trailer == nil then
-        return grainDoorSideIndex, backDoorSideIndex
+        return grainDoorSideIndex
     end
-    if trailer.ad ~= nil and trailer.ad.grainDoorSideIndex ~= nil and trailer.ad.backDoorSideIndex ~= nil then
-        return trailer.ad.grainDoorSideIndex, trailer.ad.backDoorSideIndex
+    if trailer.ad ~= nil and trailer.ad.grainDoorSideIndex ~= nil then
+        return trailer.ad.grainDoorSideIndex
     end
     local spec = trailer.spec_trailer
     if spec == nil then
-        return grainDoorSideIndex, backDoorSideIndex
+        return grainDoorSideIndex
     end
     if trailer.ad == nil then
         trailer.ad = {}
@@ -628,29 +629,29 @@ function AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
                 local tx, ty, tz = getWorldTranslation(currentDischargeNode.node)
                 local _, _, diffZ = AutoDrive.worldToLocal(trailer, tx, ty, tz + 50)
                 -- get the 2 most back doors
-                if diffZ <= backDistance1 and currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
-                    backDistance2 = backDistance1
-                    dischargeSpeed2 = dischargeSpeed1
-                    tipSideIndex2 = tipSideIndex1
-                    backDistance1 = diffZ
-                    dischargeSpeed1 = currentDischargeNode.emptySpeed
-                    tipSideIndex1 = i
+                if (diffZ <= backDistance1 or math.abs(diffZ - backDistance1) < 1) and currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
+                    if currentDischargeNode.emptySpeed < dischargeSpeed1 then
+                        backDistance2 = backDistance1
+                        dischargeSpeed2 = dischargeSpeed1
+                        tipSideIndex2 = tipSideIndex1
+                        backDistance1 = diffZ
+                        dischargeSpeed1 = currentDischargeNode.emptySpeed
+                        tipSideIndex1 = i
+                    end
                 end
             end
         end
     end
+
     local foundTwoBackDoors = (backDistance1 ~= math.huge) and (math.abs(backDistance2 - backDistance1) < 1)
     if foundTwoBackDoors then
         grainDoorSideIndex = tipSideIndex1
-        backDoorSideIndex = tipSideIndex2
         if dischargeSpeed2 < dischargeSpeed1 then
             grainDoorSideIndex = tipSideIndex2
-            backDoorSideIndex = tipSideIndex1
         end
     end
     trailer.ad.grainDoorSideIndex = grainDoorSideIndex
-    trailer.ad.backDoorSideIndex = backDoorSideIndex
-    return trailer.ad.grainDoorSideIndex, trailer.ad.backDoorSideIndex
+    return trailer.ad.grainDoorSideIndex
 end
 
 function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
@@ -669,7 +670,7 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
         if canDischargeToObject then
             local currentDischargeNodeIndex = trailer:getCurrentDischargeNodeIndex()
             local tipSide = spec.dischargeNodeIndexToTipSide[currentDischargeNodeIndex]
-            if tipSide and tipSide.index then
+            if tipSide and tipSide.index and not tipSide.manualTipToggle then
                 if tipSide.index ~= spec.preferedTipSideIndex then
                     trailer:setPreferedTipSide(tipSide.index)
                 end
@@ -677,7 +678,7 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
         end
     end
     if (AutoDrive.getSetting("autoTipSide", vehicle) == true) and dischargeCondition and (not vehicle.ad.isLoading) and (not vehicle.ad.isUnloading) and trailer.getCurrentDischargeNode ~= nil and trailer:getCurrentDischargeNode() ~= nil then
-        local grainDoorSideIndex, backDoorSideIndex = AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
+        local grainDoorSideIndex = AutoDrive.findGrainBackDoorTipSideIndex(vehicle, trailer)
         if trailer:getCanTogglePreferdTipSide() then
             local dischargeObject, dischargeFillUnitIndex = trailer:getDischargeTargetObject(trailer:getCurrentDischargeNode())
             if dischargeFillUnitIndex == nil then
@@ -708,19 +709,21 @@ function AutoDrive.findAndSetBestTipPoint(vehicle, trailer)
                     end
                     trailer.ad.lastTipSideIndex = tipSideIndex
                     local tipSide = spec.tipSides[tipSideIndex]
-                    trailer:setCurrentDischargeNodeIndex(tipSide.dischargeNodeIndex)
-                    -- check Dischargeable triggers if already discharge target available
-                    local currentDischargeNode = trailer:getCurrentDischargeNode()
-                    if currentDischargeNode then
-                        local trigger = currentDischargeNode.trigger
-                        if trigger and trigger.numObjects > 0 then
-                            if currentDischargeNode.dischargeObject then
-                                -- already suitable target available
-                                if currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
-                                    if trailer:getCanDischargeToObject(currentDischargeNode) then
-                                        if tipSideIndex ~= spec.preferedTipSideIndex then
-                                            trailer:setPreferedTipSide(tipSideIndex)
-                                            AutoDrive.debugPrint(vehicle, AutoDrive.DC_VEHICLEINFO, "AutoDrive.findAndSetBestTipPoint: trigger found Changed tip side to %s", tipSideIndex)
+                    if not tipSide.manualTipToggle then
+                        trailer:setCurrentDischargeNodeIndex(tipSide.dischargeNodeIndex)
+                        -- check Dischargeable triggers if already discharge target available
+                        local currentDischargeNode = trailer:getCurrentDischargeNode()
+                        if currentDischargeNode then
+                            local trigger = currentDischargeNode.trigger
+                            if trigger and trigger.numObjects > 0 then
+                                if currentDischargeNode.dischargeObject then
+                                    -- already suitable target available
+                                    if currentDischargeNode.effects and table.count(currentDischargeNode.effects) > 0 then
+                                        if trailer:getCanDischargeToObject(currentDischargeNode) then
+                                            if tipSideIndex ~= spec.preferedTipSideIndex then
+                                                trailer:setPreferedTipSide(tipSideIndex)
+                                                AutoDrive.debugPrint(vehicle, AutoDrive.DC_TRAILERINFO, "AutoDrive.findAndSetBestTipPoint: trigger found Changed tip side to %s", tipSideIndex)
+                                            end
                                         end
                                     end
                                 end
@@ -955,6 +958,27 @@ function AutoDrive.startFillTrigger(trailers)
     return ret
 end
 
+function AutoDrive.startLoadTreePlanter(trailers)
+    local ret = nil
+    if trailers == nil then
+        return ret
+    end
+    for _, trailer in pairs(trailers) do
+        local rootVehicle = trailer:getRootVehicle()
+        local spec = trailer.spec_treePlanter
+        if spec ~= nil and spec.nearestSaplingPallet ~= nil then
+            for _, fillUnit in ipairs(spec.nearestSaplingPallet:getFillUnits()) do
+                if fillUnit and fillUnit.fillType == rootVehicle.ad.stateModule:getFillType() then
+                    spec.activatable:run()
+                    ret = spec
+                    break
+                end
+            end
+        end
+    end
+    return ret
+end
+
 function AutoDrive.isInRangeToLoadUnloadTarget(vehicle)
     if vehicle == nil or vehicle.ad == nil or vehicle.ad.stateModule == nil or vehicle.ad.drivePathModule == nil then
         return false
@@ -1031,6 +1055,11 @@ function AutoDrive.getValidSupportedFillTypes(vehicle, excludedVehicles)
                     end
                     if trailer.spec_saltSpreader and trailer.spec_saltSpreader.fillUnitIndex and trailer.spec_saltSpreader.fillUnitIndex > 0 then
                         if trailer.spec_saltSpreader.fillUnitIndex == fillUnitIndex then
+                            getsupportedFillTypes(trailer, fillUnitIndex)
+                        end
+                    end
+                    if trailer.spec_treePlanter and trailer.spec_treePlanter.fillUnitIndex and trailer.spec_treePlanter.fillUnitIndex > 0 then
+                        if trailer.spec_treePlanter.fillUnitIndex == fillUnitIndex then
                             getsupportedFillTypes(trailer, fillUnitIndex)
                         end
                     end

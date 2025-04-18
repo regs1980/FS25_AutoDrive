@@ -5,6 +5,10 @@ ADStateModule.CREATE_NORMAL = 2
 ADStateModule.CREATE_DUAL = 3
 ADStateModule.CREATE_SUB_PRIO = 4
 ADStateModule.CREATE_SUB_PRIO_DUAL = 5
+ADStateModule.CREATE_NORMAL_TWOWAY = 6
+ADStateModule.CREATE_DUAL_TWOWAY = 7
+ADStateModule.CREATE_SUB_PRIO_TWOWAY = 8
+ADStateModule.CREATE_SUB_PRIO_DUAL_TWOWAY = 9
 
 ADStateModule.CALCULATE_REMAINING_DRIVETIME_INTERVAL = 1000
 
@@ -666,7 +670,7 @@ function ADStateModule:setActive(active)
 end
 
 function ADStateModule:isInCreationMode()
-    return (self.creationMode == ADStateModule.CREATE_NORMAL) or (self.creationMode == ADStateModule.CREATE_DUAL) or (self.creationMode == ADStateModule.CREATE_SUB_PRIO) or (self.creationMode == ADStateModule.CREATE_SUB_PRIO_DUAL)
+    return (self.creationMode ~= ADStateModule.CREATE_OFF)
 end
 
 function ADStateModule:isInNormalCreationMode()
@@ -685,44 +689,92 @@ function ADStateModule:isInSubPrioDualCreationMode()
     return self.creationMode == ADStateModule.CREATE_SUB_PRIO_DUAL
 end
 
+function ADStateModule:isInNormalTwoWayCreationMode()
+    return self.creationMode == ADStateModule.CREATE_NORMAL_TWOWAY
+end
+
+function ADStateModule:isInDualTwoWayCreationMode()
+    return self.creationMode == ADStateModule.CREATE_DUAL_TWOWAY
+end
+
+function ADStateModule:isInSubPrioTwoWayCreationMode()
+    return self.creationMode == ADStateModule.CREATE_SUB_PRIO_TWOWAY
+end
+
+function ADStateModule:isInSubPrioDualTwoWayCreationMode()
+    return self.creationMode == ADStateModule.CREATE_SUB_PRIO_DUAL_TWOWAY
+end
+
 function ADStateModule:disableCreationMode()
     self.creationMode = ADStateModule.CREATE_OFF
     self:raiseDirtyFlag()
     if self.vehicle.ad.recordingModule ~= nil then
-		self.vehicle.ad.recordingModule:stop()
-	end
+        self.vehicle.ad.recordingModule:stop()
+    end
 end
 
 function ADStateModule:startNormalCreationMode()
     self.creationMode = ADStateModule.CREATE_NORMAL
     self:raiseDirtyFlag()
     if self.vehicle.ad.recordingModule ~= nil then
-		self.vehicle.ad.recordingModule:start(false, false)
-	end
+        self.vehicle.ad.recordingModule:start(false, false, false)
+    end
 end
 
 function ADStateModule:startDualCreationMode()
     self.creationMode = ADStateModule.CREATE_DUAL
     self:raiseDirtyFlag()
     if self.vehicle.ad.recordingModule ~= nil then
-		self.vehicle.ad.recordingModule:start(true, false)
-	end
+        self.vehicle.ad.recordingModule:start(true, false, false)
+    end
 end
 
 function ADStateModule:startSubPrioCreationMode()
     self.creationMode = ADStateModule.CREATE_SUB_PRIO
     self:raiseDirtyFlag()
     if self.vehicle.ad.recordingModule ~= nil then
-		self.vehicle.ad.recordingModule:start(false, true)
-	end
+        self.vehicle.ad.recordingModule:start(false, true, false)
+    end
 end
 
 function ADStateModule:startSubPrioDualCreationMode()
     self.creationMode = ADStateModule.CREATE_SUB_PRIO_DUAL
     self:raiseDirtyFlag()
     if self.vehicle.ad.recordingModule ~= nil then
-		self.vehicle.ad.recordingModule:start(true, true)
-	end
+        self.vehicle.ad.recordingModule:start(true, true, false)
+    end
+end
+
+function ADStateModule:startNormalTwoWayCreationMode()
+    self.creationMode = ADStateModule.CREATE_NORMAL_TWOWAY
+    self:raiseDirtyFlag()
+    if self.vehicle.ad.recordingModule ~= nil then
+        self.vehicle.ad.recordingModule:start(false, false, true)
+    end
+end
+
+function ADStateModule:startDualTwoWayCreationMode()
+    self.creationMode = ADStateModule.CREATE_DUAL_TWOWAY
+    self:raiseDirtyFlag()
+    if self.vehicle.ad.recordingModule ~= nil then
+        self.vehicle.ad.recordingModule:start(true, false, true)
+    end
+end
+
+function ADStateModule:startSubPrioTwoWayCreationMode()
+    self.creationMode = ADStateModule.CREATE_SUB_PRIO_TWOWAY
+    self:raiseDirtyFlag()
+    if self.vehicle.ad.recordingModule ~= nil then
+        self.vehicle.ad.recordingModule:start(false, true, true)
+    end
+end
+
+function ADStateModule:startSubPrioDualTwoWayCreationMode()
+    self.creationMode = ADStateModule.CREATE_SUB_PRIO_DUAL_TWOWAY
+    self:raiseDirtyFlag()
+    if self.vehicle.ad.recordingModule ~= nil then
+        self.vehicle.ad.recordingModule:start(true, true, true)
+    end
 end
 
 function ADStateModule:getLoopCounter()

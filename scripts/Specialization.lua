@@ -36,7 +36,7 @@ function AutoDrive.registerEventListeners(vehicleType)
             "onPostDetachImplement",
             "onEnterVehicle",
             "onLeaveVehicle",
-            -- "onPlayerLeaveVehicle", -- TODO check, at the moment not called
+            "onSetBroken",
             -- CP events, see ExternalInterface.lua
             "onCpFinished",
             "onCpEmpty",
@@ -44,10 +44,7 @@ function AutoDrive.registerEventListeners(vehicleType)
             "onCpFuelEmpty",
             "onCpBroken",
             -- Giants helper events
-            -- "onAIJobStarted",
             "onAIJobFinished",
-            -- "onAIJobVehicleBlock",
-            -- "onAIJobVehicleContinue",
         }
     ) do
         SpecializationUtil.registerEventListener(vehicleType, n, AutoDrive)
@@ -56,7 +53,6 @@ end
 
 function AutoDrive.registerOverwrittenFunctions(vehicleType)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getCanMotorRun",                       AutoDrive.getCanMotorRun)
-    -- SpecializationUtil.registerOverwrittenFunction(vehicleType, "leaveVehicle",                         AutoDrive.leaveVehicle) -- not available
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsAIActive",                        AutoDrive.getIsAIActive)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsVehicleControlledByPlayer",       AutoDrive.getIsVehicleControlledByPlayer)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getActiveFarm",                        AutoDrive.getActiveFarm)
@@ -87,6 +83,7 @@ function AutoDrive.registerFunctions(vehicleType)
     SpecializationUtil.registerFunction(vehicleType, "generateUTurn", AutoDrive.generateUTurn)
     SpecializationUtil.registerFunction(vehicleType, "getCanAdTakeControl", AutoDrive.getCanAdTakeControl) -- see ExternalInterface.lua
     SpecializationUtil.registerFunction(vehicleType, "adGetRemainingDriveTime", AutoDrive.adGetRemainingDriveTime)
+    SpecializationUtil.registerFunction(vehicleType, "adHasHarvesterAvailableUnloader", ADHarvestManager.adHasHarvesterAvailableUnloader)
 end
 
 function AutoDrive.registerEvents(vehicleType)
@@ -111,7 +108,6 @@ function AutoDrive:onRegisterActionEvents(_, isOnActiveVehicle)
             if action[5] then
                 g_inputBinding:setActionEventTextVisibility(eventName, action[5] and showF1Help)
                 if showF1Help then
-                    -- g_inputBinding:setActionEventTextPriority(eventName, action[3])
                     if action[6] then
                         g_inputBinding:setActionEventTextPriority(eventName, action[6])
                     end
@@ -251,9 +247,9 @@ function AutoDrive:onPostLoad(savegame)
             if xmlFile:hasProperty(key) then
                 local groupString = xmlFile:getValue(key .. "#groups")
                 if groupString ~= nil then
-                    local groupTable = groupString:split(";")
+                    local groupTable = string.split(groupString, ";")
                     for _, groupCombined in pairs(groupTable) do
-                        local groupNameAndBool = groupCombined:split(",")
+                        local groupNameAndBool = string.split(groupCombined, ",")
                         if tonumber(groupNameAndBool[2]) >= 1 then
                             self.ad.groups[groupNameAndBool[1]] = true
                         else
@@ -360,8 +356,12 @@ function AutoDrive:onReadStream(streamId, connection)
     for i = 1, count do
         local settingName = streamReadString(streamId)
         local value = streamReadUInt16(streamId)
-        self.ad.settings[settingName].current = value
-        self.ad.settings[settingName].new = value
+        if self.ad.settings[settingName] == nil then
+            Logging.warning("[AutoDrive] AutoDrive:onReadStream() encountered unknown setting " .. tostring(settingName))
+        else
+            self.ad.settings[settingName].current = value
+            self.ad.settings[settingName].new = value
+        end
     end
 
     self.ad.stateModule:readStream(streamId)
@@ -429,7 +429,7 @@ function AutoDrive:onWriteUpdateStream(streamId, connection, dirtyMask)
         return
     end
     if not connection:getIsServer() then
-        if streamWriteBool(streamId, bitAND(dirtyMask, self.ad.dirtyFlag) ~= 0) then
+        if streamWriteBool(streamId, bit32.band(dirtyMask, self.ad.dirtyFlag) ~= 0) then
             self.ad.stateModule:writeUpdateStream(streamId)
         end
     end
@@ -667,7 +667,7 @@ function AutoDrive:onDrawPreviews()
     end
 end
 
-function AutoDrive:onPostAttachImplement(attachable, inputJointDescIndex, jointDescIndex)
+function AutoDrive:onPostAttachImplement(attachable, inputJointDescIndex, jointDescIndex, loadFromSavegame)
     if attachable["spec_FS19_addon_strawHarvest.strawHarvestPelletizer"] ~= nil then
         attachable.isPremos = true
     end
@@ -679,7 +679,6 @@ function AutoDrive:onPostAttachImplement(attachable, inputJointDescIndex, jointD
         local angle = math.abs(AutoDrive.angleBetween({x = vx, z = vz}, {x = cx, z = cz}))
 
         if angle > 100 then
-            AutoDrive.debugMsg(self, "AutoDrive:onPostAttachImplement isRotatedAttached")
             -- attachable is rotated attached - use sensors from vehicle
             attachable.ad.sensors = nil
             attachable.ad.isReverseAttached = true
@@ -790,7 +789,17 @@ function AutoDrive:onLeaveVehicle(wasEntered)
     AutoDrive.Hud:closeAllPullDownLists(self)
 end
 
+function AutoDrive:onSetBroken()
+    if self.ad ~= nil and self.ad.stateModule ~= nil then
+		if self.ad.stateModule:isActive() then
+			self:stopAutoDrive()
+		end
+	end
+end
+
 function AutoDrive:onDelete()
+    ADHarvestManager:unregisterHarvester(self)
+    ADHarvestManager:unregisterAsUnloader(self)
     AutoDriveHud:deleteMapHotspot(self)
 end
 
@@ -1628,48 +1637,6 @@ function AutoDrive:toggleMouse()
     self.ad.lastMouseState = g_inputBinding:getShowMouseCursor()
 end
 
-function AutoDrive:onPlayerLeaveVehicle(param)
-    AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle start param %s"
-    , tostring(param)
-    )
-    AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle self.ad %s "
-    , tostring(self.ad)
-    )
-    if self.ad ~= nil then
-        AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle self.getIsEntered %s "
-        , tostring(self.getIsEntered)
-        )
-        if self.getIsEntered then
-            AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle getIsEntered %s "
-            , tostring(self:getIsEntered() )
-            )
-        end
-        if self.getIsEntered ~= nil and self:getIsEntered() then
-            AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle getShowMouseCursor %s "
-            , tostring(g_inputBinding:getShowMouseCursor())
-            )
-            if g_inputBinding:getShowMouseCursor() then
-                g_inputBinding:setShowMouseCursor(false)
-            end
-            AutoDrive.Hud:closeAllPullDownLists(self)
-        end
-    end
-    AutoDrive.debugMsg(self, "AutoDrive:onPlayerLeaveVehicle end")
-end
-
-function AutoDrive:leaveVehicle(superFunc)
-    AutoDrive.debugMsg(self, "AutoDrive:leaveVehicle start")
-    if self.ad ~= nil then
-        if self.getIsEntered ~= nil and self:getIsEntered() then
-            if g_inputBinding:getShowMouseCursor() then
-                g_inputBinding:setShowMouseCursor(false)
-            end
-            AutoDrive.Hud:closeAllPullDownLists(self)
-        end
-    end
-    superFunc(self)
-end
-
 function AutoDrive:updateAutoDriveLights(switchOff)
     if not self.setTurnLightState then
         AutoDrive.errorMsg(self, "AutoDrive:updateAutoDriveLights self.setTurnLightState %s", tostring(self.setTurnLightState))
@@ -1698,7 +1665,8 @@ function AutoDrive:updateAutoDriveLights(switchOff)
         if self.setTurnLightState then
             if AutoDrive.getSetting("useHazardLightReverse", self) then
                 local drivingReverse = (self.lastSpeedReal * self.movingDirection) < 0
-                if drivingReverse then
+                local isReverseDrivingMode = AutoDrive.isReverseDriving(self)
+                if drivingReverse ~= isReverseDrivingMode then
                     self:setTurnLightState(Lights.TURNLIGHT_HAZARD, true)
                 elseif self.lastSpeedReal * 3600 < 0.1 then
                     self:setTurnLightState(Lights.TURNLIGHT_OFF)
@@ -1824,7 +1792,7 @@ function AutoDrive:generateUTurn(left)
 
                 local angleX = -MathUtil.getYRotationFromDirection(deltaY, length*2)
 
-                local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallback", self, mask, true, true, true)
+                local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallback", self, mask, true, true, true, true)
                 if shapes > 0 then
                     self.ad.uTurn.expectedColliCallbacks = self.ad.uTurn.expectedColliCallbacks + 1
                 end

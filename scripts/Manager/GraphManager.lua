@@ -95,8 +95,8 @@ function ADGraphManager:getMapMarkersInGroup(groupName)
     end
 
     local sort_func = function(a, b)
-        a = tostring(a.name):lower()
-        b = tostring(b.name):lower()
+        a = string.lower(tostring(a.name))
+        b = string.lower(tostring(b.name))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)
@@ -1443,7 +1443,7 @@ end
 function ADGraphManager:getIsPointSubPrio(wayPointId)
     local wayPoint = self:getWayPointById(wayPointId)
 
-    return wayPoint ~= nil and bitAND(wayPoint.flags, AutoDrive.FLAG_SUBPRIO) > 0
+    return wayPoint ~= nil and bit32.band(wayPoint.flags, AutoDrive.FLAG_SUBPRIO) > 0
 end
 
 function ADGraphManager:setWayPointFlags(wayPointId, flags)
@@ -1743,7 +1743,7 @@ function ADGraphManager:removeNodesWithFlag(flagToRemove)
     local network = self:getWayPoints()
     local pointsToDelete = {}
     for i, wp in pairs(network) do
-        if bitAND(wp.flags, flagToRemove) > 0 then
+        if bit32.band(wp.flags, flagToRemove) > 0 then
             table.insert(pointsToDelete, wp.id)
         end
     end
@@ -1845,8 +1845,8 @@ function ADGraphManager:getSortedMarkers()
     end
 
     local sort_func = function(a, b)
-        a = tostring(a.displayName):lower()
-        b = tostring(b.displayName):lower()
+        a = string.lower(tostring(a.displayName))
+        b = string.lower(tostring(b.displayName))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)
@@ -1875,8 +1875,8 @@ function ADGraphManager:sortGroups(groups)
     groups[1] = {}
 
     local sort_func = function(a, b)
-        a = tostring(a):lower()
-        b = tostring(b):lower()
+        a = string.lower(tostring(a))
+        b = string.lower(tostring(b))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)

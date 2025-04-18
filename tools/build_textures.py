@@ -5,6 +5,8 @@
 #
 # I you change the texture file, you MUST restart the game. Reloading the savegame is not sufficient.
 
+WIDTH, HEIGHT = 2048, 2048
+
 import dataclasses
 import glob
 import os
@@ -53,13 +55,12 @@ def main():
         names.add(name)
     images.sort(key=lambda x: x.height, reverse=True)
 
-    width, height = 2048, 2048
-    lines = [0] * height
-    merged = wand.image.Image(width=width, height=height, background=wand.color.Color("rgba(0, 0, 0, 0.0"), colorspace="srgb")
+    lines = [0] * HEIGHT
+    merged = wand.image.Image(width=WIDTH, height=HEIGHT, background=wand.color.Color("rgba(0, 0, 0, 0.0"), colorspace="srgb")
     merged.alpha_channel = "transparent"
 
     for image in images:
-        pos = _find_spot(lines, width, image)
+        pos = _find_spot(lines, WIDTH, image)
         if pos is None:
             raise ValueError(f"Failed to place {image.name}. Increase texture size.")
         x, y = pos
@@ -81,8 +82,8 @@ def main():
         f.write(
             xml.format(
                 texture_name=os.path.basename(output_image.replace(".dds", ".png")),
-                width=width,
-                height=height,
+                width=WIDTH,
+                height=HEIGHT,
                 slices="\n".join(f"        {x.slice}" for x in images),
             )
         )

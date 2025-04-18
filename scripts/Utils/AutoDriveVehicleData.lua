@@ -205,7 +205,7 @@ function AutoDriveVehicleData:onWriteUpdateStream(streamId, connection, dirtyMas
         AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDriveVehicleData.onWriteUpdateStream vehicle %s", tostring(self:getName()))
     end
     if not connection:getIsServer() then
-        if streamWriteBool(streamId, bitAND(dirtyMask, self.advd.dirtyFlag) ~= 0) then
+        if streamWriteBool(streamId, bit32.band(dirtyMask, self.advd.dirtyFlag) ~= 0) then
             AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDriveVehicleData.onWriteUpdateStream streamReadBool ")
             streamWriteUIntN(streamId, self.advd.parkDestination + 1, 20)
         end

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="94">
+<modDesc descVersion="97">
 	<author>AutoDrive Team</author>
 	<title>
 		<en>AutoDrive</en>
@@ -36,7 +36,7 @@ Changelog: Необходимые корректировки для FS25, нас
 ]]>
 		</ru>
 	</description>
-	<version>3.0.0.4</version>
+	<version>3.0.0.6</version>
 	<multiplayer supported="true" />
 	<iconFilename>icon_AutoDrive.dds</iconFilename>
 	<extraSourceFiles>
@@ -52,6 +52,10 @@ Changelog: Необходимые корректировки для FS25, нас
 		<action name="ADRecord_Dual"/>
 		<action name="ADRecord_SubPrio"/>
 		<action name="ADRecord_SubPrioDual"/>
+		<action name="ADRecord_TwoWay"/>
+		<action name="ADRecord_Dual_TwoWay"/>
+		<action name="ADRecord_SubPrio_TwoWay"/>
+		<action name="ADRecord_SubPrioDual_TwoWay"/>
 		<action name="ADEnDisable"/>
 		<action name="ADSelectTarget"/>
 		<action name="ADSelectPreviousTarget"/>

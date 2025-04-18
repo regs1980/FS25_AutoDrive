@@ -1,5 +1,5 @@
 AutoDrive = {}
-AutoDrive.version = "3.0.0.4"
+AutoDrive.version = "3.0.0.6"
 
 AutoDrive.directory = g_currentModDirectory
 
@@ -251,7 +251,7 @@ function AutoDrive:loadMap(name)
 
 	ADMultipleTargetsManager:load()
 
-	ADBunkerSiloManager:load()
+	ADUnloadManager:load()
 
 	AutoDrivePlaceableData:load()
 
@@ -283,11 +283,19 @@ function AutoDrive:drawBaseMission()
 	local isNewJobTab =  g_inGameMenu.mapOverviewSelector ~= nil and g_inGameMenu.mapOverviewSelector.state == g_inGameMenu.pageMapOverview.AI_CREATE_JOB
 	local isWorkerListTab =  g_inGameMenu.mapOverviewSelector ~= nil and g_inGameMenu.mapOverviewSelector.state == g_inGameMenu.pageMapOverview.AI_WORKER_LIST
 
-	if menuOpen and correctPage then
+	if menuOpen and correctPage and isNewJobTab then
 		if not AutoDrive.aiFrameOpen then
 			AutoDrive.aiFrameOpen = true
 			AutoDrive.aiFrameVehicle = AutoDrive.getControlledVehicle()
-			AutoDrive.aiNetworkOnMapCache = nil
+        end
+    else
+        AutoDrive.aiFrameOpen = false
+        AutoDrive.aiFrameVehicle = nil
+    end
+    if menuOpen and correctPage then
+        if not AutoDrive.hasMapCache then
+            AutoDrive.hasMapCache = true
+            AutoDrive.aiNetworkOnMapCache = nil
 		end
 		if isWorkerListTab then
 			AutoDrive:drawRouteOnMap()
@@ -305,8 +313,7 @@ function AutoDrive:drawBaseMission()
 		    end
 		end
 	else
-		AutoDrive.aiFrameOpen = false
-		AutoDrive.aiFrameVehicle = nil
+        AutoDrive.hasMapCache = false
 		AutoDrive.aiNetworkOnMapCache = nil
 	end
 end
@@ -339,9 +346,6 @@ function AutoDrive:MapHotspotGetRenderLast(superFunc)
 end
 
 function AutoDrive.drawRouteOnMap()
-	if not AutoDrive.aiFrameOpen then
-		return
-	end
 	local vehicle = AutoDrive.getADFocusVehicle()
 	if vehicle == nil then
 		return
@@ -396,7 +400,7 @@ function AutoDrive.createNetworkOnMapCache()
 	local dx, dz, dx2D, dy2D, width, rotation, r, g, b
 
 	local isSubPrio = function(pointToTest)
-		return bitAND(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
+		return bit32.band(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
 	end
 
 	local network = ADGraphManager:getWayPoints()
@@ -441,10 +445,6 @@ function AutoDrive.createNetworkOnMapCache()
 end
 
 function AutoDrive.drawNetworkOnMap()
-	if not AutoDrive.aiFrameOpen then
-		return
-	end
-
 	if not AutoDrive.isEditorModeEnabled() then
 		return
 	end
@@ -534,6 +534,7 @@ function AutoDrive:init()
 	AutoDrivePlaceableData:setActive(true)
 	AutoDrive:setValidSupportedFillTypesForAllVehicles()
 	AutoDrive:autostartHelpers()
+	AutoDrive.shownErrors = {}
 end
 
 function AutoDrive:saveSavegame()
@@ -566,12 +567,12 @@ function AutoDrive:deleteMap()
 end
 
 function AutoDrive:keyEvent(unicode, sym, modifier, isDown)
-	AutoDrive.leftCTRLmodifierKeyPressed = bitAND(modifier, Input.MOD_LCTRL) > 0
-	AutoDrive.leftALTmodifierKeyPressed = bitAND(modifier, Input.MOD_LALT) > 0
-	AutoDrive.leftLSHIFTmodifierKeyPressed = bitAND(modifier, Input.MOD_LSHIFT) > 0
-	AutoDrive.isCAPSKeyActive = bitAND(modifier, Input.MOD_CAPS) > 0
-	AutoDrive.rightCTRLmodifierKeyPressed = bitAND(modifier, Input.MOD_RCTRL) > 0
-	AutoDrive.rightSHIFTmodifierKeyPressed = bitAND(modifier, Input.MOD_RSHIFT) > 0
+	AutoDrive.leftCTRLmodifierKeyPressed = bit32.band(modifier, Input.MOD_LCTRL) > 0
+	AutoDrive.leftALTmodifierKeyPressed = bit32.band(modifier, Input.MOD_LALT) > 0
+	AutoDrive.leftLSHIFTmodifierKeyPressed = bit32.band(modifier, Input.MOD_LSHIFT) > 0
+	AutoDrive.isCAPSKeyActive = bit32.band(modifier, Input.MOD_CAPS) > 0
+	AutoDrive.rightCTRLmodifierKeyPressed = bit32.band(modifier, Input.MOD_RCTRL) > 0
+	AutoDrive.rightSHIFTmodifierKeyPressed = bit32.band(modifier, Input.MOD_RSHIFT) > 0
 
 	if AutoDrive.isInExtendedEditorMode() then
 		if (AutoDrive.rightCTRLmodifierKeyPressed and AutoDrive.toggleSphere == true) then
@@ -590,7 +591,7 @@ end
 
 function AutoDrive:mouseEvent(posX, posY, isDown, isUp, button)
 	local vehicle = AutoDrive.getADFocusVehicle()
-	local mouseActiveForAutoDrive = (g_gui.currentGui == nil or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
+	local mouseActiveForAutoDrive = (not g_gui:getIsGuiVisible() or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
 
 	if not mouseActiveForAutoDrive then
 		AutoDrive.lastButtonDown = nil
@@ -637,7 +638,7 @@ function AutoDrive:handleScanDialog()
 			return true
 		elseif g_server ~= nil and g_dedicatedServer == nil then
 			-- open dialog
-			if g_gui.currentGui == nil then
+			if not g_gui:getIsGuiVisible() then
 				--AutoDrive.debugMsg(nil, "[AD] AutoDrive:update SCAN_DIALOG_OPEN")
 				AutoDrive.onOpenScanConfirmation()
 				AutoDrive.scanDialogState = AutoDrive.SCAN_DIALOG_OPEN
@@ -702,12 +703,16 @@ function AutoDrive:update(dt)
 	if g_server ~= nil then
 		ADHarvestManager:update(dt)
 		ADScheduler:update(dt)
-		ADBunkerSiloManager:update(dt)
+		ADUnloadManager:update(dt)
 	end
 
 	ADMessagesManager:update(dt)
 	ADTriggerManager:update(dt)
 	ADRoutesManager:update(dt)
+
+    if AutoDrive.devOnUpdate then
+        AutoDrive.devOnUpdate(dt)
+    end
 end
 
 function AutoDrive:draw()

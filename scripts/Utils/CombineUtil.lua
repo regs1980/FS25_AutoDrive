@@ -53,51 +53,14 @@ function AutoDrive.getDischargeNode(combine)
     end
 end
 
-function AutoDrive.getPipeRoot_old(combine)
-    if combine.ad ~= nil and combine.ad.pipeRoot ~= nil then
-        return combine.ad.pipeRoot
+function AutoDrive.validateCachedPipeData(combine)
+    -- check if the harvester has been reconfigured, invalidate cache
+    if combine.ad ~= nil and combine.ad.pipeRoot ~= nil and not entityExists(combine.ad.pipeRoot) then
+        combine.ad.pipeRoot = nil
+        combine.ad.storedPipeSide = nil
+        combine.ad.storedPipeLength = nil
     end
-    local pipeRoot = AutoDrive.getDischargeNode(combine)
-    local parentStack = Buffer:new()
-    local combineNode = combine.components[1].node
-
-    repeat
-        parentStack:Insert(pipeRoot)
-        pipeRoot = getParent(pipeRoot)
-    until ((pipeRoot == combineNode) or (pipeRoot == 0) or (pipeRoot == nil) or parentStack:Count() == 100)
-
-    local translationMagnitude = 0
-    local pipeRootX, pipeRootY, pipeRootZ
-    -- local pipeRootWorldX, pipeRootWorldY, pipeRootWorldZ
-    -- local heightUnderRoot, pipeRootAgl
-    -- local lastPipeRoot = pipeRoot
-
-    repeat
-        pipeRoot = parentStack:Get()
-        if pipeRoot ~= nil and pipeRoot ~= 0 then
-            pipeRootX, pipeRootY, pipeRootZ = getTranslation(pipeRoot)
-            -- pipeRootWorldX, pipeRootWorldY, pipeRootWorldZ = getWorldTranslation(pipeRoot)
-            -- heightUnderRoot = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, pipeRootWorldX, pipeRootWorldY, pipeRootWorldZ)
-            -- pipeRootAgl = pipeRootWorldY - heightUnderRoot
-            translationMagnitude = MathUtil.vector3Length(pipeRootX, pipeRootY, pipeRootZ)
-        end
-    until ((translationMagnitude > 0.01 and translationMagnitude < 100) and
-           (AutoDrive.getIsBufferCombine(combine) or AutoDrive.sign(pipeRootX) == AutoDrive.getPipeSide(combine)) and
-           (pipeRootY > 0) or
-           parentStack:Count() == 0
-          )
-          
-    if pipeRoot == nil or pipeRoot == 0 then
-        pipeRoot = combine.components[1].node
-    end
-
-    if combine.ad ~= nil then
-        combine.ad.pipeRoot = pipeRoot
-    end
-
-    return pipeRoot
 end
-
 
 function AutoDrive.getPipeRoot(combine)
     if combine.ad ~= nil and combine.ad.pipeRoot ~= nil then

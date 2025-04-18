@@ -83,7 +83,7 @@ function ADHudCounterButton.flags_to_int(increment, fast, wheel)
 end
 
 function ADHudCounterButton.int_to_flags(value)
-    return bitAND(value, ADHudCounterButton.FLAG_INCREMENT) > 0, bitAND(value, ADHudCounterButton.FLAG_FAST) > 0, bitAND(value, ADHudCounterButton.FLAG_WHEEL) > 0
+    return bit32.band(value, ADHudCounterButton.FLAG_INCREMENT) > 0, bit32.band(value, ADHudCounterButton.FLAG_FAST) > 0, bit32.band(value, ADHudCounterButton.FLAG_WHEEL) > 0
 end
 
 

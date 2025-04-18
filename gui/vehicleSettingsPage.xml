@@ -17,7 +17,7 @@
 			</Bitmap>
 			<Bitmap profile="fs25_multiTextOptionContainer" id="pipeOffsetBox" onCreate="onCreateAutoDriveSettingRow">
 				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="pipeOffset" id="pipeOffset">
-					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_pipe_offset"/>
+					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_pipe_offset_tooltip"/>
 				</MultiTextOption>
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_pipe_offset"/>
 			</Bitmap>

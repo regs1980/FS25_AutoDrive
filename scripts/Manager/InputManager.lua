@@ -10,6 +10,10 @@ ADInputManager.actionsToInputs = {
     {"ADRecord_Dual", "input_record_dual", false, true},
     {"ADRecord_SubPrio", "input_record_subPrio", false, true},
     {"ADRecord_SubPrioDual", "input_record_subPrioDual", false, true},
+    {"ADRecord_TwoWay", "input_record_twoWay", false, true},
+    {"ADRecord_Dual_TwoWay", "input_record_dualTwoWay", false, true},
+    {"ADRecord_SubPrio_TwoWay", "input_record_subPrioTwoWay", false, true},
+    {"ADRecord_SubPrioDual_TwoWay", "input_record_subPrioDualTwoWay", false, true},
     {"ADEnDisable", "input_start_stop", true, true, true, 1},
     {"ADSelectTarget", "input_nextTarget", true, true},
     {"ADSelectPreviousTarget", "input_previousTarget", true, true},
@@ -298,7 +302,7 @@ function ADInputManager:input_previousMode(vehicle)
 end
 
 function ADInputManager:input_record(vehicle)
-    if not vehicle.ad.stateModule:isInCreationMode() and not vehicle.ad.stateModule:isInDualCreationMode() and not vehicle.ad.stateModule:isInSubPrioCreationMode() and not vehicle.ad.stateModule:isInSubPrioDualCreationMode() then
+    if not vehicle.ad.stateModule:isInCreationMode() then
         if not AutoDrive.isInExtendedEditorMode() then
             AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
         end
@@ -309,7 +313,7 @@ function ADInputManager:input_record(vehicle)
 end
 
 function ADInputManager:input_record_dual(vehicle)
-    if not vehicle.ad.stateModule:isInCreationMode() and not vehicle.ad.stateModule:isInDualCreationMode() and not vehicle.ad.stateModule:isInSubPrioCreationMode() and not vehicle.ad.stateModule:isInSubPrioDualCreationMode() then
+    if not vehicle.ad.stateModule:isInCreationMode() then
         if not AutoDrive.isInExtendedEditorMode() then
             AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
         end
@@ -320,7 +324,7 @@ function ADInputManager:input_record_dual(vehicle)
 end
 
 function ADInputManager:input_record_subPrio(vehicle)
-    if not vehicle.ad.stateModule:isInCreationMode() and not vehicle.ad.stateModule:isInDualCreationMode() and not vehicle.ad.stateModule:isInSubPrioCreationMode() and not vehicle.ad.stateModule:isInSubPrioDualCreationMode() then
+    if not vehicle.ad.stateModule:isInCreationMode() then
         if not AutoDrive.isInExtendedEditorMode() then
             AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
         end
@@ -331,11 +335,55 @@ function ADInputManager:input_record_subPrio(vehicle)
 end
 
 function ADInputManager:input_record_subPrioDual(vehicle)
-    if not vehicle.ad.stateModule:isInCreationMode() and not vehicle.ad.stateModule:isInDualCreationMode() and not vehicle.ad.stateModule:isInSubPrioCreationMode() and not vehicle.ad.stateModule:isInSubPrioDualCreationMode() then
+    if not vehicle.ad.stateModule:isInCreationMode() then
         if not AutoDrive.isInExtendedEditorMode() then
             AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
         end
         vehicle.ad.stateModule:startSubPrioDualCreationMode()
+    else
+        vehicle.ad.stateModule:disableCreationMode()
+    end
+end
+
+function ADInputManager:input_record_twoWay(vehicle)
+    if not vehicle.ad.stateModule:isInCreationMode() then
+        if not AutoDrive.isInExtendedEditorMode() then
+            AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
+        end
+        vehicle.ad.stateModule:startNormalTwoWayCreationMode()
+    else
+        vehicle.ad.stateModule:disableCreationMode()
+    end
+end
+
+function ADInputManager:input_record_dualTwoWay(vehicle)
+    if not vehicle.ad.stateModule:isInCreationMode() then
+        if not AutoDrive.isInExtendedEditorMode() then
+            AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
+        end
+        vehicle.ad.stateModule:startDualTwoWayCreationMode()
+    else
+        vehicle.ad.stateModule:disableCreationMode()
+    end
+end
+
+function ADInputManager:input_record_subPrioTwoWay(vehicle)
+    if not vehicle.ad.stateModule:isInCreationMode() then
+        if not AutoDrive.isInExtendedEditorMode() then
+            AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
+        end
+        vehicle.ad.stateModule:startSubPrioTwoWayCreationMode()
+    else
+        vehicle.ad.stateModule:disableCreationMode()
+    end
+end
+
+function ADInputManager:input_record_subPrioDualTwoWay(vehicle)
+    if not vehicle.ad.stateModule:isInCreationMode() then
+        if not AutoDrive.isInExtendedEditorMode() then
+            AutoDrive.setEditorMode(AutoDrive.EDITOR_EXTENDED)
+        end
+        vehicle.ad.stateModule:startSubPrioDualTwoWayCreationMode()
     else
         vehicle.ad.stateModule:disableCreationMode()
     end

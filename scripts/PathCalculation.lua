@@ -38,7 +38,7 @@ function ADPathCalculator:GetPath(startID, targetID, preferredStartIds)
     end
 
     local isSubPrio = function(pointToTest) 
-        return bitAND(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
+        return bit32.band(pointToTest.flags, AutoDrive.FLAG_SUBPRIO) > 0
     end
 
     local lastPredecessor = nil

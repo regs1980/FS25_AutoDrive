@@ -65,8 +65,26 @@ function AutoDrive.checkForUnknownFruitInArea(corners)
     return false
 end
 
+function AutoDrive.getFruitValue(fruitTypeIndex, corner1X, corner1Z, corner2X, corner2Z, corner3X, corner3Z)
+    local fruitToIgnore = { FruitType.GRASS, FruitType.MEADOW }
+    if table.contains(fruitToIgnore, fruitTypeIndex) then
+        return 0
+    end
+
+    local fruitValue, _, _, growthState = FSDensityMapUtil.getFruitArea(fruitTypeIndex, corner1X, corner1Z, corner2X, corner2Z, corner3X, corner3Z, true, true)
+
+    -- we need to check the growth state for these fruit types
+    local fruitToCheck = { FruitType.POTATO, FruitType.SUGARBEET }
+    if table.contains(fruitToCheck, fruitTypeIndex) then
+        local fruit = g_fruitTypeManager:getFruitTypeByIndex(fruitTypeIndex)
+        if fruit ~= nil and (fruit:getIsCut(growthState) or fruit:getIsWithered(growthState)) then
+            fruitValue = 0
+        end
+    end
+    return fruitValue
+end
+
 function AutoDrive.checkForFruitTypeInArea(corners, fruitTypeIndex)
-    local fruitValue = 0
-    fruitValue, _, _, _ = FSDensityMapUtil.getFruitArea(fruitTypeIndex, corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z, true, true)
+    local fruitValue = AutoDrive.getFruitValue(fruitTypeIndex, corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
     return (fruitValue > 10)
 end

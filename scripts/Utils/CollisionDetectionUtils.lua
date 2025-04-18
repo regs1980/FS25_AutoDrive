@@ -154,6 +154,18 @@ end
 function AutoDrive.getDistanceBetween(vehicleOne, vehicleTwo)
     if vehicleOne == nil or vehicleTwo == nil then
         printCallstack()
+        return math.huge
+    end
+    if not entityExists(vehicleOne.components[1].node) or not entityExists(vehicleTwo.components[1].node) then
+        if not table.contains(AutoDrive.shownErrors, "getDistanceBetween") then
+            table.insert(AutoDrive.shownErrors, "getDistanceBetween")
+            AutoDrive.debugMsg(nil, "AutoDrive.getDistanceBetween ERROR - entity vehicleOne %s vehicleTwo %s"
+            , tostring(entityExists(vehicleOne.components[1].node))
+            , tostring(entityExists(vehicleTwo.components[1].node))
+            )
+            printCallstack()
+        end
+        return math.huge
     end
     local x1, _, z1 = getWorldTranslation(vehicleOne.components[1].node)
     local x2, _, z2 = getWorldTranslation(vehicleTwo.components[1].node)
@@ -246,7 +258,7 @@ function ADDimensionSensor:getRealVehicleDimensions()
     maxWidthLeft = leftright(0, measureRange) -- measure to left
     maxWidthRight = leftright(0, -measureRange) -- measure to right
 
-    local function frontback(dimStart, dimEnd)
+    local function frontback(dimStart, dimEnd, includeImplements)
         local ret = self.vehicle.size.length / 2
         local selfHitCount = 0
         local minDistance = math.huge
@@ -255,13 +267,18 @@ function ADDimensionSensor:getRealVehicleDimensions()
         if diff < 0 then
             step = -step
         end
+        if includeImplements == 1 then
+            self.frontImplements, self.mostFrontImplement = AutoDrive.getFrontImplements(self.vehicle)
+        else
+            self.frontImplements, self.mostFrontImplement = nil, nil
+        end
         for distance = dimStart, dimEnd, step do
             local x,y,z = AutoDrive.localToWorld(self.vehicle, 0, self.vehicle.size.height / 2, distance)
             self.selfHits = 0
             if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_SENSORINFO) then
                 -- DebugUtil.drawOverlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, 1, 1, 1)
             end
-            self.collisionHits = overlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, "getRealVehicleDimensions_Callback", self, self.mask, true, true, true)
+            self.collisionHits = overlapBox(x,y,z, rx, ry, rz, measureRange, measureRange, 0.1, "getRealVehicleDimensions_Callback", self, self.mask, true, true, true, true)
             if self.selfHits == 0 then
                 -- found no collision with vehicle itself
                 if selfHitCount < 5 then
@@ -280,9 +297,8 @@ function ADDimensionSensor:getRealVehicleDimensions()
         end
         return ret
     end
-    maxLengthFront = frontback(0, measureRange) -- measure to front
+    maxLengthFront = frontback(0, measureRange + 20, 1) -- measure to front
     maxLengthBack = frontback(0, -measureRange) -- measure to back
-
     self.vehicle.ad.adDimensions.maxWidthLeft = maxWidthLeft + AutoDrive.DIMENSION_ADDITION
     self.vehicle.ad.adDimensions.maxWidthRight = maxWidthRight + AutoDrive.DIMENSION_ADDITION
     self.vehicle.ad.adDimensions.maxLengthFront = maxLengthFront + AutoDrive.DIMENSION_ADDITION
@@ -293,10 +309,14 @@ function ADDimensionSensor:getRealVehicleDimensions()
 end
 
 function ADDimensionSensor:getRealVehicleDimensions_Callback(transformId)
-    if transformId ~= nil then
+    if transformId ~= 0 and transformId ~= g_currentMission.terrainRootNode then
         local collisionObject = g_currentMission.nodeToObject[transformId]
-        if collisionObject ~= nil and collisionObject == self.vehicle then
-            self.selfHits = self.selfHits + 1
+        if collisionObject ~= nil then
+            if self.frontImplements and table.contains(self.frontImplements, collisionObject) then
+                self.selfHits = self.selfHits + 1
+            elseif collisionObject == self.vehicle then
+                self.selfHits = self.selfHits + 1
+            end
         end
     end
 end
@@ -319,7 +339,7 @@ function AutoDrive.getVehicleDimensions(vehicle, force)
     vehicle.ad.adDimensions.width, vehicle.ad.adDimensions.length = vehicle.size.width, vehicle.size.length
     if force then -- only measure if force true
         vehicle.ad.adDimensions = {}
-        if vehicle.ad.adDimSensor == nil then
+        if vehicle.ad.adDimSensor == nil or vehicle.ad.adDimSensor.vehicle ~= vehicle then
             vehicle.ad.adDimSensor = ADDimensionSensor:new(vehicle)
         end
         if vehicle.ad.adDimSensor and vehicle.ad.adDimSensor.getRealVehicleDimensions then

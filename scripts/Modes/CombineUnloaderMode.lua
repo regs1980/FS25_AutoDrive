@@ -328,16 +328,16 @@ function CombineUnloaderMode:assignToHarvester(harvester)
         self.vehicle.ad.taskModule:abortCurrentTask()
         self.combine = harvester
         self.combineRootVehicle = self.combine:getRootVehicle()
+        AutoDrive.validateCachedPipeData(harvester)
 
         -- if combine has extended pipe, aim for that. Otherwise DriveToVehicle and choose from there
         if AutoDrive.isPipeOut(self.combine) then
 
             local cfillLevel, cfillCapacity, _, cleftCapacity = AutoDrive.getObjectFillLevels(self.combine)
             local cFillRatio = cfillCapacity > 0 and cfillLevel / cfillCapacity or 0
-            local cpIsCalling = AutoDrive:getIsCPWaitingForUnload(harvester)
 
             if (self.combine.ad.isHarvester) 
-                and (self.combine.ad.noMovementTimer.elapsedTime > 500 or cleftCapacity < 0.1 or cpIsCalling or cFillRatio > 0.945)
+                and (self.combine.ad.noMovementTimer.elapsedTime > 500 or cleftCapacity < 0.1 or cFillRatio > 0.945)
             then
                 -- default unloading - no movement
                 self.state = self.STATE_DRIVE_TO_PIPE

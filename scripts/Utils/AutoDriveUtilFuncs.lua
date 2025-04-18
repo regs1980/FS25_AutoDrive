@@ -117,7 +117,8 @@ function AutoDrive.getVehicleMaxSpeed(vehicle)
     -- 255 is the max value to prevent errors with MP sync
     if vehicle ~= nil and vehicle.spec_motorized ~= nil and vehicle.spec_motorized.motor ~= nil then
         local motor = vehicle.spec_motorized.motor
-        return math.min(motor:getMaximumForwardSpeed() * 3.6, 255)
+        local maxSpeed = math.max(motor:getMaximumForwardSpeed() * 3.6, motor:getMaximumBackwardSpeed() * 3.6)
+        return math.min(maxSpeed, 255)
     end
     return 255
 end
@@ -342,6 +343,39 @@ function AutoDrive.getAllImplements(vehicle, includeVehicle)
     end
 
     return allImp
+end
+
+function AutoDrive.getFrontImplements(vehicle)
+    if vehicle == nil then
+        return nil, nil
+    end
+    local rootVehicle = vehicle.getRootVehicle and vehicle:getRootVehicle()
+    if rootVehicle == nil then
+        return nil, nil
+    end
+    local frontImplements = nil
+    local mostFrontImplement = nil
+    local frontDistance = 0
+    if rootVehicle == vehicle then
+        -- consider only attachments to root vehicle
+        for _, implement in pairs(AutoDrive.getAllImplements(rootVehicle)) do
+            if implement ~= nil and implement ~= rootVehicle then
+                local implementX, implementY, implementZ = getWorldTranslation(implement.components[1].node)
+                local _, _, diffZ = AutoDrive.worldToLocal(rootVehicle, implementX, implementY, implementZ)
+                if diffZ > 0 then
+                    if frontImplements == nil then
+                        frontImplements = {}
+                    end
+                    table.insert(frontImplements,implement)
+                end
+                if diffZ > frontDistance then
+                    frontDistance = diffZ
+                    mostFrontImplement = implement
+                end
+            end
+        end
+    end
+    return frontImplements, mostFrontImplement
 end
 
 function AutoDrive.foldAllImplements(vehicle)
@@ -740,8 +774,8 @@ function AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(vehicle)
     end
 
 	local sort_func = function(a, b)
-        a = tostring(g_fillTypeManager:getFillTypeByIndex(a).title):lower()
-        b = tostring(g_fillTypeManager:getFillTypeByIndex(b).title):lower()
+        a = string.lower(tostring(g_fillTypeManager:getFillTypeByIndex(a).title))
+        b = string.lower(tostring(g_fillTypeManager:getFillTypeByIndex(b).title))
         local patt = "^(.-)%s*(%d+)$"
         local _, _, col1, num1 = a:find(patt)
         local _, _, col2, num2 = b:find(patt)

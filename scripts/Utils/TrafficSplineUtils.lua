@@ -256,7 +256,7 @@ function AutoDrive:checkForCollisionOnSpline()
 
             local angleX = -MathUtil.getYRotationFromDirection(deltaY, length*2)
 
-			local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallbackIgnore", nil, mask, true, true, true)
+			local shapes = overlapBox(centerX, centerY+3, centerZ, angleX, angleRad, 0, widthX, height, length, "collisionTestCallbackIgnore", nil, mask, true, true, true, true)
             local r,g,b = 0,1,0
 			if shapes > 0 then
                 r = 1

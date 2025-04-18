@@ -430,9 +430,10 @@ function ADSpecialDrivingModule:reverseToPoint(dt, maxSpeed)
     if self.lastAngleToPoint == nil then
         self.lastAngleToPoint = self.angleToPoint
     end
-    if self.i == nil then
+    -- TODO - this is never reset to 0, cause reverse drive circles become more and more tight
+    -- if self.i == nil then
         self.i = 0
-    end
+    -- end
 
     local delta = self.angleToPoint -- - angleToTrailer
     local p = delta

@@ -129,7 +129,7 @@ function ADTrailerModule:getBunkerSiloSpeed()
                         drivenDistance = MathUtil.vector2Length(hitX - x3, hitZ - z3)
                     end
 
-                    remainingDistance = vecHLength - drivenDistance
+                    remainingDistance = vecHLength - drivenDistance - 2  -- finish 2m before the end of the silo
                 end
 
                 local speed = ((math.max(1, remainingDistance) / unloadTimeInMS) * 1000) * 3.6 * 1
@@ -336,11 +336,13 @@ function ADTrailerModule:updateLoad(dt)
 
         if not self.isLoading then
             -- try overload from liquid trailers, containers etc.
-            local fillTrigger = AutoDrive.startFillTrigger(self.trailers)
-            if fillTrigger ~= nil then
+            if AutoDrive.startFillTrigger(self.trailers) ~= nil then
                 -- no further actions required, monitoring via fill level - see load from source without trigger
                 AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload fillTrigger found -> load already started")
-            end
+            elseif AutoDrive.startLoadTreePlanter(self.trailers) ~= nil then
+                -- no further actions required, monitoring via fill level - see load from source without trigger
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload treePlanter found -> load already started")
+            end           
         end
 
         -- check for load from source without trigger
