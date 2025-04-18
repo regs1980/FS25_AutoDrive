@@ -36,7 +36,7 @@ Changelog: Необходимые корректировки для FS25, нас
 ]]>
 		</ru>
 	</description>
-	<version>3.0.0.7.RC</version>
+	<version>3.0.0.6</version>
 	<multiplayer supported="true" />
 	<iconFilename>icon_AutoDrive.dds</iconFilename>
 	<extraSourceFiles>
