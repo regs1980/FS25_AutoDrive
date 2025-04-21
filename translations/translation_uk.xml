@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Якщо автоматично визначається неправильна висота ковша, використовуйте цей параметр, щоб встановити необхідну висоту від землі." />
 		<text name="gui_ad_showMarkersOnMap"							text="Показувати маркери" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Показувати маркери/пункти призначення на карті." />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Перемикання через маркери" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Встановити локацію/точку розвантаження при натискання на гарячі точки на карті." />
 		<text name="gui_ad_cornerSpeed"								text="Швидкість на повороті" />

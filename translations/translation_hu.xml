@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Ha az automatikusan észlelt lapátmagasság nem megfelelő, ezzel állíthatja be a magasságot" />
 		<text name="gui_ad_showMarkersOnMap"							text="Célok megjelenítése" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Mutassa a célokat a térképen" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Célok a térképen" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="A térképen jelölt pontkora kattintva állítsa be a cél / kirakodás célpontját" />
 		<text name="gui_ad_cornerSpeed"								text="Kanyarodási sebesség" />

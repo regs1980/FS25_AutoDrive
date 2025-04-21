@@ -231,8 +231,6 @@ function AutoDrive:loadMap(name)
 
 	Placeable.onBuy = Utils.appendedFunction(Placeable.onBuy, ADTriggerManager.onPlaceableBuy)
 
-	MapHotspot.getIsVisible = Utils.overwrittenFunction(MapHotspot.getIsVisible, AutoDrive.MapHotspot_getIsVisible)
-
 	IngameMapElement.mouseEvent = Utils.overwrittenFunction(IngameMapElement.mouseEvent, AutoDrive.ingameMapElementMouseEvent)
 
 	FSBaseMission.removeVehicle = Utils.prependedFunction(FSBaseMission.removeVehicle, AutoDrive.preRemoveVehicle)
@@ -257,10 +255,7 @@ function AutoDrive:loadMap(name)
 
 	InGameMenuMapFrame.refreshContextInput = Utils.appendedFunction(InGameMenuMapFrame.refreshContextInput, AutoDrive.refreshContextInputMapFrame)
 	BaseMission.draw = Utils.appendedFunction(BaseMission.draw, AutoDrive.drawBaseMission)
-	PlaceableHotspot.getCategory = Utils.overwrittenFunction(PlaceableHotspot.getCategory, AutoDrive.PlaceableHotspotGetCategory)
 	InGameMenuMapFrame.setMapSelectionItem = Utils.overwrittenFunction(InGameMenuMapFrame.setMapSelectionItem, AutoDrive.InGameMenuMapFrameSetMapSelectionItem)
-	MapHotspot.getRenderLast = Utils.overwrittenFunction(MapHotspot.getRenderLast, AutoDrive.MapHotspotGetRenderLast)
-
 end
 
 function AutoDrive:refreshContextInputMapFrame()
@@ -318,16 +313,9 @@ function AutoDrive:drawBaseMission()
 	end
 end
 
-function AutoDrive:PlaceableHotspotGetCategory()
-	if self.isADMarker then
-		return MapHotspot.CATEGORY_STEERABLE --MapHotspot.CATEGORY_PLAYER
-	end
-	return PlaceableHotspot.CATEGORY_MAPPING[self.placeableType]
-end
-
 function AutoDrive:InGameMenuMapFrameSetMapSelectionItem(superFunc, hotspot)
 	if hotspot ~= nil and hotspot.isADMarker and AutoDrive.aiFrameOpen then
-		if AutoDrive.getSetting("showMarkersOnMap") and AutoDrive.getSetting("switchToMarkersOnMap") then
+		if AutoDrive.showMarkersOnMainMenuMap() and AutoDrive.getSetting("switchToMarkersOnMap") then
 			local vehicle = AutoDrive.getADFocusVehicle()
 			if vehicle ~= nil then
 				AutoDriveHudInputEventEvent:sendFirstMarkerEvent(vehicle, hotspot.markerID)
@@ -336,13 +324,6 @@ function AutoDrive:InGameMenuMapFrameSetMapSelectionItem(superFunc, hotspot)
 		end
 	end
 	return superFunc(self, hotspot)
-end
-
-function AutoDrive:MapHotspotGetRenderLast(superFunc)
-	if self.isADMarker then
-		return true
-	end
-	return superFunc(self)
 end
 
 function AutoDrive.drawRouteOnMap()

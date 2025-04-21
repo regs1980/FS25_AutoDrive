@@ -21,6 +21,7 @@ source(Utils.getFilename("scripts/ExternalInterface.lua", g_currentModDirectory)
 source(Utils.getFilename("scripts/PathCalculation.lua", g_currentModDirectory))
 
 source(Utils.getFilename("scripts/Hud/GenericHudElement.lua", g_currentModDirectory))
+source(Utils.getFilename("scripts/Hud/Hotspot.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Hud/HudButton.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Hud/HudCounterButton.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Hud/HudSettingsButton.lua", g_currentModDirectory))

@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Jeśli automatycznie wykryta wysokość łychy jest nieprawidłowa. Wykorzystaj to do regulacji wysokości podłoża, na którym znajduje się cel." />
 		<text name="gui_ad_showMarkersOnMap"							text="Pokaż znaczniki" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Pokaż znaczniki/cele na mapie w grze" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Przełącz na znaczniki" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Ustaw cel/cel rozładunku po kliknięciu na punktach na mapie" />
 		<text name="gui_ad_cornerSpeed"								text="Prędkość na zakręcie" />

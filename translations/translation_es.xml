@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Si la altura de la pala detectada automáticamente es incorrecta, usa esto para ajustar la altura objetivo del suelo" />
 		<text name="gui_ad_showMarkersOnMap"							text="Mostrar Marcadores" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Mostrar Marcadores/Destinos en el mapa del juego" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Cambiar a Marcadores" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Establecer objetivo/descargar objetivo, al hacer clic en los puntos del mapa" />
 		<text name="gui_ad_cornerSpeed"								text="Velocidad de la esquina" />

@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Pokud je automaticky detekovaná výška lopaty nesprávná. Slouží k nastavení cílové výšky terénu" />
 		<text name="gui_ad_showMarkersOnMap"							text="Zobrazit značky" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Zobrazit značky / cíle na herní mapě" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Přepněte na značky" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Nastavte cíl / uvolněte cíl, když kliknete na aktivní body na mapě" />
 		<text name="gui_ad_cornerSpeed"								text="Rycholst v zatačkách" />

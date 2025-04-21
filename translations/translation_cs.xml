@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="如果自动检测到的工具高度不正确。 使用它来调整目标地面高度" />
 		<text name="gui_ad_showMarkersOnMap"							text="显示标记" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="在游戏地图上显示标记/目的地" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="切换到标记" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="在点击地图热点时设置目标/卸载目标" />
 		<text name="gui_ad_cornerSpeed"								text="转弯速度" />

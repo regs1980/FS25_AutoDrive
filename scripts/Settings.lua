@@ -857,8 +857,8 @@ AutoDrive.settings.autoRepair = {
 }
 
 AutoDrive.settings.showMarkersOnMap = {
-    values = {false, true},
-    texts = {"gui_ad_no", "gui_ad_yes"},
+    values = {0x00, 0x01, 0x02, 0x03},
+    texts = {"gui_ad_no", "gui_ad_mainMenuMap", "gui_ad_ingameMap", "gui_ad_both"},
     default = 2,
     current = 2,
     text = "gui_ad_showMarkersOnMap",
