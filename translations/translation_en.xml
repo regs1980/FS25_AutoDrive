@@ -210,7 +210,10 @@
 		<text name="gui_ad_shovelHeight"								text="Shovel height" />
 		<text name="gui_ad_shovelHeight_tooltip"						text="If automatically detected shovel height is incorrect. Use this to adjust the target ground height" />
 		<text name="gui_ad_showMarkersOnMap"							text="Show markers" />
-		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Show markers/destinations on the ingame map" />
+		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Show markers/destinations on the main map/ingame map" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Switch to markers" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Set target/unload target when clicking on map hotspots" />
 		<text name="gui_ad_cornerSpeed"								text="Corner speed" />

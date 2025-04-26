@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Als de automatisch gedetecteerde bladhoogte niet correct is. Gebruik dit om de doelhoogte van de grond aan te passen" />
 		<text name="gui_ad_showMarkersOnMap"							text="Toon markeringen" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Toon markeringen/bestemmingen op de spelkaart" />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Spring naar markering" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Selecteer markering om er naar toe te gaan" />
 		<text name="gui_ad_cornerSpeed"								text="Hoeksnelheid" />

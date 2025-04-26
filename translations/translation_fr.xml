@@ -211,6 +211,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Ajuster la hauteur du godet si la détection automatique n'est pas correcte." />
 		<text name="gui_ad_showMarkersOnMap"							text="Afficher les destinations AD" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Afficher les destinations/marqueurs AutoDrive sur la carte." />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Clic sur destinations" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Définissez la destination en cliquant sur son marqueur depuis la carte." />
 		<text name="gui_ad_cornerSpeed"								text="Vitesse dans les virages" />
