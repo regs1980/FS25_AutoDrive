@@ -784,7 +784,8 @@ function AutoDrive:onLeaveVehicle(wasEntered)
         end
     end
     if g_inputBinding:getShowMouseCursor() then
-        g_inputBinding:setShowMouseCursor(false)
+        -- there are several ways to trigger this function while in the main menu - this delays hiding the mouse until the menu was closed
+        AutoDrive.hideMouseCursorOnNextTick = true
     end
     AutoDrive.Hud:closeAllPullDownLists(self)
 end

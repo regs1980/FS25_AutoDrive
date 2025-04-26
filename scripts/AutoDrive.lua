@@ -668,6 +668,11 @@ function AutoDrive:update(dt)
 		end
 	end
 
+	if AutoDrive.hideMouseCursorOnNextTick == true and not g_inGameMenu.isOpen then
+		AutoDrive.hideMouseCursorOnNextTick = nil
+		g_inputBinding:setShowMouseCursor(false)
+	end
+
 	if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_NETWORKINFO) then
 		if AutoDrive.debug.lastSentEvent ~= nil then
 			AutoDrive.renderTable(0.3, 0.9, 0.009, AutoDrive.debug.lastSentEvent)
