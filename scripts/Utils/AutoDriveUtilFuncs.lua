@@ -296,6 +296,23 @@ function AutoDrive.cycleEditorShowMode()
     end
 end
 
+function AutoDrive.isInConstructionModeEditor()
+    return (AutoDrive.isInExtendedEditorMode()
+        and g_gui:getIsGuiVisible()
+        and g_gui.currentGuiName == "ConstructionScreen"
+        and g_constructionScreen ~= nil
+        and g_constructionScreen.camera ~= nil)
+end
+
+function AutoDrive.isMouseActiveForHud()
+    return not g_gui:getIsGuiVisible() or (g_gui.currentGuiName == "InGameMenu" and AutoDrive.aiFrameOpen)
+end    
+
+function AutoDrive.isMouseActiveForEditor()
+    return not g_gui:getIsGuiVisible() or g_gui.currentGuiName == "ConstructionScreen"
+end    
+
+
 function AutoDrive.getSelectedWorkTool(vehicle)
     local selectedWorkTool = nil
 
