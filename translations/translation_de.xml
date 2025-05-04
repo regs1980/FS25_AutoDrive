@@ -169,6 +169,8 @@
 		<text name="gui_ad_shovelWidth_tooltip"						text="Falls die automatisch erkannte Breite zu klein ist, kann sie hiermit erhöht werden." />
 		<text name="gui_ad_preCallLevel"								text="Früher rufen ab" />
 		<text name="gui_ad_preCallLevel_tooltip"						text="Abfahrer wird bereits beim eingestellten Füllgrad gerufen." />
+		<text name="gui_ad_chaseSide"									text="Entladeseite Häcksler" />
+		<text name="gui_ad_chaseSide_tooltip"							text="Der Abfahrer nutzt nur diese Seite vom Häcksler aus gesehen: Automatisch, links, hinten, rechts" />
 		<text name="gui_ad_none"										text="Keine" />
 		<text name="gui_ad_onlyPickup"									text="Nur Beladen" />
 		<text name="gui_ad_onlyDeliver"								text="Nur Entladen" />
@@ -211,6 +213,9 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Falls die automatisch erkannte Zielhöhe nicht korrekt auf dem Boden ist, nutze diesen Wert zum Anpassen." />
 		<text name="gui_ad_showMarkersOnMap"							text="Ziele auf Karte" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Zeigt die Ziele auf der Karte an." />
+		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
+		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Ziele anwählbar" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Ziele als Ziel/Abladepunkt übernehmen, wenn auf Karte geklickt." />
 		<text name="gui_ad_cornerSpeed"								text="Kurvengeschwindigkeit" />

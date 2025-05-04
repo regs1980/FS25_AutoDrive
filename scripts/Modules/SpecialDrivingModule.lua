@@ -91,7 +91,7 @@ function ADSpecialDrivingModule:stopAndHoldVehicle(dt)
 
     if self.stoppedTimer:done() then
         self.motorShouldBeStopped = true
-        if self:shouldStopMotor() and self.vehicle:getIsMotorStarted() and (not g_currentMission.missionInfo.automaticMotorStartEnabled) then
+        if self:shouldStopMotor() and self.vehicle:getIsMotorStarted() then
             self.vehicle:stopMotor()
         end
     end

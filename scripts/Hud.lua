@@ -951,7 +951,7 @@ function AutoDrive:ingameMapElementMouseEvent(superFunc, posX, posY, isDown, isU
         local hotspot = g_currentMission.hud.ingameMap.selectedHotspot
         if hotspot ~= nil and hotspot.isADMarker then
             local targetVehicle = AutoDrive.getADFocusVehicle()
-            if targetVehicle ~= nil and AutoDrive.getSetting("showMarkersOnMap") and AutoDrive.getSetting("switchToMarkersOnMap") then
+            if targetVehicle ~= nil and AutoDrive.showMarkersOnMainMenuMap() and AutoDrive.getSetting("switchToMarkersOnMap") then
                 AutoDriveHudInputEventEvent:sendFirstMarkerEvent(targetVehicle, hotspot.markerID)
                 return
             end
@@ -964,7 +964,7 @@ function AutoDrive:ingameMapElementMouseEvent(superFunc, posX, posY, isDown, isU
                 local hotspotPosX, hotspotPosY =  hotspot.lastScreenPositionX, hotspot.lastScreenPositionY
                 if hotspotPosX and GuiUtils.checkOverlayOverlap(posX, posY, hotspotPosX, hotspotPosY, hotspot:getWidth(), hotspot:getHeight(), nil) then
                     local targetVehicle = AutoDrive.getADFocusVehicle()
-                    if targetVehicle ~= nil and AutoDrive.getSetting("showMarkersOnMap") and AutoDrive.getSetting("switchToMarkersOnMap") then
+                    if targetVehicle ~= nil and AutoDrive.showMarkersOnMainMenuMap() and AutoDrive.getSetting("switchToMarkersOnMap") then
                         AutoDriveHudInputEventEvent:sendSecondMarkerEvent(targetVehicle, hotspot.markerID)
                     end
                     break
@@ -974,14 +974,6 @@ function AutoDrive:ingameMapElementMouseEvent(superFunc, posX, posY, isDown, isU
     end
 
 	return eventUsed
-end
-
-function AutoDrive:MapHotspot_getIsVisible(superFunc)
-	local superReturn = true
-	if superFunc ~= nil then
-		superReturn = superFunc(self)
-	end
-	return superReturn and ((not self.isADMarker) or AutoDrive.getSetting("showMarkersOnMap"))
 end
 
 function AutoDrive.getPlayerHotspot()
@@ -1107,7 +1099,15 @@ function AutoDrive.getPlaceableHotspot()
 	
 		return mapHotspot
 	end
-	
+
+function AutoDrive.showMarkersOnMainMenuMap()
+	return bit32.band(AutoDrive.getSetting("showMarkersOnMap"), 0x01) > 0
+end
+
+function AutoDrive.showMarkersOnIngameMap()
+	return bit32.band(AutoDrive.getSetting("showMarkersOnMap"), 0x02) > 0
+end
+
 function AutoDrive.updateDestinationsMapHotspots()
     AutoDrive.debugPrint(nil, AutoDrive.DC_DEVINFO, "AutoDrive.updateDestinationsMapHotspots()")
 
@@ -1124,26 +1124,10 @@ function AutoDrive.updateDestinationsMapHotspots()
 
 	-- Updating and adding hotspots
     for index, marker in ipairs(ADGraphManager:getMapMarkers()) do
-        local mapHotspot = PlaceableHotspot.new()
-
-        mapHotspot.width, mapHotspot.height = getNormalizedScreenValues(40, 40)
-        mapHotspot.isVisible = true
-        mapHotspot.icon =  g_overlayManager:createOverlay("ad_gui.marker", 0, 0, mapHotspot.width, mapHotspot.height)
-		mapHotspot.iconSmall = g_overlayManager:createOverlay("ad_gui.marker", 0, 0, mapHotspot.width, mapHotspot.height)
-
-		
-        if marker.isADDebug == true then
-            -- map hotspot debug
-            mapHotspot.isADDebug = true
-			mapHotspot.icon:setSliceId("ad_gui.debug_marker")
-        end
-
-        mapHotspot.isADMarker = true
-        mapHotspot.markerID = index
-
 		local wp = ADGraphManager:getWayPointById(marker.id)
         if wp ~= nil then
-            g_currentMission.hud:addMapHotspot(mapHotspot)
+			local mapHotspot = AutoDriveHotspot.new(index, marker)
+			g_currentMission.hud:addMapHotspot(mapHotspot)
             table.insert(AutoDrive.mapHotspotsBuffer, mapHotspot)
 
             mapHotspot:setWorldPosition(wp.x, wp.z)
