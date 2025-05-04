@@ -710,13 +710,11 @@ function AutoDrive:draw()
 end
 
 function AutoDrive:constructionScreenDraw()
-	if AutoDrive.isInExtendedEditorMode() then
-		local vehicle = AutoDrive.getControlledVehicle()
-		if vehicle ~= nil and vehicle.ad ~= nil then
-			AutoDrive.onDrawEditorMode(vehicle)
-			AutoDrive.onDrawPreviews(vehicle)
-			ADDrawingManager:draw()
-		end
+	local vehicle = AutoDrive.getControlledVehicle()
+	if vehicle ~= nil and vehicle.ad ~= nil then
+		AutoDrive.onDrawEditorMode(vehicle)
+		AutoDrive.onDrawPreviews(vehicle)
+		ADDrawingManager:draw()
 	end
 end
 

@@ -297,11 +297,22 @@ function AutoDrive.cycleEditorShowMode()
 end
 
 function AutoDrive.isInConstructionModeEditor()
-    return (AutoDrive.isInExtendedEditorMode()
-        and g_gui:getIsGuiVisible()
-        and g_gui.currentGuiName == "ConstructionScreen"
-        and g_constructionScreen ~= nil
-        and g_constructionScreen.camera ~= nil)
+    if not g_gui:getIsGuiVisible() or g_gui.currentGuiName ~= "ConstructionScreen" or g_constructionScreen == nil then
+        -- not in construction screen
+        return false
+    end
+    if g_constructionScreen.categorySelector == nil  or g_constructionScreen.categories == nil or g_constructionScreen.camera == nil then
+        return false
+    end
+    local index = g_constructionScreen.categorySelector.selectedIndex
+    if index == nil or g_constructionScreen.categories[index] == nil then
+        return false
+    end
+    if g_constructionScreen.categories[index].name ~= "LANDSCAPING" then
+        -- not in landscaping category
+        return false
+    end
+    return true
 end
 
 function AutoDrive.isMouseActiveForHud()
@@ -309,7 +320,7 @@ function AutoDrive.isMouseActiveForHud()
 end    
 
 function AutoDrive.isMouseActiveForEditor()
-    return not g_gui:getIsGuiVisible() or g_gui.currentGuiName == "ConstructionScreen"
+    return not g_gui:getIsGuiVisible() or AutoDrive.isInConstructionModeEditor()
 end    
 
 

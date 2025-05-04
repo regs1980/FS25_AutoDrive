@@ -813,7 +813,16 @@ function AutoDrive:onDrawEditorMode()
     local startNode = self.components[1].node
     local x, y, z = getWorldTranslation(startNode)
 
-    if AutoDrive.isInConstructionModeEditor() then
+    local isEditorShowEnabled = AutoDrive.isEditorShowEnabled()
+    local isInExtendedEditorMode = AutoDrive.isInExtendedEditorMode()
+    local isInConstructionModeEditor = AutoDrive.isInConstructionModeEditor()
+
+    if g_gui:getIsGuiVisible() and not isInConstructionModeEditor then
+        isEditorShowEnabled = false
+        isInExtendedEditorMode = false
+    end
+
+    if isInConstructionModeEditor then
         x = g_constructionScreen.camera.cameraX
         z = g_constructionScreen.camera.cameraZ
     end
@@ -834,7 +843,7 @@ function AutoDrive:onDrawEditorMode()
                     and not AutoDrive.leftALTmodifierKeyPressed
                     and not AutoDrive.rightSHIFTmodifierKeyPressed
 
-    if AutoDrive.isEditorShowEnabled() or AutoDrive.isInExtendedEditorMode() then
+    if isEditorShowEnabled or isInExtendedEditorMode then
         local distance = MathUtil.vector2Length(x - self.ad.lastDrawPosition.x, z - self.ad.lastDrawPosition.z)
         if distance > AutoDrive.drawDistance / 2 then
             self.ad.lastDrawPosition = {x = x, z = z}
@@ -864,8 +873,8 @@ function AutoDrive:onDrawEditorMode()
     end
 
     if ADGraphManager:getWayPointById(1) ~= nil
-        and not AutoDrive.isEditorShowEnabled()
-        and not AutoDrive.isInConstructionModeEditor()
+        and isInExtendedEditorMode
+        and not isInConstructionModeEditor
         then
         --Draw line to selected neighbor point
         local neighbour = self.ad.stateModule:getSelectedNeighbourPoint()
@@ -889,7 +898,7 @@ function AutoDrive:onDrawEditorMode()
         local z = point.z
         local isSubPrio = ADGraphManager:getIsPointSubPrio(point.id)
 
-        if AutoDrive.isInExtendedEditorMode() then
+        if isInExtendedEditorMode then
             arrowPosition = DrawingManager.arrows.position.middle
             if AutoDrive.enableSphere == true then
                 if AutoDrive.mouseIsAtPos(point, 0.01) or point.isSelected then
@@ -950,7 +959,7 @@ function AutoDrive:onDrawEditorMode()
         end
 
 -- draw connection lines
-        if point.out ~= nil then
+        if point.out ~= nil and (isInExtendedEditorMode or isInConstructionModeEditor or isEditorShowEnabled) then
 
             for _, neighbor in pairs(point.out) do
                 -- if a section is active, skip these connections, they are drawn below
@@ -1076,7 +1085,7 @@ function AutoDrive:onDrawEditorMode()
         end
     end
 
-    if AutoDrive.isInExtendedEditorMode() and AutoDrive.enableSphere == true then
+    if isInExtendedEditorMode and AutoDrive.enableSphere == true then
         if self.ad.selectionWayPoints and #self.ad.selectionWayPoints > 0 then
             -- draw range circle for selection wayPoints
             local selectedWayPoint = ADGraphManager:getWayPointById(self.ad.selectedNodeId)
