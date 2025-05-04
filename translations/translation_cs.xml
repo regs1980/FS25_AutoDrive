@@ -169,6 +169,8 @@
 		<text name="gui_ad_shovelWidth_tooltip"						text="如果自动检测到的工具宽度太小，可以增加这个值" />
 		<text name="gui_ad_preCallLevel"								text="预呼叫级别" />
 		<text name="gui_ad_preCallLevel_tooltip"						text="设定预呼叫卸载车辆的填充水平。" />
+		<text name="gui_ad_chaseSide"									text="Chopper Unload Side" />
+		<text name="gui_ad_chaseSide_tooltip"							text="Unloader will use only this side from Chppers perspective: automatic, left, behind, right" />
 		<text name="gui_ad_none"										text="无" />
 		<text name="gui_ad_onlyPickup"									text="仅装载" />
 		<text name="gui_ad_onlyDeliver"								text="仅卸载" />

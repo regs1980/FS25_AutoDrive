@@ -85,6 +85,13 @@ AutoDrive.USER_PLAYER = 1
 AutoDrive.USER_GIANTS = 2
 AutoDrive.USER_CP = 3
 
+AutoDrive.CHASEPOS_UNKNOWN = 0
+AutoDrive.CHASEPOS_AUTO = 5
+AutoDrive.CHASEPOS_LEFT = 1
+AutoDrive.CHASEPOS_RIGHT = -1
+AutoDrive.CHASEPOS_REAR = 3
+AutoDrive.CHASEPOS_FRONT = 4
+
 AutoDrive.colors = {
 	ad_color_singleConnection = { 0, 1, 0, 1 },
 	ad_color_dualConnection = { 0, 0, 1, 1 },

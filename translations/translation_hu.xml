@@ -169,6 +169,8 @@
 		<text name="gui_ad_shovelWidth_tooltip"						text="Ha az automatikusan felismert szélesség túl kicsi, ezzel növelhető" />
 		<text name="gui_ad_preCallLevel"								text="Hívás előtti szint" />
 		<text name="gui_ad_preCallLevel_tooltip"						text="A kirakodó hívása a beállított kitöltési szintnél." />
+		<text name="gui_ad_chaseSide"									text="Chopper Unload Side" />
+		<text name="gui_ad_chaseSide_tooltip"							text="Unloader will use only this side from Chppers perspective: automatic, left, behind, right" />
 		<text name="gui_ad_none"										text="Egyik sem" />
 		<text name="gui_ad_onlyPickup"									text="Csak átvétel" />
 		<text name="gui_ad_onlyDeliver"								text="Csal szállítás" />
