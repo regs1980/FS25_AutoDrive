@@ -913,18 +913,6 @@ AutoDrive.settings.followOnlyOnField = {
     isVehicleSpecific = true
 }
 
-AutoDrive.settings.addSettingsToHUD = {
-    values = {false, true},
-    texts = {"gui_ad_no", "gui_ad_yes"},
-    default = 1,
-    current = 1,
-    text = "gui_ad_addSettingsToHUD",
-    tooltip = "gui_ad_addSettingsToHUD_tooltip",
-    translate = true,
-    isVehicleSpecific = false,
-    isUserSpecific = true
-}
-
 AutoDrive.settings.iconSetToUse = {
     values = {1, 2, 3},
     texts = {"AutoDrive", "Hirschfeld", "Holger"},
@@ -933,18 +921,6 @@ AutoDrive.settings.iconSetToUse = {
     text = "gui_ad_iconSetToUse",
     tooltip = "gui_ad_iconSetToUse_tooltip",
     translate = false,
-    isVehicleSpecific = false,
-    isUserSpecific = true
-}
-
-AutoDrive.settings.wideHUD = {
-    values = {false, true},
-    texts = {"gui_ad_no", "gui_ad_yes"},
-    default = 1,
-    current = 1,
-    text = "gui_ad_wideHUD",
-    tooltip = "gui_ad_wideHUD_tooltip",
-    translate = true,
     isVehicleSpecific = false,
     isUserSpecific = true
 }

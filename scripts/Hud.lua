@@ -68,21 +68,45 @@ function AutoDriveHud:new()
 end
 
 function AutoDriveHud:loadHud()
+	-- local filename = AutoDrive.directory .. "gui/hud/default.xml"
+	-- local filename = AutoDrive.directory .. "gui/hud/defaultWithSettings.xml"
+	-- local filename = AutoDrive.directory .. "gui/hud/wide.xml"
+	local filename = AutoDrive.directory .. "gui/hud/wideWithSettings.xml"
+	
+	local xml = loadXMLFile("Hud_xml", filename)
+	self.numElementsH = getXMLInt(xml, "hud.size#width")
+	self.numElementsV = getXMLInt(xml, "hud.size#height")
+	self.elementSize = 32
+	self.elementGap = 3
+	self.listItemSize = 20
+	self.elements = {}
+
+	local i = 0
+	while true do
+		local key = string.format("hud.elements.element(%d)", i)
+		if not hasXMLProperty(xml, key) then
+			break
+		end
+		local name = getXMLString(xml, key .. "#name")
+		local x = getXMLInt(xml, key .. "#x")
+		local y = getXMLInt(xml, key .. "#y")
+		local width = getXMLInt(xml, key .. "#width") or 1
+		local edit = getXMLBool(xml, key .. "#edit")
+		i = i + 1
+		self.elements[i] = { name = name, x = x, y = y, width = width, edit=edit}
+	end
+
 	if AutoDrive.HudX == nil or AutoDrive.HudY == nil then
 		local uiScale = g_gameSettings:getValue("uiScale")
 		if AutoDrive.getSetting("guiScale") ~= 0 then
 			uiScale = AutoDrive.getSetting("guiScale")
 		end
 
-		local numButtons = 7
-		local numButtonRows = 2
-		local buttonSize = 32
-		local iconSize = 32
-		local gapSize = 3
+		self.width, self.height = getNormalizedScreenValues(
+			(self.numElementsH * (self.elementSize + self.elementGap) + self.elementGap) * uiScale,
+			(self.numElementsV * (self.elementSize + self.elementGap) + self.elementGap) * uiScale)
 
-		self.width, self.height = getNormalizedScreenValues((numButtons * (gapSize + buttonSize) + gapSize) * uiScale, ((numButtonRows * (gapSize + buttonSize)) + (3 * (gapSize + iconSize)) + 30) * uiScale)
-		self.gapWidth, self.gapHeight = getNormalizedScreenValues(uiScale * gapSize, uiScale * gapSize)
-		self.posX = 1 - self.width - self.gapWidth
+		self.posX = 1 - self.width
 		self.posY = 0.31
 		AutoDrive.HudX = self.posX
 		AutoDrive.HudY = self.posY
@@ -92,252 +116,136 @@ function AutoDriveHud:loadHud()
 	end
 	self.isMoving = false
 	self.isShowingTips = false
-	self.stateHud = 0
-	self.statesHud = 0
 end
 
 function AutoDriveHud:createHudAt(hudX, hudY)
-    local vehicle = AutoDrive.getADFocusVehicle()
+	if self.elements == nil then
+		self:loadHud()
+	end
 	local uiScale = g_gameSettings:getValue("uiScale")
 	if AutoDrive.getSetting("guiScale") ~= 0 then
 		uiScale = AutoDrive.getSetting("guiScale")
 	end
-	local numButtons = 7
-	local numButtonRows = 2
-	local buttonSize = 32
-	local iconSize = 32
-	local gapSize = 3
-	local listItemSize = 20
-	
-	self.headerHeight = AutoDriveHud.defaultHeaderHeight * uiScale
-	self.headerExtensionHeight = (AutoDriveHud.extendedHeaderHeight - AutoDriveHud.defaultHeaderHeight) * uiScale
 
 	if self.isShowingTips then
 		self.headerHeight = AutoDriveHud.extendedHeaderHeight * uiScale
+	else
+		self.headerHeight = AutoDriveHud.defaultHeaderHeight * uiScale
 	end
 
-	self.Background = {}
-	self.Buttons = {}
-	self.buttonCounter = 0
-	self.rows = 1
-	self.rowCurrent = 1
-	self.cols = 7
-	self.colCurrent = 1
-	self.buttonCollOffset = 0
-	self.pullDownRowOffset = 2
+	self.elementWidth, self.elementHeight = getNormalizedScreenValues(uiScale * self.elementSize, uiScale * self.elementSize)
+	self.gapWidth, self.gapHeight = getNormalizedScreenValues(uiScale * self.elementGap, uiScale * self.elementGap)
+	self.width, self.height = getNormalizedScreenValues(
+		(self.numElementsH * (self.elementSize + self.elementGap) + self.elementGap) * uiScale,
+		(self.numElementsV * (self.elementSize + self.elementGap) + self.elementGap) * uiScale + self.headerHeight)
+	_, self.listItemHeight = getNormalizedScreenValues(self.listItemSize * uiScale, self.listItemSize * uiScale)
 
-	if AutoDrive.getSetting("wideHUD") then
-		self.buttonCollOffset = 7
-		self.pullDownRowOffset = 0
-		numButtonRows = 0
-	end
-
-	self.borderX, self.borderY = getNormalizedScreenValues(uiScale * gapSize, uiScale * gapSize)
-	self.buttonWidth, self.buttonHeight = getNormalizedScreenValues(uiScale * buttonSize, uiScale * buttonSize)
-	self.width, self.height = getNormalizedScreenValues(((numButtons + self.buttonCollOffset) * (gapSize + buttonSize) + gapSize) * uiScale, ((numButtonRows * (gapSize + buttonSize)) + (3 * (gapSize + iconSize)) + gapSize) * uiScale + self.headerHeight)
-	self.gapWidth, self.gapHeight = getNormalizedScreenValues(uiScale * gapSize, uiScale * gapSize)
-	self.iconWidth, self.iconHeight = getNormalizedScreenValues(uiScale * iconSize, uiScale * iconSize)
-	self.listItemWidth, self.listItemHeight = getNormalizedScreenValues(uiScale * listItemSize, uiScale * listItemSize)
+	self.headerIconHeight = AutoDriveHud.defaultHeaderHeight * uiScale
+	self.headerIconWidth = self.headerIconHeight * (g_screenHeight / g_screenWidth)
+	self.headerLabelWidth = self.width - 4 * self.gapWidth - 3 * self.headerIconWidth
 
 	self.posX = math.clamp(hudX, 0, 1 - self.width)
-	self.posY = math.clamp(hudY, 2 * self.gapHeight, 1 - (self.height + 3 * self.gapHeight + self.headerHeight))
-
+	self.posY = math.clamp(hudY, 0, 1 - self.height)
 	AutoDrive.HudX = self.posX
 	AutoDrive.HudY = self.posY
-	AutoDrive.HudChanged = true
 
 	self.hudElements = {}
 
-	self.Speed = "50"
-	self.Target = "Not Ready"
-    -- AutoDrive.setSettingState("showHUD", 2)
-	self.stateHud = 0
-	self.statesHud = 0
+	-- background
+	local headerY = self.posY + (self.elementHeight + self.gapHeight) * self.numElementsV + self.gapHeight
+	table.insert(self.hudElements, ADHudIcon:new(self.posX, self.posY, self.width, self.height, "ad_gui.Background", 0, "background"))
+	table.insert(self.hudElements, ADHudIcon:new(self.posX, headerY, self.width, self.headerHeight, "ad_gui.Header", 1, "header"))
 
-	-- TODO: deactivated until PR #1862 solved with issue #1886
-	self.statesHud = 0
+	-- header icons
+	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHud", nil, nil, nil, nil, nil, nil, nil, "", 1))
+	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - 2 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHudExtension", nil, nil, nil, nil, nil, nil, nil, "", 1))
 
-	if ADGraphManager:getMapMarkerById(1) ~= nil then
-		self.Target = ADGraphManager:getMapMarkerById(1).name
-	end
-
-	self.row2 = self.posY + (self.pullDownRowOffset + 1) * self.borderY + (self.pullDownRowOffset + 0) * self.buttonHeight
-	self.row3 = self.posY + (self.pullDownRowOffset + 2) * self.borderY + (self.pullDownRowOffset + 1) * self.buttonHeight
-	self.row4 = self.posY + (self.pullDownRowOffset + 3) * self.borderY + (self.pullDownRowOffset + 2) * self.buttonHeight
-	self.rowHeader = self.posY + (self.pullDownRowOffset + 4) * self.borderY + (self.pullDownRowOffset + 3) * self.buttonHeight
-
-	table.insert(self.hudElements, ADHudIcon:new(self.posX, self.posY - 0 * self.gapHeight, self.width, self.height + 5 * self.gapHeight, "ad_gui.Background", 0, "background"))
-	table.insert(self.hudElements, ADHudIcon:new(self.posX, self.rowHeader, self.width, self.headerHeight, "ad_gui.Header", 1, "header"))
-
-	local closeHeight = AutoDriveHud.defaultHeaderHeight * uiScale --0.0177 * uiScale;
-	local closeWidth = closeHeight * (g_screenHeight / g_screenWidth)
-	self.headerIconWidth = closeWidth
-	local posX = self.posX + self.width - (closeWidth * 1.1)
-	local posY = self.rowHeader
-	-- close crossing
-	table.insert(self.hudElements, ADHudButton:new(posX, posY, closeWidth, closeHeight, "input_toggleHud", nil, nil, nil, nil, nil, nil, nil, "", 1, true))
-
-	posX = posX - closeWidth - self.gapWidth
-	table.insert(self.hudElements, ADHudButton:new(posX, posY, closeWidth, closeHeight, "input_toggleHudExtension", nil, nil, nil, nil, nil, nil, nil, "", 1, true))
-
-	
-	table.insert(self.hudElements, ADHudButton:new(self.posX + self.gapWidth, self.row4, self.iconWidth, self.iconHeight, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, true))
-
-	-- 1st destination
-	self.targetPullDownList = ADPullDownList:new(self.posX + 2 * self.gapWidth + self.buttonWidth, self.row4, self.iconWidth * 6 + self.gapWidth * 5, self.listItemHeight, ADPullDownList.TYPE_TARGET, 1)
-	table.insert(self.hudElements, self.targetPullDownList)
-
-	table.insert(self.hudElements, ADHudButton:new(self.posX + self.gapWidth, self.row3, self.iconWidth, self.iconHeight, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, true))
-
-	table.insert(self.hudElements, ADPullDownList:new(self.posX + 2 * self.gapWidth + self.buttonWidth, self.row3, self.iconWidth * 6 + self.gapWidth * 5, self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1))
-	
-	table.insert(self.hudElements, ADHudButton:new(self.posX + self.gapWidth, self.row2, self.iconWidth, self.iconHeight, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, true))
-
-	table.insert(
-		self.hudElements,
-		ADPullDownList:new(
-			self.posX + 2 * self.gapWidth + self.buttonWidth, --+ self.iconWidth * 5 + self.gapWidth*5
-			self.row2,
-			self.iconWidth * 6 + self.gapWidth * 5,
-			self.listItemHeight,
-			ADPullDownList.TYPE_FILLTYPE,
-			1
-		)
-	)
-	table.insert(self.hudElements, HudHarvesterInfo:new(self.posX + 2 * self.gapWidth + self.buttonWidth, self.row2, self.iconWidth * 6 + self.gapWidth * 5, self.listItemHeight))
-
-
-	-------- BASE ROW BUTTONS --------------
-	self:AddButton("input_start_stop", nil, nil, nil, nil, nil, nil, nil, "input_ADEnDisable", 1, true)
-	self:AddButton("input_silomode", "input_previousMode", nil, nil, nil, nil, nil, nil, "input_ADSilomode", 1, true)
-	self:AddButton("input_continue", nil, nil, nil, nil, nil, nil, nil, "input_AD_continue", 1, true)
-	self:AddButton("input_parkVehicle", "input_setParkDestination", nil, nil, nil, "input_setParkDestination", nil, nil, "input_ADParkVehicle", 1, true)
-	if vehicle == nil or vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA then
-		local loopX = self.posX + (self.cols - 2 + self.buttonCollOffset) * self.borderX + (self.cols - 3 + self.buttonCollOffset) * self.buttonWidth
-		local loopY = self.posY + (1) * self.borderY + (0) * self.buttonHeight
-		table.insert(self.hudElements, ADHudCounterButton:new(loopX, loopY, self.buttonWidth, self.buttonHeight, "loop_counter"))
-		self.buttonCounter = self.buttonCounter + 1
-	else
-		self:AddButton("input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, true)
-	end
-
-	local speedX = self.posX + (self.cols - 1 + self.buttonCollOffset) * self.borderX + (self.cols - 2 + self.buttonCollOffset) * self.buttonWidth
-	local speedY = self.posY + (1) * self.borderY + (0) * self.buttonHeight
-	table.insert(self.hudElements, ADHudSpeedmeter:new(speedX, speedY, self.buttonWidth, self.buttonHeight, false))
-	self.buttonCounter = self.buttonCounter + 1
-
-	self:AddButton("input_debug", "input_displayMapPoints", nil, nil, nil, nil, nil, nil, "input_ADActivateDebug", 1, true)
-	--------------------------------------------------
-
-	---------- SECOND ROW BUTTONS ---------------------
-	if AutoDrive.getSetting("wideHUD") then
-		if AutoDrive.getSetting("addSettingsToHUD") then
-			self:AddSettingsButton("enableTrafficDetection", "gui_ad_enableTrafficDetection", 1, true)
-			self:AddSettingsButton("rotateTargets", "gui_ad_rotateTargets", 1, true)
-			self:AddSettingsButton("exitField", "gui_ad_exitField", 1, true)
-			self:AddSettingsButton("restrictToField", "gui_ad_restrictToField", 1, true)
-			self:AddSettingsButton("avoidFruit", "gui_ad_avoidFruit", 1, true)
-		else
-			self:AddEditModeButtons()
-			if vehicle then
-				local usedHelper = vehicle.ad.stateModule:getUsedHelper()
-				local state = (usedHelper * 2) - 1
-				self.buttonCounter = self.buttonCounter - 1
-				self:AddButton("input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, true)
-			end
-		end
-
-		speedX = self.posX + (self.cols - 1 + self.buttonCollOffset) * self.borderX + (self.cols - 2 + self.buttonCollOffset) * self.buttonWidth
-		speedY = self.posY + (2) * self.borderY + (1) * self.buttonHeight
-		table.insert(self.hudElements, ADHudSpeedmeter:new(speedX, speedY, self.buttonWidth, self.buttonHeight, true))
-		self.buttonCounter = self.buttonCounter + 1
-
-		self:AddButton("input_openGUI", nil, nil, nil, nil, nil, nil, nil, "input_ADOpenGUI", 1, true)
-	else
-		self:AddEditModeButtons()
-		if AutoDrive.getSetting("addSettingsToHUD") then
-			self.buttonCounter = self.buttonCounter - 5
-			if vehicle then
-				local usedHelper = vehicle.ad.stateModule:getUsedHelper()
-				local state = (usedHelper * 2) - 1
-				self:AddButton("input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, true)
-			end
-
-			self:AddSettingsButton("rotateTargets", "gui_ad_rotateTargets", 1, true)
-			self:AddSettingsButton("exitField", "gui_ad_exitField", 1, true)
-			self:AddSettingsButton("restrictToField", "gui_ad_restrictToField", 1, true)
-			self:AddSettingsButton("avoidFruit", "gui_ad_avoidFruit", 1, true)
-		else
-			if vehicle then
-				local usedHelper = vehicle.ad.stateModule:getUsedHelper()
-				local state = (usedHelper * 2) - 1
-				self.buttonCounter = self.buttonCounter - 1
-				self:AddButton("input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, true)
-			end
-		end
-
-		speedX = self.posX + (self.cols - 1 + self.buttonCollOffset) * self.borderX + (self.cols - 2 + self.buttonCollOffset) * self.buttonWidth
-		speedY = self.posY + (2) * self.borderY + (1) * self.buttonHeight
-		table.insert(self.hudElements, ADHudSpeedmeter:new(speedX, speedY, self.buttonWidth, self.buttonHeight, true))
-		self.buttonCounter = self.buttonCounter + 1
-
-		self:AddButton("input_openGUI", nil, nil, nil, nil, nil, nil, nil, "input_ADOpenGUI", 1, true)
-	end
-	--------------------------------------------------
-
-	---------- THIRD ROW BUTTONS ---------------------
-	if AutoDrive.getSetting("wideHUD") and AutoDrive.getSetting("addSettingsToHUD") then
-		self:AddEditModeButtons()
-		if vehicle then
-			local usedHelper = vehicle.ad.stateModule:getUsedHelper()
-			local state = (usedHelper * 2) - 1
-			self:AddButton("input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, true)
-		end
+	-- hud elements
+	for _, element in ipairs(self.elements) do
+		self:addElement(element)
 	end
 
 	-- Refreshing layer sequence must be called, after all elements have been added
 	self:refreshHudElementsLayerSequence()
 end
 
-function AutoDriveHud:AddEditModeButtons()
-	self:AddButton("input_record", "input_record_dual", "input_record_subPrio", "input_record_subPrioDual", "input_record_twoWay", "input_record_dualTwoWay", "input_record_subPrioTwoWay", "input_record_subPrioDualTwoWay", "input_ADRecord", 1, false)
-	self:AddButton("input_routesManager", nil, nil, nil, nil, nil, nil, nil, "input_AD_routes_manager", 1, false)
-	self:AddButton("input_createMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugCreateMapMarker", 1, false)
-	self:AddButton("input_removeWaypoint", "input_removeMapMarker", nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteWayPoint", 1, false)
-	self:AddButton("input_editMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADRenameMapMarker", 1, false)
-	if AutoDrive.getSetting("wideHUD") and AutoDrive.getSetting("addSettingsToHUD") then
-		self:AddButton("input_removeMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteDestination", 1, false)
+function AutoDriveHud:addElement(element)
+	local vehicle = AutoDrive.getADFocusVehicle()
+
+	local x = self.posX + element.x * (self.elementWidth + self.gapWidth) + self.gapWidth
+	local y = self.posY + element.y * (self.elementHeight + self.gapHeight) + self.gapWidth
+	local width = element.width * (self.elementWidth + self.gapWidth) - self.gapWidth
+	local height = self.elementHeight
+	local edit = element.edit
+	
+	if element.name == "toggleTarget" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, edit))
+	elseif element.name == "pulldownTarget" then
+		self.targetPullDownList = ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_TARGET, 1)
+		table.insert(self.hudElements, self.targetPullDownList)
+
+	elseif element.name == "toggleUnload" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, edit))
+	elseif element.name == "pulldownUnload" then
+		table.insert(self.hudElements, ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1))
+
+	elseif element.name == "toggleFilltype" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, edit))
+	elseif element.name == "pulldownFilltype" then
+		table.insert(self.hudElements, ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_FILLTYPE, 1))
+		table.insert(self.hudElements, HudHarvesterInfo:new(x, y, width, self.listItemHeight))
+
+	elseif element.name == "record" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_record", "input_record_dual", "input_record_subPrio", "input_record_subPrioDual", "input_record_twoWay", "input_record_dualTwoWay", "input_record_subPrioTwoWay", "input_record_subPrioDualTwoWay", "input_ADRecord", 1, edit))
+	elseif element.name == "routesManager" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_routesManager", nil, nil, nil, nil, nil, nil, nil, "input_AD_routes_manager", 1, edit))
+	elseif element.name == "createMarker" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_createMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugCreateMapMarker", 1, edit))
+	elseif element.name == "removeWaypoint" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_removeWaypoint", "input_removeMapMarker", nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteWayPoint", 1, edit))
+	elseif element.name == "editMarker" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_editMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADRenameMapMarker", 1, edit))
+	elseif element.name == "removeMarker" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_removeMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteDestination", 1, edit))
+	elseif element.name == "startHelper" then
+		if vehicle then
+			local usedHelper = vehicle.ad.stateModule:getUsedHelper()
+			local state = (usedHelper * 2) - 1
+			table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, edit))
+	 	end
+	elseif element.name == "fieldSpeed" then
+		table.insert(self.hudElements, ADHudSpeedmeter:new(x, y, width, height, true))
+	elseif element.name == "settings" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_openGUI", nil, nil, nil, nil, nil, nil, nil, "input_ADOpenGUI", 1, edit))
+	elseif element.name == "startStop" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_start_stop", nil, nil, nil, nil, nil, nil, nil, "input_ADEnDisable", 1, edit))
+	elseif element.name == "mode" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_silomode", "input_previousMode", nil, nil, nil, nil, nil, nil, "input_ADSilomode", 1, edit))
+	elseif element.name == "continue" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_continue", nil, nil, nil, nil, nil, nil, nil, "input_AD_continue", 1, edit))
+	elseif element.name == "park" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_parkVehicle", "input_setParkDestination", nil, nil, nil, "input_setParkDestination", nil, nil, "input_ADParkVehicle", 1, edit))
+	elseif element.name == "loopCounter" then
+		if vehicle == nil or vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA then
+	 		table.insert(self.hudElements, ADHudCounterButton:new(x, y, width, height, "loop_counter"))
+		else
+			table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, edit))
+		end
+	elseif element.name == "speed" then
+		table.insert(self.hudElements, ADHudSpeedmeter:new(x, y, width, height, false))
+	elseif element.name == "editor" then
+		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_debug", "input_displayMapPoints", nil, nil, nil, nil, nil, nil, "input_ADActivateDebug", 1, edit))
+	elseif element.name == "trafficDetection" then
+		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "enableTrafficDetection", "gui_ad_enableTrafficDetection", 1, edit))
+	elseif element.name == "rotateTargets" then
+		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "rotateTargets", "gui_ad_rotateTargets", 1, edit))
+	elseif element.name == "exitField" then
+		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "exitField", "gui_ad_exitField", 1, edit))
+	elseif element.name == "restrictToField" then
+		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "restrictToField", "gui_ad_restrictToField", 1, edit))
+	elseif element.name == "avoidFruit" then
+		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "avoidFruit", "gui_ad_avoidFruit", 1, edit))
 	end
-end
-
-function AutoDriveHud:AddButton(primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, visible)
-	self.buttonCounter = self.buttonCounter + 1
-	self.colCurrent = self.buttonCounter % self.cols
-	if self.colCurrent == 0 then
-		self.colCurrent = self.cols
-	end
-	self.rowCurrent = math.ceil(self.buttonCounter / self.cols)
-	self.colCurrent = self.colCurrent + self.buttonCollOffset
-
-	local posX = self.posX + self.colCurrent * self.borderX + (self.colCurrent - 1) * self.buttonWidth
-	local posY = self.posY + (self.rowCurrent) * self.borderY + (self.rowCurrent - 1) * self.buttonHeight
-	--toolTip = string.sub(g_i18n:getText(toolTip), 4, string.len(g_i18n:getText(toolTip)))
-	table.insert(self.hudElements, ADHudButton:new(posX, posY, self.buttonWidth, self.buttonHeight, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, visible))
-end
-
-function AutoDriveHud:AddSettingsButton(setting, toolTip, state, visible)
-	self.buttonCounter = self.buttonCounter + 1
-	self.colCurrent = self.buttonCounter % self.cols
-	if self.colCurrent == 0 then
-		self.colCurrent = self.cols
-	end
-	self.rowCurrent = math.ceil(self.buttonCounter / self.cols)
-	self.colCurrent = self.colCurrent + self.buttonCollOffset
-
-	local posX = self.posX + self.colCurrent * self.borderX + (self.colCurrent - 1) * self.buttonWidth
-	local posY = self.posY + (self.rowCurrent) * self.borderY + (self.rowCurrent - 1) * self.buttonHeight
-	--toolTip = string.sub(g_i18n:getText(toolTip), 4, string.len(g_i18n:getText(toolTip)))
-	table.insert(self.hudElements, ADHudSettingsButton:new(posX, posY, self.buttonWidth, self.buttonHeight, setting, toolTip, state, visible))
 end
 
 function AutoDriveHud:refreshHudElementsLayerSequence()

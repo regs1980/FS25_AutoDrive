@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Hívja a 2. számú kirakót, amikor az aktuális kirakodó eléri az előhívás töltési szintjét" />
 		<text name="gui_ad_followOnlyOnField"							text="Szállítót tartsa a földön" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Szállító földön tartása ürítés közben" />
-		<text name="gui_ad_addSettingsToHUD"							text="Adja meg a HUD beállításait" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Gombok hozzáadása a HUD-hoz a beállítások módosításához a menü megnyitása nélkül" />
 		<text name="gui_ad_iconSetToUse"								text="Logó személyre szabása" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Alapértelmezett logó vagy személyre szabott logó - A választék bővíthető." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Használja a 2. szerkesztő módot" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Használja a 2. szerkesztő módot az útvonal manipulálásához az Bal CTRL lenyomása helyett" />
-		<text name="gui_ad_wideHUD"									text="Széles HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Használjon széles HUD módot, amely lehetővé teszi még néhány beállítási gombot a HUD-ban" />
 		<text name="gui_ad_playSounds"									text="Hangok" />
 		<text name="gui_ad_playSounds_tooltip"							text="Engedélyezi a hanghatásokat egérkattintásokhoz és értesítésekhez." />
 		<text name="gui_ad_scaleLines"									text="Vonalvastagság" />

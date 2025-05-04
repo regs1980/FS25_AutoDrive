@@ -1,6 +1,6 @@
 ADHudButton = ADInheritsFrom(ADGenericHudElement)
 
-function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, visible)
+function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, editMode)
     local o = ADHudButton:create()
     o:init(posX, posY, width, height)
     o.primaryAction = primaryAction
@@ -13,7 +13,8 @@ function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryActi
     o.eightthAction = eightthAction
     o.toolTip = toolTip
     o.state = state
-    o.isVisible = visible
+    o.editMode = editMode
+    o.isVisible = false
 
     o.layer = 5
 
@@ -60,6 +61,8 @@ end
 
 function ADHudButton:getNewState(vehicle)
     local newState = self.state
+    self.isVisible = self.editMode == nil or self.editMode == AutoDrive.isEditorModeEnabled()
+
     if self.primaryAction == "input_silomode" then
         if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_DELIVERTO then
             newState = 2
@@ -103,7 +106,6 @@ function ADHudButton:getNewState(vehicle)
         else
             newState = 1
         end
-        self.isVisible = AutoDrive.isEditorModeEnabled()
     end
 
     if self.primaryAction == "input_start_stop" then
@@ -123,8 +125,6 @@ function ADHudButton:getNewState(vehicle)
     end
 
     if self.primaryAction == "input_showNeighbor" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-
         if vehicle.ad.showSelectedDebugPoint == true then
             newState = 2
         else
@@ -132,34 +132,10 @@ function ADHudButton:getNewState(vehicle)
         end
     end
 
-    if self.primaryAction == "input_toggleConnection" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-    end
-
-    if self.primaryAction == "input_nextNeighbor" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-    end
-
-    if self.primaryAction == "input_createMapMarker" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-    end
-
     if self.primaryAction == "input_routesManager" then
         if (AutoDrive.getSetting("enableRoutesManagerOnDediServer") and g_dedicatedServer ~= nil) or g_dedicatedServer == nil then
             self.isVisible = AutoDrive.isEditorModeEnabled()
         end
-    end
-
-    if self.primaryAction == "input_removeWaypoint" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-    end
-
-    if self.primaryAction == "input_editMapMarker" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
-    end
-
-    if self.primaryAction == "input_removeMapMarker" then
-        self.isVisible = AutoDrive.isEditorModeEnabled()
     end
 
     if self.primaryAction == "input_parkVehicle" then
@@ -179,7 +155,6 @@ function ADHudButton:getNewState(vehicle)
         else
             newState = (usedHelper * 2) - 1
         end
-        self.isVisible = (not AutoDrive.isEditorModeEnabled()) or (AutoDrive.getSetting("wideHUD") and AutoDrive.getSetting("addSettingsToHUD"))
     end
 
     if self.primaryAction == "input_bunkerUnloadType" then

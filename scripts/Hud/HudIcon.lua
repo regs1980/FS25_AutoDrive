@@ -42,8 +42,7 @@ function ADHudIcon:onDrawHeader(vehicle, uiScale)
     setTextAlignment(RenderText.ALIGN_LEFT)
     self:renderDefaultText(vehicle, adFontSize, adPosX, adPosY)
     if AutoDrive.Hud.isShowingTips then
-        adPosY = adPosY + textHeight + AutoDrive.Hud.gapHeight
-        adPosY = adPosY + (textHeight + AutoDrive.Hud.gapHeight) * (self.lastLineCount - 1)
+        adPosY = adPosY + (textHeight + AutoDrive.Hud.gapHeight) * self.lastLineCount
         self:renderEditorTips(textHeight, adFontSize, adPosX, adPosY)
     end
 end
@@ -67,7 +66,7 @@ function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
         end
     end
 
-    local lines = self:splitTextByLength(textToShow, fontSize, self.size.width - 4 * AutoDrive.Hud.gapWidth - 3 * AutoDrive.Hud.headerIconWidth)
+    local lines = self:splitTextByLength(textToShow, fontSize, AutoDrive.Hud.headerLabelWidth)
     
     if #lines ~= self.lastLineCount and self.ov ~= nil then
         self.ov:setDimension(nil, self.size.height + (textHeight + AutoDrive.Hud.gapHeight) * (#lines - 1))        

@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Llama al segundo remolque cuando el remolque actual alcanza el nivel de llenado establecido" />
 		<text name="gui_ad_followOnlyOnField"							text="Restringir remolque al campo" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Evita que el remolque se salga del campo mientras se descarga la cosechadora" />
-		<text name="gui_ad_addSettingsToHUD"							text="Añadir ajustes a la ventana" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Añade botones al panel de AutoDrive para cambiar la configuración sin tener que abrir este menú." />
 		<text name="gui_ad_iconSetToUse"								text="Personalización de logo" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Logotipo predeterminado o personalizado. La selección se puede ampliar." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Modo edición alternativo" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Utilizar el modo de edición alternativo para modificar la ruta en lugar de tener que mantener pulsada la tecla LCTRL" />
-		<text name="gui_ad_wideHUD"									text="Ventana ancha" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Usar el modo de ventana ancha, lo que permite mostrar algunos botones más en el panel" />
 		<text name="gui_ad_playSounds"									text="Sonido" />
 		<text name="gui_ad_playSounds_tooltip"							text="Habilita los efectos de sonido para clics del ratón" />
 		<text name="gui_ad_scaleLines"									text="Escalar líneas" />

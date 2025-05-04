@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Вызов 2-го разгрузчика, когда текущий разгрузчик достигнет уровня предварительного заполнения." />
 		<text name="gui_ad_followOnlyOnField"							text="Ограничить разгрузчика полем" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Ограничить разгрузчика полем при активной выгрузке." />
-		<text name="gui_ad_addSettingsToHUD"							text="Вынести настройки в HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Добавление кнопок настройки в HUD для их изменения без открытия этого окна." />
 		<text name="gui_ad_iconSetToUse"								text="Персонализация логотипа" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Логотип по умолчанию или свой персональный. - Выбор может быть расширен." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="2-й режим редактора" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Использовать 2-й режим редактора для манипуляции точками вместо удержания LCTRL." />
-		<text name="gui_ad_wideHUD"									text="Широкий HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Использовать режим широкого HUD, который также позволяет использовать еще несколько кнопок настройки в HUD." />
 		<text name="gui_ad_playSounds"									text="Звук" />
 		<text name="gui_ad_playSounds_tooltip"							text="Включает звуковые эффекты для щелчков мыши и уведомлений." />
 		<text name="gui_ad_scaleLines"									text="Размер линий" />

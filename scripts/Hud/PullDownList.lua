@@ -46,22 +46,22 @@ function ADPullDownList:new(posX, posY, width, height, type, selected)
     o.selected = selected
     o.hovered = selected
     o.type = type
-    o.size.height = AutoDrive.Hud.buttonHeight  -- uiScale * 32
+    o.size.height = AutoDrive.Hud.elementHeight
     self.autoLoadFillTypes = nil
 
     AutoDrive.pullDownListExpanded = 0
 -- icons in list 1/2 size of HUD icons?
 -- position from right to left
 -- right icon:
-    o.rightIconPos  = {x = o.position.x + o.size.width -  AutoDrive.Hud.buttonWidth / 2      - AutoDrive.Hud.gapWidth,     y = o.position.y + (o.size.height - AutoDrive.Hud.buttonHeight / 2) / 2}
-    o.rightIconPos2 = {x = o.position.x + o.size.width - (AutoDrive.Hud.buttonWidth / 2) * 2 - AutoDrive.Hud.gapWidth * 3, y = o.position.y + (o.size.height - AutoDrive.Hud.buttonHeight / 2) / 2}
-    o.rightIconPos3 = {x = o.position.x + o.size.width - (AutoDrive.Hud.buttonWidth / 2) * 3 - AutoDrive.Hud.gapWidth * 5, y = o.position.y + (o.size.height - AutoDrive.Hud.buttonHeight / 2) / 2}
+    o.rightIconPos  = {x = o.position.x + o.size.width -  AutoDrive.Hud.elementWidth / 2      - AutoDrive.Hud.gapWidth,     y = o.position.y + (o.size.height - AutoDrive.Hud.elementHeight / 2) / 2}
+    o.rightIconPos2 = {x = o.position.x + o.size.width - (AutoDrive.Hud.elementWidth / 2) * 2 - AutoDrive.Hud.gapWidth * 3, y = o.position.y + (o.size.height - AutoDrive.Hud.elementHeight / 2) / 2}
+    o.rightIconPos3 = {x = o.position.x + o.size.width - (AutoDrive.Hud.elementWidth / 2) * 3 - AutoDrive.Hud.gapWidth * 5, y = o.position.y + (o.size.height - AutoDrive.Hud.elementHeight / 2) / 2}
 -- most left icon:
-    o.rightIconPos4 = {x = o.position.x + o.size.width - (AutoDrive.Hud.buttonWidth / 2) * 4 - AutoDrive.Hud.gapWidth * 6, y = o.position.y + (o.size.height - AutoDrive.Hud.buttonHeight / 2) / 2}
+    o.rightIconPos4 = {x = o.position.x + o.size.width - (AutoDrive.Hud.elementWidth / 2) * 4 - AutoDrive.Hud.gapWidth * 6, y = o.position.y + (o.size.height - AutoDrive.Hud.elementHeight / 2) / 2}
 
 -- icons in list 1/2 size of HUD icons
-    o.iconSize = {width = AutoDrive.Hud.buttonWidth / 2, height = AutoDrive.Hud.buttonHeight / 2}
-    o.rowSize = {width = AutoDrive.Hud.buttonWidth / 2, height = AutoDrive.Hud.listItemHeight / 2}
+    o.iconSize = {width = AutoDrive.Hud.elementWidth / 2, height = AutoDrive.Hud.elementHeight / 2}
+    o.rowSize = {width = AutoDrive.Hud.elementWidth / 2, height = AutoDrive.Hud.listItemHeight / 2}
 
     o.layer = 6
 

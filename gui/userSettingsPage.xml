@@ -58,22 +58,10 @@
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_switchToMarkersOnMap"/>
 			</Bitmap>
 			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
-				<BinaryOption profile="fs25_settingsBinaryOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="addSettingsToHUD" id="addSettingsToHUD">
-					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_addSettingsToHUD_tooltip"/>
-				</BinaryOption>
-				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_addSettingsToHUD"/>
-			</Bitmap>
-			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
 				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="iconSetToUse" id="iconSetToUse">
 					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_iconSetToUse_tooltip"/>
 				</MultiTextOption>
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_iconSetToUse"/>
-			</Bitmap>
-			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
-				<BinaryOption profile="fs25_settingsBinaryOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="wideHUD" id="wideHUD">
-					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_wideHUD_tooltip"/>
-				</BinaryOption>
-				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_wideHUD"/>
 			</Bitmap>
 			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
 				<BinaryOption profile="fs25_settingsBinaryOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="playSounds" id="playSounds">

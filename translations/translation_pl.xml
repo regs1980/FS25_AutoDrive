@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Wezwij drugiego rozładowującego, gdy aktualny osiągnie ustalony poziom wypełnienia" />
 		<text name="gui_ad_followOnlyOnField"							text="Ogranicz rozładowującego do pola" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Ogranicz rozładowującego do pola podczas aktywowanego rozładunku" />
-		<text name="gui_ad_addSettingsToHUD"							text="Dodaj ustawienia do interfejsu" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Dodaj przyciski do interfejsu, aby zmieniać ustawienia bez otwieranie menu ustawień" />
 		<text name="gui_ad_iconSetToUse"								text="Personalizacja logo" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Domyślne lub personalizowane logo - wybór może być rozszerzony." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Użyj drugiego trybu edycji" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Drugi tryb edycji pozwala zmieniać trasy bez przytrzymywania wciśniętego LCTRL" />
-		<text name="gui_ad_wideHUD"									text="Szeroki interfejs" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Użyj trybu szerokiego interfejsu, który pozwala umieścić kilka dodatkowych przycisków ustawień na interfejsie" />
 		<text name="gui_ad_playSounds"									text="Dźwięki" />
 		<text name="gui_ad_playSounds_tooltip"							text="Włącza efekty dźwiękowe dla kliknięć myszką i powiadomień." />
 		<text name="gui_ad_scaleLines"									text="Scale Lines" />

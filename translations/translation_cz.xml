@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Zavolat 2. odvozce pokud prní dosáhne nataveného limitu naplnění" />
 		<text name="gui_ad_followOnlyOnField"							text="Omezit odvozce na pole" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Omezit odvozce na pole pokud aktivně odváží" />
-		<text name="gui_ad_addSettingsToHUD"							text="Přidat nastavení do HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Přidat tlačítka do HUD pro změnu nastavení bez nutnosti oteření tohoto menu" />
 		<text name="gui_ad_iconSetToUse"								text="Perzonalizace loga" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Základní logo nebo vlastní logo - Výběr lze rozšířit." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Použijte 2. režim editoru" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Použijte 2. režim editoru pro manipulaci s trasou namísto přidržení LCTRL" />
-		<text name="gui_ad_wideHUD"									text="Široký HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Použijte široký režim HUD, který také umožňuje několik dalších tlačítek pro nastavení v HUD" />
 		<text name="gui_ad_playSounds"									text="Zvuk" />
 		<text name="gui_ad_playSounds_tooltip"							text="Umožňuje zvukové efekty pro kliknutí myší a upozornění" />
 		<text name="gui_ad_scaleLines"									text="Měřítko čar" />

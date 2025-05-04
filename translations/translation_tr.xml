@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Mevcut boşaltıcı ön doldurma seviyesine ulaştığında 2. Boşaltıcıyı çağır:" />
 		<text name="gui_ad_followOnlyOnField"							text="Boşaltıcıyı alanla sınırla" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Aktif olarak boşaltma sırasında boşaltıcıyı tarlayla kısıtlayın" />
-		<text name="gui_ad_addSettingsToHUD"							text="HUD'ye ayarlar ekleyin" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Bu menüyü açmadan ayarları değiştirmek için Gösterge Paneli'ne düğmeler ekler" />
 		<text name="gui_ad_iconSetToUse"								text="Logo kişiselleştirme" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Varsayılan logo veya kişiselleştirilmiş logo - Seçim genişletilebilir." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="2. düzenleyici modunu kullanın" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="LCTRL'yi basılı tutmak yerine rota manipülasyonu için 2. düzenleyici modunu kullanın" />
-		<text name="gui_ad_wideHUD"									text="Geniş HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="HUD'da birkaç ayar düğmesine daha izin veren geniş HUD modunu kullanın" />
 		<text name="gui_ad_playSounds"									text="Sound" />
 		<text name="gui_ad_playSounds_tooltip"							text="Enables the sound effects for mouse clicks and notifications" />
 		<text name="gui_ad_scaleLines"									text="Scale Lines" />

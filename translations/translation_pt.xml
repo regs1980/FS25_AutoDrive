@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Chamada 2. Descarregador quando o descarregador atual atingir o nível de preenchimento de pré-chamada" />
 		<text name="gui_ad_followOnlyOnField"							text="Restringir o descarregador ao campo" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Restrinja o descarregador ao campo enquanto descarrega ativamente" />
-		<text name="gui_ad_addSettingsToHUD"							text="Adicionar configurações ao HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Adiciona botões ao HUD para alterar as configurações sem abrir este menu" />
 		<text name="gui_ad_iconSetToUse"								text="Personalização do logotipo" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Logotipo padrão ou logotipo personalizado - a seleção pode ser expandida." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Use 2. modo de editor" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Use 2. modo editor para manipulação de rota em vez de manter pressionada a tecla LCTRL" />
-		<text name="gui_ad_wideHUD"									text="Wide HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Use o modo Wide HUD, que também permite mais alguns botões de configuração no HUD" />
 		<text name="gui_ad_playSounds"									text="Sound" />
 		<text name="gui_ad_playSounds_tooltip"							text="Enables the sound effects for mouse clicks and notifications" />
 		<text name="gui_ad_scaleLines"									text="Scale Lines" />

@@ -1,12 +1,13 @@
 ADHudSettingsButton = ADInheritsFrom(ADGenericHudElement)
 
-function ADHudSettingsButton:new(posX, posY, width, height, setting, toolTip, state, visible)
+function ADHudSettingsButton:new(posX, posY, width, height, setting, toolTip, state, editMode)
     local o = ADHudSettingsButton:create()
     o:init(posX, posY, width, height)
     o.setting = setting
     o.toolTip = toolTip
     o.state = state
-    o.isVisible = visible
+    o.editMode = editMode
+    o.isVisible = false
 
     o.layer = 5
 
@@ -42,7 +43,7 @@ end
 
 function ADHudSettingsButton:updateState(vehicle)
     local newState = AutoDrive.getSettingState(self.setting, vehicle)
-    self.isVisible = not AutoDrive.isEditorModeEnabled() or AutoDrive.getSetting("wideHUD")
+    self.isVisible = self.editMode == nil or self.editMode == AutoDrive.isEditorModeEnabled()
     self.ov:setSliceId(self.images[newState])
     self.state = newState
 end

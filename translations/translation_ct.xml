@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="當前卸貨拖車達到設定的填充水平時，呼叫第二輛卸載拖車" />
 		<text name="gui_ad_followOnlyOnField"							text="將卸貨車輛限制在田地區域" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="在主動卸貨時將卸貨車輛限制在田地範圍內" />
-		<text name="gui_ad_addSettingsToHUD"							text="將設置添加到 HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="向 HUD 添加按鈕以在不打開此菜單的情況下更改設置" />
 		<text name="gui_ad_iconSetToUse"								text="個性化Logo" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="默認Logo或個性化Logo - 可以擴展選擇。" />
 		<text name="gui_ad_secondEditorModeAllowed"					text="使用第二編輯器模式" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="使用第二編輯器模式,而不是按住左CTRL" />
-		<text name="gui_ad_wideHUD"									text="寬HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="使用寬 HUD 模式，該模式還允許在 HUD 中添加更多設置按鈕" />
 		<text name="gui_ad_playSounds"									text="聲音" />
 		<text name="gui_ad_playSounds_tooltip"							text="啟用滑鼠點擊和通知的音效" />
 		<text name="gui_ad_scaleLines"									text="刻度線" />

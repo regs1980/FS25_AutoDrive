@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Kald 2. Aflæser, når den aktuelle læsser når påfyldningsniveauet" />
 		<text name="gui_ad_followOnlyOnField"							text="Begræns aflæsser til mark" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Begræns aflæser til marken, mens den tømmes aktivt" />
-		<text name="gui_ad_addSettingsToHUD"							text="Føj indstillinger til HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Tilføjer knapper til HUD for at ændre indstillinger uden at åbne denne menu" />
 		<text name="gui_ad_iconSetToUse"								text="Personlig Logo" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Standard logo eller personlig logo - Udvalg kan udvides." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Brug 2. editor mode" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Brug 2. editor mode til rutemanipulation i stedet for at holde LCTRL nede" />
-		<text name="gui_ad_wideHUD"									text="Bred HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Brug bred HUD-tilstand, som også tillader et par flere indstillingsknapper i HUD" />
 		<text name="gui_ad_playSounds"									text="Lyd" />
 		<text name="gui_ad_playSounds_tooltip"							text="Tænder for lyd effekter for muse klik og beskeder" />
 		<text name="gui_ad_scaleLines"									text="Skaler Linier" />

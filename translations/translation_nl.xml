@@ -222,14 +222,10 @@
 		<text name="gui_ad_callSecondUnloader_tooltip"					text="Roep tweede Ontlader als de huidige ontlader het ingestelde vulniveau heeft bereikt" />
 		<text name="gui_ad_followOnlyOnField"							text="Beperk ontlader to het veld" />
 		<text name="gui_ad_followOnlyOnField_tooltip"					text="Beperk ontlader tot het veld, wanneer deze actief aan het ontladen is" />
-		<text name="gui_ad_addSettingsToHUD"							text="Instellingen toevoegen aan HUD" />
-		<text name="gui_ad_addSettingsToHUD_tooltip"					text="Voegt knoppen toe aan de HUD om instellingen te wijzigen zonder dit menu te openen" />
 		<text name="gui_ad_iconSetToUse"								text="Logo personaliseren" />
 		<text name="gui_ad_iconSetToUse_tooltip"						text="Standaard logo of gepersonaliseerde - Selectie kan worden uitgebreid." />
 		<text name="gui_ad_secondEditorModeAllowed"					text="Gebruik tweede Editor-modus" />
 		<text name="gui_ad_secondEditorModeAllowed_tooltip"			text="Gebruik tweede Editor-modus om de route aan te passen in plaats van de LCTRL vasthouden" />
-		<text name="gui_ad_wideHUD"									text="Brede HUD" />
-		<text name="gui_ad_wideHUD_tooltip"							text="Gebruik brede hud modus, die ook een paar meer instellingen knoppen in de HUD mogelijk maakt" />
 		<text name="gui_ad_playSounds"									text="Geluid" />
 		<text name="gui_ad_playSounds_tooltip"							text="Schakelt de geluidseffecten voor muisklikken en meldingen in" />
 		<text name="gui_ad_scaleLines"									text="Scale Lines" />
