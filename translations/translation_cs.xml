@@ -13,8 +13,8 @@
 		<text name="input_ADRecord_Dual"								text="AD: 录制双向路径" />
 		<text name="input_ADRecord_SubPrio"							text="AD: 录制次优先级路径" />
 		<text name="input_ADRecord_SubPrioDual"						text="AD: 录制倒车路径" />
-		<text name="input_ADRecord_TwoWay"								text="AD: 录制两条单向路径" />
-		<text name="input_ADRecord_Dual_TwoWay"						text="AD: 录制两条双向路径" />
+		<text name="input_ADRecord_TwoWay"								text="AD: 录制两条同向路径" />
+		<text name="input_ADRecord_Dual_TwoWay"						text="AD: 录制两条对向路径" />
 		<text name="input_ADRecord_SubPrio_TwoWay"						text="AD: 录制两条次优先级路径" />
 		<text name="input_ADRecord_SubPrioDual_TwoWay"					text="AD: 录制两条倒车路径" />
 		<text name="input_ADSelectTarget"								text="AD: 选择下一个目标" />
@@ -276,10 +276,10 @@
 		<text name="gui_ad_FoldImplements_tooltip"						text="AutoDrive 会等农具收好再启动" />
 		<text name="gui_ad_RecordWhileNotInVehicle"					text="无驾驶员时录制" />
 		<text name="gui_ad_RecordWhileNotInVehicle_tooltip"			text="如果玩家离开载具，AutoDrive 将继续录制路线。" />
-		<text name="gui_ad_RecordDriveDirectionOffset"					text="行驶方向录制偏移" />
-		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="将录制的路径点相对于载具向左 (-0.1 至 -6米) 或向右 (0.1 至 6米) 偏移。注意：倒车时会停止录制！" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="反向行驶录制偏移" />
-		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="（用于双向录制）将对向车道的录制点相对于载具向左 (-0.1 至 -6米) 或向右 (0.1 至 6米) 偏移。注意：倒车时会停止录制！" />
+		<text name="gui_ad_RecordDriveDirectionOffset"					text="录制双路径同向车道间距偏移量" />
+		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="将录制同向的路径点相对于载具向左 (-0.1 至 -6米) 或向右 (0.1 至 6米) 偏移。注意：倒车时会停止录制！" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="录制双路径对向车道间距偏移量" />
+		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="将对向车道的录制点相对于载具向左 (-0.1 至 -6米) 或向右 (0.1 至 6米) 偏移。注意：倒车时会停止录制！" />
 		<text name="gui_ad_settingsPage_title"							text="设置 - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="用户设置 - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="车辆设置 - AutoDrive" />
