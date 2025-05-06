@@ -1037,13 +1037,25 @@ Sprayer.registerOverwrittenFunctions =
 	return result
 end
  ]]
-function AutoDrive:zoomSmoothly(superFunc, offset)
+
+function AutoDrive:handleSplineCurvature(offset)
+	-- returns true is the event was handled
 	if AutoDrive.splineInterpolation ~= nil and AutoDrive.splineInterpolation.valid then
         AutoDrive.splineInterpolationUserCurvature = math.clamp(AutoDrive.splineInterpolationUserCurvature + offset/12, 0.49, 3.5)
-		return
+		return true
 	end
-	if not AutoDrive.mouseWheelActive then -- don't zoom camera when mouse wheel is used to scroll targets (thanks to sperrgebiet)
+	return AutoDrive.mouseWheelActive
+end
+
+function AutoDrive:zoomSmoothly(superFunc, offset)
+	if not AutoDrive:handleSplineCurvature(offset) then
 		superFunc(self, offset)
+	end
+end
+
+function AutoDrive:onZoomTopDownCamera(superFunc, action, offset, ...)
+	if not AutoDrive:handleSplineCurvature(-offset) then
+		superFunc(self, action, offset, ...)
 	end
 end
 

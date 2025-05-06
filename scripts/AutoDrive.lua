@@ -231,6 +231,7 @@ function AutoDrive:loadMap(name)
 	LoadTrigger.onFillTypeSelection = Utils.appendedFunction(LoadTrigger.onFillTypeSelection, AutoDrive.onFillTypeSelection)
 
 	VehicleCamera.zoomSmoothly = Utils.overwrittenFunction(VehicleCamera.zoomSmoothly, AutoDrive.zoomSmoothly)
+	GuiTopDownCamera.onZoom = Utils.overwrittenFunction(GuiTopDownCamera.onZoom, AutoDrive.onZoomTopDownCamera)
 
 	LoadTrigger.load = Utils.overwrittenFunction(LoadTrigger.load, ADTriggerManager.loadTriggerLoad)
 
@@ -241,6 +242,8 @@ function AutoDrive:loadMap(name)
 	IngameMapElement.mouseEvent = Utils.overwrittenFunction(IngameMapElement.mouseEvent, AutoDrive.ingameMapElementMouseEvent)
 
 	FSBaseMission.removeVehicle = Utils.prependedFunction(FSBaseMission.removeVehicle, AutoDrive.preRemoveVehicle)
+
+	ConstructionScreen.draw = Utils.appendedFunction(ConstructionScreen.draw, AutoDrive.constructionScreenDraw)
 
 	ADRoutesManager:load()
 
@@ -579,7 +582,7 @@ end
 
 function AutoDrive:mouseEvent(posX, posY, isDown, isUp, button)
 	local vehicle = AutoDrive.getADFocusVehicle()
-	local mouseActiveForAutoDrive = (not g_gui:getIsGuiVisible() or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
+	local mouseActiveForAutoDrive = (AutoDrive.isMouseActiveForHud() or AutoDrive.isMouseActiveForEditor()) and g_inputBinding:getShowMouseCursor()
 
 	if not mouseActiveForAutoDrive then
 		AutoDrive.lastButtonDown = nil
@@ -711,6 +714,15 @@ end
 function AutoDrive:draw()
 	ADDrawingManager:draw()
 	ADMessagesManager:draw()
+end
+
+function AutoDrive:constructionScreenDraw()
+	local vehicle = AutoDrive.getControlledVehicle()
+	if vehicle ~= nil and vehicle.ad ~= nil then
+		AutoDrive.onDrawEditorMode(vehicle)
+		AutoDrive.onDrawPreviews(vehicle)
+		ADDrawingManager:draw()
+	end
 end
 
 function AutoDrive:preRemoveVehicle(vehicle)
