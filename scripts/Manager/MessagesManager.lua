@@ -59,7 +59,7 @@ function ADMessagesManager:loadHud(hud)
     hud.headerOverlay:setAlignment(Overlay.ALIGN_VERTICAL_BOTTOM, Overlay.ALIGN_HORIZONTAL_CENTER)
     hud.backgroundOverlay = g_overlayManager:createOverlay("ad_gui.messageBackground", hud.posX, hud.posY, 0, hud.backgroundOverlayHeight)
     hud.backgroundOverlay:setAlignment(Overlay.ALIGN_VERTICAL_MIDDLE, Overlay.ALIGN_HORIZONTAL_CENTER)
-    hud.dismissOverlay = g_overlayManager:createOverlay("ad_gui.input_toggleHud_1", 0, hud.posY - (textSize), hud.headerOverlayHeight * 2 / g_screenAspectRatio, hud.headerOverlayHeight * 2)
+    hud.dismissOverlay = g_overlayManager:createOverlay("ad_gui.input_toggleHud", 0, hud.posY - (textSize), hud.headerOverlayHeight * 2 / g_screenAspectRatio, hud.headerOverlayHeight * 2)
     hud.dismissOverlay:setAlignment(Overlay.ALIGN_VERTICAL_MIDDLE, Overlay.ALIGN_HORIZONTAL_CENTER)
     if hud.goToOverlay ~= nil then
         hud.goToOverlay = g_overlayManager:createOverlay("ad_gui.input_goTo_1", 0, hud.posY - (textSize), hud.headerOverlayHeight * 2 / g_screenAspectRatio, hud.headerOverlayHeight * 2)

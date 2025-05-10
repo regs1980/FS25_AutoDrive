@@ -1,18 +1,18 @@
 ADHudButton = ADInheritsFrom(ADGenericHudElement)
 
-function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fithAction, sixthAction, seventhAction, eightthAction, toolTip, state, editMode)
+function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fifthAction, sixthAction, seventhAction, eighthAction, toolTip, state, editMode)
     local o = ADHudButton:create()
     o:init(posX, posY, width, height)
     o.primaryAction = primaryAction
     o.secondaryAction = secondaryAction
     o.tertiaryAction = tertiaryAction
     o.quatenaryAction = quatenaryAction
-    o.fithAction = fithAction
+    o.fifthAction = fifthAction
     o.sixthAction = sixthAction
     o.seventhAction = seventhAction
-    o.eightthAction = eightthAction
-    o.toolTip = toolTip
-    o.state = state
+    o.eighthAction = eighthAction
+    o.toolTip = toolTip or ""
+    o.state = state or 0
     o.editMode = editMode
     o.isVisible = false
 
@@ -27,7 +27,7 @@ end
 
 function ADHudButton:readImages()
     local images = {}
-    local counter = 1
+    local counter = 0
 
     local path = self.primaryAction
     if self.primaryAction == "input_toggleAutomaticPickupTarget" then
@@ -37,7 +37,10 @@ function ADHudButton:readImages()
     local adTextureConfig = g_overlayManager.textureConfigs["ad_gui"]
     while counter <= 20 do
         -- we can't exit early here, because we have gaps e.g. input_startHelper
-        local sliceId = path .. "_" .. counter
+        local sliceId = path
+        if counter > 0 then 
+            sliceId = path .. "_" .. counter
+        end
         if adTextureConfig.slices[sliceId] ~= nil then
             images[counter] = "ad_gui." .. sliceId
         end
@@ -253,7 +256,7 @@ function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
             ADInputManager:onInputCall(vehicle, self.quatenaryAction)
             return true
         elseif button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.fithAction)
+            ADInputManager:onInputCall(vehicle, self.fifthAction)
             return true
         elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
             ADInputManager:onInputCall(vehicle, self.sixthAction)
@@ -262,7 +265,7 @@ function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
             ADInputManager:onInputCall(vehicle, self.seventhAction)
             return true
         elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.eightthAction)
+            ADInputManager:onInputCall(vehicle, self.eighthAction)
             return true
         end
 

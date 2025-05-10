@@ -7,11 +7,44 @@ AutoDrive.ItemFilterList = {}
 AutoDrive.pullDownListExpanded = 0
 AutoDrive.pullDownListDirection = 0
 AutoDrive.mouseWheelActive = false
+AutoDrive.mouseOverHud = false
 
 AutoDriveHud.debug = false
 
 AutoDriveHud.defaultHeaderHeight = 0.016
 AutoDriveHud.extendedHeaderHeight = 0.200
+
+AutoDriveHud.ELEMENTS = {
+	["pulldownTarget"] = { w = 7, h = 1 },
+	["pulldownUnload"] = { w = 7, h = 1 },
+	["pulldownFilltype"] = { w = 7, h = 1 },
+	["record"] = { w = 1, h = 1, button = {[1] = "input_record", [2] = "input_record_dual", [3] = "input_record_subPrio", [4] = "input_record_subPrioDual", [5] = "input_record_twoWay", [6] = "input_record_dualTwoWay", [7] = "input_record_subPrioTwoWay", [8] = "input_record_subPrioDualTwoWay", tip="input_ADRecord"}},
+	["routesManager"] = { w = 1, h = 1, button = {[1] = "input_routesManager", tip="input_AD_routes_manager"}},
+	["createMarker"] = { w = 1, h = 1, button = {[1] = "input_createMapMarker", tip="input_ADDebugCreateMapMarker"}},
+	["removeWaypoint"] = { w = 1, h = 1, button = {[1] = "input_removeWaypoint", [2] = "input_removeMapMarker", tip="input_ADDebugDeleteWayPoint"}},
+	["editMarker"] = { w = 1, h = 1, button = {[1] = "input_editMapMarker", tip="input_ADRenameMapMarker"}},
+	["removeMarker"] = { w = 1, h = 1, button = {[1] = "input_removeMapMarker", tip="input_ADDebugDeleteDestination"}},
+	["startHelper"] = { w = 1, h = 1, button = {[1] = "input_startHelper", [2] = "input_toggleUsedHelper", tip="hud_startHelper"}},
+	["fieldSpeed"] = { w = 1, h = 1, speed = {field = true} },
+	["settings"] = { w = 1, h = 1, button = {[1] = "input_openGUI", tip="input_ADOpenGUI"}},
+	["startStop"] = { w = 1, h = 1, button = {[1] = "input_start_stop", tip="input_ADEnDisable"}},
+	["mode"] = { w = 1, h = 1, button = {[1] = "input_silomode", [2] = "input_previousMode", tip="input_ADSilomode"}},
+	["continue"] = { w = 1, h = 1, button = {[1] = "input_continue", tip="input_AD_continue"}},
+	["park"] = { w = 1, h = 1, button = {[1] = "input_parkVehicle", [2] = "input_setParkDestination", [6] = "input_setParkDestination", tip="input_ADParkVehicle"}},
+	["loopCounter"] = { w = 1, h = 1 },
+	["speed"] = { w = 1, h = 1, speed = {field = false} },
+	["editor"] = { w = 1, h = 1, button={[1] = "input_debug", [2] = "input_displayMapPoints",  tip="input_ADActivateDebug"}},
+	["trafficDetection"] = { w = 1, h = 1, settings = {[1] = "enableTrafficDetection", tip="gui_ad_enableTrafficDetection"}},
+	["rotateTargets"] = { w = 1, h = 1, settings = {[1] = "rotateTargets", tip="gui_ad_rotateTargets"}},
+	["exitField"] = { w = 1, h = 1, settings = {[1] = "exitField", tip="gui_ad_exitField"}},
+	["restrictToField"] = { w = 1, h = 1, settings = {[1] = "restrictToField", tip="gui_ad_restrictToField"}},
+	["avoidFruit"] = { w = 1, h = 1, settings = {[1] = "avoidFruit", tip="gui_ad_avoidFruit"}},
+	["decHudWidth"] = { w = 1, h = 1, editor = {[1] = "decHudWidth"}},
+	["incHudWidth"] = { w = 1, h = 1, editor = {[1] = "incHudWidth"}},
+	["decHudHeight"] = { w = 1, h = 1, editor = {[1] = "decHudHeight"}},
+	["incHudHeight"] = { w = 1, h = 1, editor = {[1] = "incHudHeight"}},
+	["rotatePresets"] = { w = 1, h = 1, editor = {[1] = "rotatePresets"}},
+}
 
 function AutoDriveHud:new()
 	local o = {}
@@ -90,10 +123,9 @@ function AutoDriveHud:loadHud()
 		local name = getXMLString(xml, key .. "#name")
 		local x = getXMLInt(xml, key .. "#x")
 		local y = getXMLInt(xml, key .. "#y")
-		local width = getXMLInt(xml, key .. "#width") or 1
 		local edit = getXMLBool(xml, key .. "#edit")
 		i = i + 1
-		self.elements[i] = { name = name, x = x, y = y, width = width, edit=edit}
+		self.elements[i] = { name = name, x = x, y = y, edit = edit }
 	end
 
 	if AutoDrive.HudX == nil or AutoDrive.HudY == nil then
@@ -116,6 +148,7 @@ function AutoDriveHud:loadHud()
 	end
 	self.isMoving = false
 	self.isShowingTips = false
+	self.isEditingHud = false
 end
 
 function AutoDriveHud:createHudAt(hudX, hudY)
@@ -149,6 +182,13 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	AutoDrive.HudX = self.posX
 	AutoDrive.HudY = self.posY
 
+	self.hudEditorElementsH = 10
+	self.hudEditorElementsV = 4
+	self.hudEditorWidth = self.hudEditorElementsH * (self.elementWidth + self.gapWidth) + self.gapWidth
+	self.hudEditorHeight = self.hudEditorElementsV * (self.elementHeight + self.gapHeight) + self.gapHeight
+	self.hudEditorPosX = self.posX - self.hudEditorWidth - self.gapWidth
+	self.hudEditorPosY = self.posY + self.height - self.hudEditorHeight
+
 	self.hudElements = {}
 
 	-- background
@@ -156,9 +196,15 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	table.insert(self.hudElements, ADHudIcon:new(self.posX, self.posY, self.width, self.height, "ad_gui.Background", 0, "background"))
 	table.insert(self.hudElements, ADHudIcon:new(self.posX, headerY, self.width, self.headerHeight, "ad_gui.Header", 1, "header"))
 
+	-- HUD editor
+	if self.isEditingHud then
+		self:createHudEditor()
+	end
+
 	-- header icons
-	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHud", nil, nil, nil, nil, nil, nil, nil, "", 1))
-	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - 2 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHudExtension", nil, nil, nil, nil, nil, nil, nil, "", 1))
+	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHud"))
+	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - 2 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHudExtension"))
+	table.insert(self.hudElements, ADHudEditorButton:new(self.posX + self.width - 3 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "toggleEditHud"))
 
 	-- hud elements
 	for _, element in ipairs(self.elements) do
@@ -169,82 +215,77 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	self:refreshHudElementsLayerSequence()
 end
 
+function AutoDriveHud:createHudEditor()
+	table.insert(self.hudElements, ADHudIcon:new(self.hudEditorPosX, self.hudEditorPosY, self.hudEditorWidth, self.hudEditorHeight, "ad_gui.Background", 0, "editorBackground"))
+	self:addElement({ name = "decHudWidth", x = 0, y = 0, hudEditor = true })
+	self:addElement({ name = "incHudWidth", x = 1, y = 0, hudEditor = true })
+	self:addElement({ name = "decHudHeight", x = 2, y = 0, hudEditor = true })
+	self:addElement({ name = "incHudHeight", x = 3, y = 0, hudEditor = true })
+	self:addElement({ name = "rotatePresets", x = 4, y = 0, hudEditor = true })
+end
+
 function AutoDriveHud:addElement(element)
+	local config = AutoDriveHud.ELEMENTS[element.name]
+	if config == nil then
+		Logging.error("Unknown HUD element: %s", element.name)
+		return
+	end
+
 	local vehicle = AutoDrive.getADFocusVehicle()
-
-	local x = self.posX + element.x * (self.elementWidth + self.gapWidth) + self.gapWidth
-	local y = self.posY + element.y * (self.elementHeight + self.gapHeight) + self.gapWidth
-	local width = element.width * (self.elementWidth + self.gapWidth) - self.gapWidth
-	local height = self.elementHeight
 	local edit = element.edit
-	
-	if element.name == "toggleTarget" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, edit))
+	local h = config.h * (self.elementHeight + self.gapHeight) - self.gapHeight
+
+	local posX, posY, numV = self.posX, self.posY, self.numElementsV
+	if element.hudEditor then
+		posX, posY, numV = self.hudEditorPosX, self.hudEditorPosY, self.hudEditorElementsV
+	elseif element.x + config.w > self.numElementsH then
+		return
+	elseif element.y + config.h > self.numElementsV then
+		return
+	end
+
+	local function X(offset)
+		offset = offset or 0
+		return posX + (element.x + offset) * (self.elementWidth + self.gapWidth) + self.gapWidth
+	end
+	local function Y(offset)
+		offset = offset or 0
+		return posY + (numV - element.y - offset - 1) * (self.elementHeight + self.gapHeight) + self.gapHeight
+	end
+	local function W(w)
+		w = w or config.w
+		return w * (self.elementWidth + self.gapWidth) - self.gapWidth
+	end
+
+	if config.button ~= nil then
+		local btn = config.button
+		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(), h, btn[1], btn[2], btn[3], btn[4], btn[5], btn[6], btn[7], btn[8], btn.tip, 1, edit))
+	elseif config.speed ~= nil then
+		table.insert(self.hudElements, ADHudSpeedmeter:new(X(), Y(), W(), h, config.speed.field))
+	elseif config.settings ~= nil then
+		table.insert(self.hudElements, ADHudSettingsButton:new(X(), Y(), W(), h, config.settings[1], config.settings.tip, 1, edit))
+	elseif config.editor ~= nil then
+		table.insert(self.hudElements, ADHudEditorButton:new(X(), Y(), W(), h, config.editor[1], config.editor.tip))
+
 	elseif element.name == "pulldownTarget" then
-		self.targetPullDownList = ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_TARGET, 1)
+		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, edit))
+		self.targetPullDownList = ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_TARGET, 1)
 		table.insert(self.hudElements, self.targetPullDownList)
-
-	elseif element.name == "toggleUnload" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, edit))
 	elseif element.name == "pulldownUnload" then
-		table.insert(self.hudElements, ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1))
-
-	elseif element.name == "toggleFilltype" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, edit))
+		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, edit))
+		table.insert(self.hudElements, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1))
 	elseif element.name == "pulldownFilltype" then
-		table.insert(self.hudElements, ADPullDownList:new(x, y, width, self.listItemHeight, ADPullDownList.TYPE_FILLTYPE, 1))
-		table.insert(self.hudElements, HudHarvesterInfo:new(x, y, width, self.listItemHeight))
-
-	elseif element.name == "record" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_record", "input_record_dual", "input_record_subPrio", "input_record_subPrioDual", "input_record_twoWay", "input_record_dualTwoWay", "input_record_subPrioTwoWay", "input_record_subPrioDualTwoWay", "input_ADRecord", 1, edit))
-	elseif element.name == "routesManager" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_routesManager", nil, nil, nil, nil, nil, nil, nil, "input_AD_routes_manager", 1, edit))
-	elseif element.name == "createMarker" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_createMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugCreateMapMarker", 1, edit))
-	elseif element.name == "removeWaypoint" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_removeWaypoint", "input_removeMapMarker", nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteWayPoint", 1, edit))
-	elseif element.name == "editMarker" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_editMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADRenameMapMarker", 1, edit))
-	elseif element.name == "removeMarker" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_removeMapMarker", nil, nil, nil, nil, nil, nil, nil, "input_ADDebugDeleteDestination", 1, edit))
-	elseif element.name == "startHelper" then
-		if vehicle then
-			local usedHelper = vehicle.ad.stateModule:getUsedHelper()
-			local state = (usedHelper * 2) - 1
-			table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_startHelper", "input_toggleUsedHelper", nil, nil, nil, nil, nil, nil, "hud_startHelper", state, edit))
-	 	end
-	elseif element.name == "fieldSpeed" then
-		table.insert(self.hudElements, ADHudSpeedmeter:new(x, y, width, height, true))
-	elseif element.name == "settings" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_openGUI", nil, nil, nil, nil, nil, nil, nil, "input_ADOpenGUI", 1, edit))
-	elseif element.name == "startStop" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_start_stop", nil, nil, nil, nil, nil, nil, nil, "input_ADEnDisable", 1, edit))
-	elseif element.name == "mode" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_silomode", "input_previousMode", nil, nil, nil, nil, nil, nil, "input_ADSilomode", 1, edit))
-	elseif element.name == "continue" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_continue", nil, nil, nil, nil, nil, nil, nil, "input_AD_continue", 1, edit))
-	elseif element.name == "park" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_parkVehicle", "input_setParkDestination", nil, nil, nil, "input_setParkDestination", nil, nil, "input_ADParkVehicle", 1, edit))
+		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, edit))
+		table.insert(self.hudElements, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_FILLTYPE, 1))
+		table.insert(self.hudElements, HudHarvesterInfo:new(X(1), Y(), W(6), self.listItemHeight))
 	elseif element.name == "loopCounter" then
 		if vehicle == nil or vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA then
-	 		table.insert(self.hudElements, ADHudCounterButton:new(x, y, width, height, "loop_counter"))
+	 		table.insert(self.hudElements, ADHudCounterButton:new(X(), Y(), W(), h, "loop_counter"))
 		else
-			table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, edit))
+			table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(), h, "input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, edit))
 		end
-	elseif element.name == "speed" then
-		table.insert(self.hudElements, ADHudSpeedmeter:new(x, y, width, height, false))
-	elseif element.name == "editor" then
-		table.insert(self.hudElements, ADHudButton:new(x, y, width, height, "input_debug", "input_displayMapPoints", nil, nil, nil, nil, nil, nil, "input_ADActivateDebug", 1, edit))
-	elseif element.name == "trafficDetection" then
-		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "enableTrafficDetection", "gui_ad_enableTrafficDetection", 1, edit))
-	elseif element.name == "rotateTargets" then
-		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "rotateTargets", "gui_ad_rotateTargets", 1, edit))
-	elseif element.name == "exitField" then
-		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "exitField", "gui_ad_exitField", 1, edit))
-	elseif element.name == "restrictToField" then
-		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "restrictToField", "gui_ad_restrictToField", 1, edit))
-	elseif element.name == "avoidFruit" then
-		table.insert(self.hudElements, ADHudSettingsButton:new(x, y, width, height, "avoidFruit", "gui_ad_avoidFruit", 1, edit))
+	else
+		Logging.error("Unknown HUD element: %s", element.name)
 	end
 end
 
@@ -703,6 +744,7 @@ function AutoDriveHud:mouseEvent(vehicle, posX, posY, isDown, isUp, button)
 			AutoDrive.splineInterpolation.valid = false
 		end
 		AutoDrive.mouseWheelActive = false
+		AutoDrive.mouseOverHud = AutoDriveHud:isMouseOverHud(posX, posY)
 
         if AutoDrive.isMouseActiveForHud() then
     		mouseEventHandled = self:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp, button)

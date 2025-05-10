@@ -14,10 +14,6 @@ function ADHudIcon:new(posX, posY, width, height, image, layer, name)
 end
 
 function ADHudIcon:onDraw(vehicle, uiScale)
-    self:updateVisibility(vehicle)
-
-    self:updateIcon(vehicle)
-
     if self.name == "header" then
         self:onDrawHeader(vehicle, uiScale)
     end
@@ -53,7 +49,7 @@ function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
     textToShow = textToShow .. " - " .. AutoDrive.version
     textToShow = textToShow .. " - " .. AutoDriveHud:getModeName(vehicle)
     textToShow = self:addVehicleDriveTimeString(vehicle, textToShow)
-    textToShow = self:addTooltipString(vehicle, textToShow)    
+    textToShow = self:addTooltipString(vehicle, textToShow)
 
     local taskInfo = vehicle.ad.stateModule:getCurrentLocalizedTaskInfo()
     if taskInfo ~= "" then
@@ -153,27 +149,6 @@ function ADHudIcon:splitTextByLength(text, fontSize, maxLength)
     return lines
 end
 
-function ADHudIcon:updateVisibility(vehicle)
-    local newVisibility = self.isVisible
-    if self.name == "unloadOverlay" then
-        if (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD) then
-            newVisibility = true
-        else
-            newVisibility = false
-        end
-    end
-    
-    if self.name == "fruitOverlay" then
-        if (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD) then
-            newVisibility = true
-        else
-            newVisibility = false
-        end
-    end
-
-    self.isVisible = newVisibility
-end
-
 function ADHudIcon:act(vehicle, posX, posY, isDown, isUp, button)
     if self.name == "header" then
         if button == 1 and isDown and AutoDrive.pullDownListExpanded == 0 then
@@ -184,30 +159,4 @@ function ADHudIcon:act(vehicle, posX, posY, isDown, isUp, button)
         end
     end
     return false
-end
-
-function ADHudIcon:updateIcon(vehicle)
-    local newIcon = self.image
-    if self.name == "unloadOverlay" then
-        if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD then
-            newIcon = "ad_gui.tipper_load"
-        elseif vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER then
-            newIcon = "ad_gui.tipper_overlay"
-        elseif vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD then
-            newIcon = "ad_gui.tipper_overlay"
-        end
-    elseif self.name == "destinationOverlay" then
-        if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER then
-            newIcon = "ad_gui.tipper_load"
-        elseif vehicle.ad.stateModule:getMode() == AutoDrive.MODE_DELIVERTO then
-            newIcon = "ad_gui.tipper_overlay"
-        elseif vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA then
-            newIcon = "ad_gui.destination"
-        end
-    end
-
-    self.image = newIcon
-    if self.ov ~= nil then
-        self.ov:setSliceId(self.image)
-    end
 end
