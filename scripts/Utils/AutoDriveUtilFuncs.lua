@@ -296,6 +296,34 @@ function AutoDrive.cycleEditorShowMode()
     end
 end
 
+function AutoDrive.isInConstructionModeEditor()
+    if not g_gui:getIsGuiVisible() or g_gui.currentGuiName ~= "ConstructionScreen" or g_constructionScreen == nil then
+        -- not in construction screen
+        return false
+    end
+    if g_constructionScreen.categorySelector == nil  or g_constructionScreen.categories == nil or g_constructionScreen.camera == nil then
+        return false
+    end
+    local index = g_constructionScreen.categorySelector.selectedIndex
+    if index == nil or g_constructionScreen.categories[index] == nil then
+        return false
+    end
+    if g_constructionScreen.categories[index].name ~= "LANDSCAPING" then
+        -- not in landscaping category
+        return false
+    end
+    return true
+end
+
+function AutoDrive.isMouseActiveForHud()
+    return not g_gui:getIsGuiVisible() or (g_gui.currentGuiName == "InGameMenu" and AutoDrive.aiFrameOpen)
+end    
+
+function AutoDrive.isMouseActiveForEditor()
+    return not g_gui:getIsGuiVisible() or AutoDrive.isInConstructionModeEditor()
+end    
+
+
 function AutoDrive.getSelectedWorkTool(vehicle)
     local selectedWorkTool = nil
 
@@ -384,10 +412,31 @@ function AutoDrive.foldAllImplements(vehicle)
     AutoDrive.setAugerPipeOpen(implements, false) -- close all pipes first
     AutoDrive.closeAllCurtains(implements, true) -- close curtain at UAL trailers
     for _, implement in pairs(implements) do
-        spec = implement.spec_baleLoader
-        if spec and spec.doStateChange then
-            if spec.isInWorkPosition and spec.emptyState == BaleLoader.EMPTY_NONE then
-                spec:doStateChange(BaleLoader.CHANGE_BUTTON_WORK_TRANSPORT)
+        local specs = implement.spec_baleLoader and implement.spec_baler
+        if specs then
+            if not implement.spec_baleLoader.fullAutomaticUnloading then
+                -- TODO: check in case an implement without fullAutomaticUnloading comes into picture
+                -- at the moment only Krone BiG Pack 1290 HDP VC use this configuration of baler and baleunloader with fullAutomaticUnloading
+                if implement:getFillUnitFillLevel(implement.spec_baleLoader.fillUnitIndex) > 0 then
+                    -- BaleLoader
+                    if implement:getIsAutomaticBaleUnloadingAllowed() then
+                        if not implement:getIsAutomaticBaleUnloadingInProgress() then
+                            implement:startAutomaticBaleUnloading()
+                        end
+                    end
+                else
+                    -- Baler
+                    if implement:isUnloadingAllowed() then
+                        implement:dropBaleFromPlatform()
+                    end
+                end
+            end
+        else
+            spec = implement.spec_baleLoader
+            if spec and spec.doStateChange then
+                if spec.isInWorkPosition and spec.emptyState == BaleLoader.EMPTY_NONE then
+                    spec:doStateChange(BaleLoader.CHANGE_BUTTON_WORK_TRANSPORT)
+                end
             end
         end
         spec = implement.spec_plow
@@ -397,12 +446,27 @@ function AutoDrive.foldAllImplements(vehicle)
             end
         end
         spec = implement.spec_foldable
-        if spec and not AutoDrive.isVehicleFolded(implement) then
-            if spec ~= nil and implement.getToggledFoldDirection then
-                if implement:getToggledFoldDirection() ~= spec.turnOnFoldDirection then
-                    local toggledFoldDirection = implement:getToggledFoldDirection()
-                    if implement.getIsFoldAllowed and toggledFoldDirection and implement:getIsFoldAllowed(toggledFoldDirection) and implement.setFoldState then
-                        implement:setFoldState(toggledFoldDirection, false)
+        if spec then
+            local shouldFold = true
+            if implement.spec_baler then
+                -- delay folding for baler with and without collector to ensure all unloadable bales are unloaded before folding
+                if implement.ad == nil then
+                    implement.ad = {}
+                end
+                if implement:getIsBaleUnloading() then
+                    implement.ad.foldDelay = g_time
+                end
+                if implement.ad.foldDelay and implement.ad.foldDelay + 1000 > g_time then
+                    shouldFold = false
+                end
+            end
+            if shouldFold and not AutoDrive.isVehicleFolded(implement) then
+                if spec ~= nil and implement.getToggledFoldDirection then
+                    if implement:getToggledFoldDirection() ~= spec.turnOnFoldDirection then
+                        local toggledFoldDirection = implement:getToggledFoldDirection()
+                        if implement.getIsFoldAllowed and toggledFoldDirection and implement:getIsFoldAllowed(toggledFoldDirection) and implement.setFoldState then
+                            implement:setFoldState(toggledFoldDirection, false)
+                        end
                     end
                 end
             end
@@ -429,6 +493,12 @@ function AutoDrive.getAllImplementsFolded(vehicle)
             ret = ret and not implement:getIsAutomaticBaleUnloadingInProgress()
             ret = ret and not implement:getIsBaleLoaderFoldingPlaying()
             ret = ret and spec.emptyState == BaleLoader.EMPTY_NONE
+        end
+
+        spec = implement.spec_baler
+        if spec then
+            -- baler
+            ret = ret and implement:getIsFoldAllowed() and not implement:getIsBaleUnloading()
         end
 
         spec = implement.spec_foldable

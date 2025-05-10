@@ -542,9 +542,7 @@ function AutoDrive:onDrawUIInfo()
 
     if (AutoDrive.isEditorModeEnabled() or AutoDrive.isEditorShowEnabled()) then
         self:onDrawEditorMode()
-        if AutoDrive.splineInterpolation ~= nil and AutoDrive.splineInterpolation.valid then
-            self:onDrawPreviews()
-        end
+        self:onDrawPreviews()
     end
 
     local x, y, z = getWorldTranslation(self.components[1].node)
@@ -625,6 +623,10 @@ function AutoDrive:onDrawUIInfo()
 end
 
 function AutoDrive:onDrawPreviews()
+    if AutoDrive.splineInterpolation == nil or not AutoDrive.splineInterpolation.valid then
+        return
+    end
+
     local lastHeight = AutoDrive.splineInterpolation.startNode.y
     local lastWp = AutoDrive.splineInterpolation.startNode
     local targetWp = AutoDrive.splineInterpolation.endNode
@@ -809,9 +811,23 @@ function AutoDrive:onDrawEditorMode()
     local DrawingManager = ADDrawingManager
 
     local startNode = self.components[1].node
-    local x1, y1, z1 = getWorldTranslation(startNode)
+    local x, y, z = getWorldTranslation(startNode)
 
-    local dy = y1 + 3.5 - AutoDrive.getSetting("lineHeight")
+    local isEditorShowEnabled = AutoDrive.isEditorShowEnabled()
+    local isInExtendedEditorMode = AutoDrive.isInExtendedEditorMode()
+    local isInConstructionModeEditor = AutoDrive.isInConstructionModeEditor()
+
+    if g_gui:getIsGuiVisible() and not isInConstructionModeEditor then
+        isEditorShowEnabled = false
+        isInExtendedEditorMode = false
+    end
+
+    if isInConstructionModeEditor then
+        x = g_constructionScreen.camera.cameraX
+        z = g_constructionScreen.camera.cameraZ
+    end
+
+    local dy = y + 3.5 - AutoDrive.getSetting("lineHeight")
     local maxDistance = AutoDrive.drawDistance
     local arrowPosition = DrawingManager.arrows.position.start
 
@@ -827,8 +843,7 @@ function AutoDrive:onDrawEditorMode()
                     and not AutoDrive.leftALTmodifierKeyPressed
                     and not AutoDrive.rightSHIFTmodifierKeyPressed
 
-    if AutoDrive.isEditorShowEnabled() or AutoDrive.isInExtendedEditorMode() then
-        local x, y, z = getWorldTranslation(self.components[1].node)
+    if isEditorShowEnabled or isInExtendedEditorMode then
         local distance = MathUtil.vector2Length(x - self.ad.lastDrawPosition.x, z - self.ad.lastDrawPosition.z)
         if distance > AutoDrive.drawDistance / 2 then
             self.ad.lastDrawPosition = {x = x, z = z}
@@ -840,12 +855,16 @@ function AutoDrive:onDrawEditorMode()
         self:resetWayPointsDistance()
         ADGraphManager:resetChanges()
     end
+    
+    if self.ad.distances.wayPoints == nil then
+        self:updateWayPointsDistance(x, z)
+    end
 
     --Draw close destinations
     for _, marker in pairs(ADGraphManager:getMapMarkers()) do
         local wp = ADGraphManager:getWayPointById(marker.id)
         if wp then
-            if MathUtil.vector2Length(wp.x - x1, wp.z - z1) < maxDistance then
+            if MathUtil.vector2Length(wp.x - x, wp.z - z) < maxDistance then
                 local scale = AutoDrive.getSetting("scaleMarkerText") or 1
                 Utils.renderTextAtWorldPosition(wp.x, wp.y + 4, wp.z, marker.name, getCorrectTextSize(0.013) * scale, 0)
                 DrawingManager:addMarkerTask(wp.x, wp.y + 0.45, wp.z)
@@ -853,19 +872,22 @@ function AutoDrive:onDrawEditorMode()
         end
     end
 
-    if ADGraphManager:getWayPointById(1) ~= nil and not AutoDrive.isEditorShowEnabled() then
+    if ADGraphManager:getWayPointById(1) ~= nil
+        and isInExtendedEditorMode
+        and not isInConstructionModeEditor
+        then
         --Draw line to selected neighbor point
         local neighbour = self.ad.stateModule:getSelectedNeighbourPoint()
         if neighbour ~= nil then
-            DrawingManager:addLineTask(x1, dy, z1, neighbour.x, neighbour.y, neighbour.z, 1, 1, 1, 0)
+            DrawingManager:addLineTask(x, dy, z, neighbour.x, neighbour.y, neighbour.z, 1, 1, 1, 0)
         end
 
         --Draw line to closest point
         local closest, _ = self:getClosestWayPoint(true)
         local wp = ADGraphManager:getWayPointById(closest)
         if wp ~= nil then
-            DrawingManager:addLineTask(x1, dy, z1, wp.x, wp.y, wp.z, 1, unpack(AutoDrive.currentColors.ad_color_closestLine))
-            DrawingManager:addSmallSphereTask(x1, dy, z1, unpack(AutoDrive.currentColors.ad_color_closestLine))
+            DrawingManager:addLineTask(x, dy, z, wp.x, wp.y, wp.z, 1, unpack(AutoDrive.currentColors.ad_color_closestLine))
+            DrawingManager:addSmallSphereTask(x, dy, z, unpack(AutoDrive.currentColors.ad_color_closestLine))
         end
     end
 
@@ -876,7 +898,7 @@ function AutoDrive:onDrawEditorMode()
         local z = point.z
         local isSubPrio = ADGraphManager:getIsPointSubPrio(point.id)
 
-        if AutoDrive.isInExtendedEditorMode() then
+        if isInExtendedEditorMode then
             arrowPosition = DrawingManager.arrows.position.middle
             if AutoDrive.enableSphere == true then
                 if AutoDrive.mouseIsAtPos(point, 0.01) or point.isSelected then
@@ -937,7 +959,7 @@ function AutoDrive:onDrawEditorMode()
         end
 
 -- draw connection lines
-        if point.out ~= nil then
+        if point.out ~= nil and (isInExtendedEditorMode or isInConstructionModeEditor or isEditorShowEnabled) then
 
             for _, neighbor in pairs(point.out) do
                 -- if a section is active, skip these connections, they are drawn below
@@ -1063,7 +1085,7 @@ function AutoDrive:onDrawEditorMode()
         end
     end
 
-    if AutoDrive.isInExtendedEditorMode() and AutoDrive.enableSphere == true then
+    if isInExtendedEditorMode and AutoDrive.enableSphere == true then
         if self.ad.selectionWayPoints and #self.ad.selectionWayPoints > 0 then
             -- draw range circle for selection wayPoints
             local selectedWayPoint = ADGraphManager:getWayPointById(self.ad.selectedNodeId)
@@ -1483,14 +1505,16 @@ function AutoDrive:adGetRemainingDriveTime()
     return 0
 end
 
-function AutoDrive:updateWayPointsDistance()
+function AutoDrive:updateWayPointsDistance(x, z)
     self.ad.distances.wayPoints = {}
     self.ad.distances.closest.wayPoint = nil
     self.ad.distances.closest.distance = math.huge
     self.ad.distances.closestNotReverse.wayPoint = nil
     self.ad.distances.closestNotReverse.distance = math.huge
 
-    local x, _, z = getWorldTranslation(self.components[1].node)
+    if x == nil or z == nil then
+        x, _, z = getWorldTranslation(self.components[1].node)
+    end
 
     --We should see some perfomance increase by localizing the sqrt/pow functions right here
     local sqrt = math.sqrt

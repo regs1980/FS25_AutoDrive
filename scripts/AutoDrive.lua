@@ -85,6 +85,13 @@ AutoDrive.USER_PLAYER = 1
 AutoDrive.USER_GIANTS = 2
 AutoDrive.USER_CP = 3
 
+AutoDrive.CHASEPOS_UNKNOWN = 0
+AutoDrive.CHASEPOS_AUTO = 5
+AutoDrive.CHASEPOS_LEFT = 1
+AutoDrive.CHASEPOS_RIGHT = -1
+AutoDrive.CHASEPOS_REAR = 3
+AutoDrive.CHASEPOS_FRONT = 4
+
 AutoDrive.colors = {
 	ad_color_singleConnection = { 0, 1, 0, 1 },
 	ad_color_dualConnection = { 0, 0, 1, 1 },
@@ -224,6 +231,7 @@ function AutoDrive:loadMap(name)
 	LoadTrigger.onFillTypeSelection = Utils.appendedFunction(LoadTrigger.onFillTypeSelection, AutoDrive.onFillTypeSelection)
 
 	VehicleCamera.zoomSmoothly = Utils.overwrittenFunction(VehicleCamera.zoomSmoothly, AutoDrive.zoomSmoothly)
+	GuiTopDownCamera.onZoom = Utils.overwrittenFunction(GuiTopDownCamera.onZoom, AutoDrive.onZoomTopDownCamera)
 
 	LoadTrigger.load = Utils.overwrittenFunction(LoadTrigger.load, ADTriggerManager.loadTriggerLoad)
 
@@ -234,6 +242,8 @@ function AutoDrive:loadMap(name)
 	IngameMapElement.mouseEvent = Utils.overwrittenFunction(IngameMapElement.mouseEvent, AutoDrive.ingameMapElementMouseEvent)
 
 	FSBaseMission.removeVehicle = Utils.prependedFunction(FSBaseMission.removeVehicle, AutoDrive.preRemoveVehicle)
+
+	ConstructionScreen.draw = Utils.appendedFunction(ConstructionScreen.draw, AutoDrive.constructionScreenDraw)
 
 	ADRoutesManager:load()
 
@@ -572,7 +582,7 @@ end
 
 function AutoDrive:mouseEvent(posX, posY, isDown, isUp, button)
 	local vehicle = AutoDrive.getADFocusVehicle()
-	local mouseActiveForAutoDrive = (not g_gui:getIsGuiVisible() or AutoDrive.aiFrameOpen) and (g_inputBinding:getShowMouseCursor() == true)
+	local mouseActiveForAutoDrive = (AutoDrive.isMouseActiveForHud() or AutoDrive.isMouseActiveForEditor()) and g_inputBinding:getShowMouseCursor()
 
 	if not mouseActiveForAutoDrive then
 		AutoDrive.lastButtonDown = nil
@@ -704,6 +714,15 @@ end
 function AutoDrive:draw()
 	ADDrawingManager:draw()
 	ADMessagesManager:draw()
+end
+
+function AutoDrive:constructionScreenDraw()
+	local vehicle = AutoDrive.getControlledVehicle()
+	if vehicle ~= nil and vehicle.ad ~= nil then
+		AutoDrive.onDrawEditorMode(vehicle)
+		AutoDrive.onDrawPreviews(vehicle)
+		ADDrawingManager:draw()
+	end
 end
 
 function AutoDrive:preRemoveVehicle(vehicle)
