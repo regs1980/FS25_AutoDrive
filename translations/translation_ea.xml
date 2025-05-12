@@ -250,6 +250,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Sí: Los descargadores de AutoDrive intentan planificar un camino hacia adelante para adaptarse al giro de 90° de la cosechadora./No - Los descargadores se revertirán antes del giro" />
 		<text name="gui_ad_ALUnload"									text="Autocarga: Posición de descarga" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Apagado: La posición de descarga depende de la configuración del vehículo, no de AutoDrive)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="No descargar" />
 		<text name="gui_ad_AL_center"									text="Descargar sobre el vehiculo" />
 		<text name="gui_ad_AL_left"									text="Descargar a la izquierda" />

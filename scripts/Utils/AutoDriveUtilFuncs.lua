@@ -806,23 +806,30 @@ function AutoDrive.getADFocusVehicle(debug)
     return vehicle
 end
 
-function AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(vehicle)
+function AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(vehicle, excludedFillType)
     local supportedFillTypes = {}
-    local autoLoadFillTypes = nil -- AutoLoad - TODO: return the correct fillTypes
+    local autoLoadFillTypes = nil -- AutoLoad
 
     if vehicle ~= nil then
-        local hasAL = false
         local trailers, _ = AutoDrive.getAllUnits(vehicle)
         if trailers then
+            -- AutoLoad
             for _, trailer in ipairs(trailers) do
-                hasAL = hasAL or AutoDrive:hasAL(trailer)
+                if AutoDrive:hasAL(trailer) then
+                    local alFillTypes = AutoDrive:getALFillTypes(trailer)
+                    if alFillTypes ~= nil and #alFillTypes > 0 then
+                        -- self.autoLoadFillTypes is either nil or it contains items. It is never empty.
+                        autoLoadFillTypes = alFillTypes
+                        break
+                    end
+                end
             end
         end
-        supportedFillTypes = {}
-        if trailers and hasAL then
-            -- AutoLoad - TODO: return the correct fillTypes
-            for trailerIndex, trailer in ipairs(trailers) do
-                autoLoadFillTypes = AutoDrive:getALFillTypes(trailer)
+        if autoLoadFillTypes ~= nil then
+            for _, fillType in ipairs(autoLoadFillTypes) do
+                if fillType.fillTypeID ~= excludedFillType then
+                    table.insert(supportedFillTypes, fillType.fillTypeID)
+                end
             end
         else
             local dischargeableUnits = AutoDrive.getAllDischargeableUnits(vehicle, true)

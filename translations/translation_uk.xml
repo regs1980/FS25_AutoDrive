@@ -250,6 +250,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Так - Розвантажувачі AutoDrive намагаються планувати шлях вперед щоб адаптуватися до повороті комбайну на 90°. / Ні - Розвантажувачі здадуть назад перед поворотом." />
 		<text name="gui_ad_ALUnload"									text="Автозавантаження: положення розвантаження" />
 		<text name="gui_ad_ALUnload_tooltip"							text="ВИМК-без авторозвантаження, центр-розвантажити на платформу, вліво / вправо від техніки (Положення залежить від налаштування автомобіля, а не AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Розвантаження ВИМК" />
 		<text name="gui_ad_AL_center"									text="Розвантаження в центр" />
 		<text name="gui_ad_AL_left"									text="Розвантаження вліво" />

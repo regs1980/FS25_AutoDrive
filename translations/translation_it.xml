@@ -250,6 +250,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Sì - gli scaricatori AutoDrive cercano di pianificare un percorso in avanti per adattarsi alla svolta a 90° della mietitrebbia. / No - Gli scaricatori si invertiranno prima del turno" />
 		<text name="gui_ad_ALUnload"									text="Autoload: Posizione di scarico" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Spento - nessuno scarico automatic, Centrale - scarico sulla piattaforma di carico, Sinistra/Destra/Dietro - questa posizione dipende dalla configurazione del veicolo, non da AD!" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Scaricamento Spento" />
 		<text name="gui_ad_AL_center"									text="Scarica al centro" />
 		<text name="gui_ad_AL_left"									text="Scarica a sinistra" />

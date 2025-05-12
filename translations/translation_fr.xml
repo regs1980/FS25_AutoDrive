@@ -250,6 +250,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Oui - Les chauffeurs tenteront d'établir une trajectoire pour s'adapter aux virages à 90° de la moissonneuse. / Non - Les chauffeurs feront une marche arrière avant le virage." />
 		<text name="gui_ad_ALUnload"									text="AutoLoad: Position de déchargement" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Off-pas de déchargement automatique / déchargement au centre de la plateforme, gauche, droite du véhicule.La position dépend de la configuration du véhicule et non de l'AD." />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Déchargement désactivé" />
 		<text name="gui_ad_AL_center"									text="Déchargement centre" />
 		<text name="gui_ad_AL_left"									text="Déchargement gauche" />

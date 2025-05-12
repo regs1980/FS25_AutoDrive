@@ -250,6 +250,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="是 - AutoDrive 卸料车辆尝试规划一条前进路径以适应联合收割机的 90° 转弯。 / 否 - 卸载车辆将在转弯前倒车" />
 		<text name="gui_ad_ALUnload"									text="自动装载：卸载位置" />
 		<text name="gui_ad_ALUnload_tooltip"							text="开关自动装载(Autoload拖车MOD)，装载拖车中间卸载，左右边卸载(位置取决于车辆设置,而不是AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="关闭卸载" />
 		<text name="gui_ad_AL_center"									text="中间卸载" />
 		<text name="gui_ad_AL_left"									text="左边卸载" />
