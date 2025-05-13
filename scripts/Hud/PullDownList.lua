@@ -411,13 +411,15 @@ function ADPullDownList:createSelection()
     self.fakeGroupIDs[1] = 1
     if self.type == ADPullDownList.TYPE_TARGET then
         self:createSelection_Target()
+        self:sortCurrentItems()
     elseif self.type == ADPullDownList.TYPE_UNLOAD then
         self:createSelection_Target()
+        self:sortCurrentItems()
     elseif self.type == ADPullDownList.TYPE_FILLTYPE then
         self:createSelection_FillType()
+        self:sortFillTypes()
     end
 
-    self:sortCurrentItems()
 end
 
 function ADPullDownList:createSelection_Target()
@@ -905,6 +907,28 @@ function ADPullDownList:sortCurrentItems()
 
     for id, _ in pairs(self.options) do
         table.sort(self.options[id], sort_func)
+    end
+end
+
+function ADPullDownList:sortFillTypes()
+    local sort_func = function(a, b)
+        if a.returnValue == AutoDrive.UAL_FILLTYPE_ALL then
+            return true
+        elseif b.returnValue == AutoDrive.UAL_FILLTYPE_ALL then
+            return false
+        end
+        a = string.lower(tostring(a.displayName))
+        b = string.lower(tostring(b.displayName))
+        local patt = "^(.-)%s*(%d+)$"
+        local _, _, col1, num1 = a:find(patt)
+        local _, _, col2, num2 = b:find(patt)
+        if (col1 and col2) and col1 == col2 then
+            return tonumber(num1) < tonumber(num2)
+        end
+        return a < b
+    end
+    for id, _ in pairs(self.options) do
+    table.sort(self.options[id], sort_func)
     end
 end
 
