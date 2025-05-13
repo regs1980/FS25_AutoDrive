@@ -511,9 +511,13 @@ function ADPullDownList:createSelection_FillType()
     local fillTypeIndex = 1
     local itemListIndex = 1
     local lastIndexReached = false
-    self.options[1][itemListIndex] = {displayName = "", returnValue = 0}
+    self.options[1][itemListIndex] = {displayName = "", returnValue = 0} -- default empty list
     if self.autoLoadFillTypes ~= nil then
         -- AutoLoad
+        self.options[1][itemListIndex] = {displayName = g_i18n:getText("gui_ad_Text_all"), returnValue = AutoDrive.UAL_FILLTYPE_ALL}
+        -- AutoDrive.UAL_FILLTYPE_ALL is for all fillTypes in UAL
+        -- 1st entry in list is key for all filltypes
+        itemListIndex = itemListIndex + 1
         for _, fillType in ipairs(self.autoLoadFillTypes) do
             self.options[1][itemListIndex] = {displayName = fillType.fillTypeName, returnValue = fillType.fillTypeID}
             itemListIndex = itemListIndex + 1

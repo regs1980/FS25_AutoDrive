@@ -852,9 +852,6 @@ function AutoDrive:getALFillTypes(object) -- used by PullDownList, getSupportedF
     local spec = object.spec_universalAutoload
     if spec and AutoDrive:hasAL(object) then
         AutoDrive.debugPrint(object, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:getALFillTypes spec_universalAutoload retrieve fillTypes...")
-        -- AutoDrive.UAL_FILLTYPE_ALL is for all fillTypes in UAL
-        table.insert(fillTypes, {fillTypeID = AutoDrive.UAL_FILLTYPE_ALL, fillTypeName = "_" .. g_i18n:getText("gui_ad_Text_all")})
-        -- 1st entry in list is key for all filltypes
         for index, fillType in ipairs(g_fillTypeManager:getFillTypes()) do
             if fillType.isBaleType or fillType.isPalletType or (fillType.palletFilename ~= nil) then
                 table.insert(fillTypes, {fillTypeID = index, fillTypeName = fillType.title})
