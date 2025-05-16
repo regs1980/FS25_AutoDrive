@@ -15,35 +15,36 @@ AutoDriveHud.defaultHeaderHeight = 0.016
 AutoDriveHud.extendedHeaderHeight = 0.200
 
 AutoDriveHud.ELEMENTS = {
-	["pulldownTarget"] = { w = 7, h = 1 },
-	["pulldownUnload"] = { w = 7, h = 1 },
-	["pulldownFilltype"] = { w = 7, h = 1 },
-	["record"] = { w = 1, h = 1, button = {[1] = "input_record", [2] = "input_record_dual", [3] = "input_record_subPrio", [4] = "input_record_subPrioDual", [5] = "input_record_twoWay", [6] = "input_record_dualTwoWay", [7] = "input_record_subPrioTwoWay", [8] = "input_record_subPrioDualTwoWay", tip="input_ADRecord"}},
-	["routesManager"] = { w = 1, h = 1, button = {[1] = "input_routesManager", tip="input_AD_routes_manager"}},
-	["createMarker"] = { w = 1, h = 1, button = {[1] = "input_createMapMarker", tip="input_ADDebugCreateMapMarker"}},
-	["removeWaypoint"] = { w = 1, h = 1, button = {[1] = "input_removeWaypoint", [2] = "input_removeMapMarker", tip="input_ADDebugDeleteWayPoint"}},
-	["editMarker"] = { w = 1, h = 1, button = {[1] = "input_editMapMarker", tip="input_ADRenameMapMarker"}},
-	["removeMarker"] = { w = 1, h = 1, button = {[1] = "input_removeMapMarker", tip="input_ADDebugDeleteDestination"}},
-	["startHelper"] = { w = 1, h = 1, button = {[1] = "input_startHelper", [2] = "input_toggleUsedHelper", tip="hud_startHelper"}},
-	["fieldSpeed"] = { w = 1, h = 1, speed = {field = true} },
-	["settings"] = { w = 1, h = 1, button = {[1] = "input_openGUI", tip="input_ADOpenGUI"}},
-	["startStop"] = { w = 1, h = 1, button = {[1] = "input_start_stop", tip="input_ADEnDisable"}},
-	["mode"] = { w = 1, h = 1, button = {[1] = "input_silomode", [2] = "input_previousMode", tip="input_ADSilomode"}},
-	["continue"] = { w = 1, h = 1, button = {[1] = "input_continue", tip="input_AD_continue"}},
-	["park"] = { w = 1, h = 1, button = {[1] = "input_parkVehicle", [2] = "input_setParkDestination", [6] = "input_setParkDestination", tip="input_ADParkVehicle"}},
-	["loopCounter"] = { w = 1, h = 1 },
-	["speed"] = { w = 1, h = 1, speed = {field = false} },
-	["editor"] = { w = 1, h = 1, button={[1] = "input_debug", [2] = "input_displayMapPoints",  tip="input_ADActivateDebug"}},
-	["trafficDetection"] = { w = 1, h = 1, settings = {[1] = "enableTrafficDetection", tip="gui_ad_enableTrafficDetection"}},
-	["rotateTargets"] = { w = 1, h = 1, settings = {[1] = "rotateTargets", tip="gui_ad_rotateTargets"}},
-	["exitField"] = { w = 1, h = 1, settings = {[1] = "exitField", tip="gui_ad_exitField"}},
-	["restrictToField"] = { w = 1, h = 1, settings = {[1] = "restrictToField", tip="gui_ad_restrictToField"}},
-	["avoidFruit"] = { w = 1, h = 1, settings = {[1] = "avoidFruit", tip="gui_ad_avoidFruit"}},
-	["decHudWidth"] = { w = 1, h = 1, editor = {[1] = "decHudWidth"}},
-	["incHudWidth"] = { w = 1, h = 1, editor = {[1] = "incHudWidth"}},
-	["decHudHeight"] = { w = 1, h = 1, editor = {[1] = "decHudHeight"}},
-	["incHudHeight"] = { w = 1, h = 1, editor = {[1] = "incHudHeight"}},
-	["rotatePresets"] = { w = 1, h = 1, editor = {[1] = "rotatePresets"}},
+	-- table of all possible hud elements, x/y are used for the editor
+	["pulldownTarget"] = { w=7, h=1, x=0, y=1 },
+	["pulldownUnload"] = { w=7, h=1, x=0, y=2 },
+	["pulldownFilltype"] = { w=7, h=1, x=0, y=3 },
+	["record"] = { w=1, h=1, x=0, y=4, button={[1]="input_record", [2]="input_record_dual", [3]="input_record_subPrio", [4]="input_record_subPrioDual", [5]="input_record_twoWay", [6]="input_record_dualTwoWay", [7]="input_record_subPrioTwoWay", [8]="input_record_subPrioDualTwoWay", tip="input_ADRecord"}},
+	["routesManager"] = { w=1, h=1, x=1, y=4, button={[1]="input_routesManager", tip="input_AD_routes_manager"}},
+	["createMarker"] = { w=1, h=1, x=2, y=4, button={[1]="input_createMapMarker", tip="input_ADDebugCreateMapMarker"}},
+	["removeWaypoint"] = { w=1, h=1, x=3, y=4, button={[1]="input_removeWaypoint", [2]="input_removeMapMarker", tip="input_ADDebugDeleteWayPoint"}},
+	["editMarker"] = { w=1, h=1, x=4, y=4, button={[1]="input_editMapMarker", tip="input_ADRenameMapMarker"}},
+	["removeMarker"] = { w=1, h=1, x=5, y=4, button={[1]="input_removeMapMarker", tip="input_ADDebugDeleteDestination"}},
+	["startHelper"] = { w=1, h=1, x=6, y=4, button={[1]="input_startHelper", [2]="input_toggleUsedHelper", tip="hud_startHelper"}},
+	["fieldSpeed"] = { w=1, h=1, x=10, y=3, speed={field=true} },
+	["settings"] = { w=1, h=1, x=7, y=3, button={[1]="input_openGUI", tip="input_ADOpenGUI"}},
+	["startStop"] = { w=1, h=1, x=7, y=2, button={[1]="input_start_stop", tip="input_ADEnDisable"}},
+	["mode"] = { w=1, h=1, x=8, y=2, button={[1]="input_silomode", [2]="input_previousMode", tip="input_ADSilomode"}},
+	["continue"] = { w=1, h=1, x=9, y=2, button={[1]="input_continue", tip="input_AD_continue"}},
+	["park"] = { w=1, h=1, x=10, y=2, button={[1]="input_parkVehicle", [2]="input_setParkDestination", [6]="input_setParkDestination", tip="input_ADParkVehicle"}},
+	["loopCounter"] = { w=1, h=1, x=11, y=2 },
+	["speed"] = { w=1, h=1, x=9, y=3, speed={field=false} },
+	["editor"] = { w=1, h=1, x=8, y=3, button={[1]="input_debug", [2]="input_displayMapPoints",  tip="input_ADActivateDebug"}},
+	["trafficDetection"] = { w=1, h=1, x=7, y=1, settings={[1]="enableTrafficDetection", tip="gui_ad_enableTrafficDetection"}},
+	["rotateTargets"] = { w=1, h=1, x=8, y=1, settings={[1]="rotateTargets", tip="gui_ad_rotateTargets"}},
+	["exitField"] = { w=1, h=1, x=9, y=1, settings={[1]="exitField", tip="gui_ad_exitField"}},
+	["restrictToField"] = { w=1, h=1, x=10, y=1, settings={[1]="restrictToField", tip="gui_ad_restrictToField"}},
+	["avoidFruit"] = { w=1, h=1, x=11, y=1, settings={[1]="avoidFruit", tip="gui_ad_avoidFruit"}},
+	["decHudWidth"] = { w=1, h=1, editor={[1]="decHudWidth"}},
+	["incHudWidth"] = { w=1, h=1, editor={[1]="incHudWidth"}},
+	["decHudHeight"] = { w=1, h=1, editor={[1]="decHudHeight"}},
+	["incHudHeight"] = { w=1, h=1, editor={[1]="incHudHeight"}},
+	["rotatePresets"] = { w=1, h=1, editor={[1]="rotatePresets"}},
 }
 
 function AutoDriveHud:new()
@@ -182,8 +183,8 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	AutoDrive.HudX = self.posX
 	AutoDrive.HudY = self.posY
 
-	self.hudEditorElementsH = 10
-	self.hudEditorElementsV = 4
+	self.hudEditorElementsH = 12
+	self.hudEditorElementsV = 5
 	self.hudEditorWidth = self.hudEditorElementsH * (self.elementWidth + self.gapWidth) + self.gapWidth
 	self.hudEditorHeight = self.hudEditorElementsV * (self.elementHeight + self.gapHeight) + self.gapHeight
 	self.hudEditorPosX = self.posX - self.hudEditorWidth - self.gapWidth
@@ -222,6 +223,12 @@ function AutoDriveHud:createHudEditor()
 	self:addElement({ name = "decHudHeight", x = 2, y = 0, hudEditor = true })
 	self:addElement({ name = "incHudHeight", x = 3, y = 0, hudEditor = true })
 	self:addElement({ name = "rotatePresets", x = 4, y = 0, hudEditor = true })
+	self:addElement({ name = "editor", x = 11, y = 0, hudEditor = true })
+	for name, config in pairs(AutoDriveHud.ELEMENTS) do
+		if config.editor == nil and config.x ~= nil and config.y ~= nil then
+			self:addElement({ name = name, x = config.x, y = config.y, hudEditor = true })
+		end
+	end
 end
 
 function AutoDriveHud:addElement(element)
@@ -320,7 +327,7 @@ function AutoDriveHud:drawHud(vehicle)
 
         if self.hudElements ~= nil then
 			new2DLayer()
-            for _, element in ipairs(self.hudElements) do -- `ipairs` is important, as we want "index-value pairs", not "key-value pairs". https://stackoverflow.com/a/55109411
+            for _, element in ipairs(self.hudElements) do
                 element:onDraw(vehicle, uiScale)
             end
         end
@@ -329,7 +336,7 @@ end
 
 function AutoDriveHud:update(dt)
     if self.hudElements ~= nil then
-        for _, element in ipairs(self.hudElements) do -- `ipairs` is important, as we want "index-value pairs", not "key-value pairs". https://stackoverflow.com/a/55109411
+        for _, element in ipairs(self.hudElements) do
             element:update(dt)
         end
     end

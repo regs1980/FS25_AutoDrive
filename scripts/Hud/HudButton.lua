@@ -66,6 +66,11 @@ function ADHudButton:getNewState(vehicle)
     local newState = self.state
     self.isVisible = self.editMode == nil or self.editMode == AutoDrive.isEditorModeEnabled()
 
+    if AutoDrive.Hud.isEditingHud and self.primaryAction ~= "input_debug" then
+        -- always show the button in edit mode (except the editor button)
+        return newState
+    end
+
     if self.primaryAction == "input_silomode" then
         if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_DELIVERTO then
             newState = 2
@@ -136,8 +141,8 @@ function ADHudButton:getNewState(vehicle)
     end
 
     if self.primaryAction == "input_routesManager" then
-        if (AutoDrive.getSetting("enableRoutesManagerOnDediServer") and g_dedicatedServer ~= nil) or g_dedicatedServer == nil then
-            self.isVisible = AutoDrive.isEditorModeEnabled()
+        if g_dedicatedServer ~= nil and not AutoDrive.getSetting("enableRoutesManagerOnDediServer") then
+            self.isVisible = false
         end
     end
 
@@ -169,7 +174,7 @@ function ADHudButton:getNewState(vehicle)
     end
 
     if self.primaryAction == "input_toggleAutomaticUnloadTarget" then
-        self.isVisible = (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD)
+        self.isVisible = self.isVisible and (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD)
 
         if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD then            
             if vehicle.ad.stateModule:getAutomaticPickupTarget() then
@@ -210,7 +215,7 @@ function ADHudButton:getNewState(vehicle)
     end
 
     if self.primaryAction == "input_toggleLoadByFillLevel" then
-        self.isVisible = vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER
+        self.isVisible = self.isVisible and (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER)
         if #vehicle.ad.stateModule:getSelectedFillTypes() <= 1 then
             newState = 1
         elseif vehicle.ad.stateModule:getLoadByFillLevel() then
@@ -235,7 +240,10 @@ function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
             if actualParkDestination >= 1 and ADGraphManager:getMapMarkerById(actualParkDestination) ~= nil then
                 vehicle.ad.sToolTipInfo = ADGraphManager:getMapMarkerById(actualParkDestination).name
             end
+        end
 
+        if AutoDrive.Hud.isEditingHud and self.primaryAction ~= "input_debug" then
+            return false
         end
 
         if self.primaryAction == "input_toggleAutomaticUnloadTarget" or self.primaryAction == "input_toggleAutomaticPickupTarget" then

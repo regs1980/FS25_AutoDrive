@@ -42,7 +42,9 @@ function ADHudSpeedmeter:onDraw(vehicle, uiScale)
 end
 
 function ADHudSpeedmeter:act(vehicle, posX, posY, isDown, isUp, button)
-    if button == 1 and isUp then
+    if AutoDrive.Hud.isEditingHud then
+        return false
+    elseif button == 1 and isUp then
         ADInputManager:onInputCall(vehicle, self.primaryAction)
         return true
     elseif (button == 3 or button == 2) and isUp then

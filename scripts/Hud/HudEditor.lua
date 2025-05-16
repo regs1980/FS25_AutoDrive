@@ -43,7 +43,7 @@ function ADHudEditorButton:getNewState(vehicle)
     local newState = self.state
   
     if self.primaryAction == "toggleEditHud" then
-        self.isVisible = AutoDrive.leftCTRLmodifierKeyPressed and AutoDrive.mouseOverHud
+        self.isVisible = (AutoDrive.leftCTRLmodifierKeyPressed and AutoDrive.mouseOverHud) or AutoDrive.Hud.isEditingHud
     end
     
     return newState

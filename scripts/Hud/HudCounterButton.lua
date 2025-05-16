@@ -88,7 +88,7 @@ end
 
 
 function ADHudCounterButton:act(vehicle, posX, posY, isDown, isUp, button)
-    if not isUp or button < 1 or button > 5 then
+    if not isUp or button < 1 or button > 5 or AutoDrive.Hud.isEditingHud then
         return false
     end
 

@@ -55,7 +55,7 @@ function ADHudSettingsButton:act(vehicle, posX, posY, isDown, isUp, button)
         vehicle.ad.sToolTipInfo = nil
         vehicle.ad.toolTipIsSetting = true
 
-        if button == 1 and isUp then
+        if not AutoDrive.Hud.isEditingHud and button == 1 and isUp then
             local currentState = AutoDrive.getSettingState(self.setting, vehicle)
             currentState = (currentState + 1)
             if currentState > table.count(AutoDrive.settings[self.setting].values) then

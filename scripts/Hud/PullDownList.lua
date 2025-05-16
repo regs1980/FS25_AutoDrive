@@ -102,10 +102,6 @@ function ADPullDownList:update(dt)
 end
 
 function ADPullDownList:onDraw(vehicle, uiScale)
-    if not (self.type ~= ADPullDownList.TYPE_FILLTYPE or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER) then
-        -- do not show fruit pulldownlist in modes where it makes no sense
-        return
-    end
     self:updateState(vehicle)
     if self.isVisible == false then
         return
@@ -387,23 +383,15 @@ function ADPullDownList:updateState(vehicle)
 end
 
 function ADPullDownList:updateVisibility(vehicle)
-    local newVisibility = self.isVisible
-    if self.type == ADPullDownList.TYPE_UNLOAD then
-        if (vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD) then
-            newVisibility = true
-        else
-            newVisibility = false
-        end
+    if AutoDrive.Hud.isEditingHud then
+        self.isVisible = true
+    elseif self.type == ADPullDownList.TYPE_UNLOAD then
+        self.isVisible = vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD
+    elseif self.type == ADPullDownList.TYPE_TARGET then
+        self.isVisible = vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA
+    elseif self.type == ADPullDownList.TYPE_FILLTYPE then
+        self.isVisible = vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER
     end
-    if self.type == ADPullDownList.TYPE_TARGET then
-        if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_BGA then
-            newVisibility = false
-        else
-            newVisibility = true
-        end
-    end
-
-    self.isVisible = newVisibility
 end
 
 function ADPullDownList:createSelection()
@@ -614,6 +602,10 @@ function ADPullDownList:hit(posX, posY, layer)
 end
 
 function ADPullDownList:act(vehicle, posX, posY, isDown, isUp, button)
+    if AutoDrive.Hud.isEditingHud then
+        return false
+    end
+    
     if (self.type ~= ADPullDownList.TYPE_FILLTYPE or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER) and (self.type ~= ADPullDownList.TYPE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD) then
         local hitElement, hitIndex, hitIcon = self:getElementAt(vehicle, posX, posY)
         if button == 1 and isUp then
