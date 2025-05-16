@@ -36,6 +36,11 @@ function LoadAtDestinationTask:setUp()
     self.trailers, _ = AutoDrive.getAllUnits(self.vehicle)
     self.vehicle.ad.trailerModule:reset()
     self.activatedUALLoading = false
+    self.fillLevel = 0
+    self.fillFreeCapacity = 0
+    self.lastFillLevel = 0
+    self.filledToUnload = false
+    self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
     self.isReverseTriggerReached = false
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:setUp end self.state %s", tostring(self.state))
 end
@@ -76,25 +81,27 @@ function LoadAtDestinationTask:update(dt)
                 self.vehicle.ad.specialDrivingModule:update(dt)
                 -- local waitForALUnloadTime = AutoDrive.getSetting("ALUnloadWaitTime", self.vehicle)
 
-                if self.vehicle.ad.trailerModule:getHasAL() then
+                if self.vehicle.ad.hasAL then
                     -- UAL special handling - loading only possible if vehicle not moving -> self.lastSpeedReal < 0.0005
                     -- assume no influence on aPalletAutoLoader
-                    if self.vehicle.lastSpeedReal < 0.0005 and not self.activatedUALLoading then
-                        self.activatedUALLoading = true
-                        self.ualIterations = 0
-                        self.numberOfSelectedFillTypes = #self.vehicle.ad.stateModule:getSelectedFillTypes()
-                        AutoDrive.activateALTrailers(self.vehicle, self.trailers)
+                    if not self.activatedUALLoading then
+                        if self.vehicle.lastSpeedReal < 0.0005 then
+                            -- start loading
+                            self.activatedUALLoading = true
+                            self.ualIterations = 0
+                            self.fillLevel, _, _, _ = AutoDrive.getAllFillLevels(self.trailers)
+                            self.lastFillLevel = self.fillLevel
+                            self.numberOfSelectedFillTypes = #self.vehicle.ad.stateModule:getSelectedFillTypes()
+                            AutoDrive.activateALTrailers(self.vehicle, self.trailers)
+                        end
+                        self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
                     end
-                    -- AutoLoad wait time
-                    -- if waitForALUnloadTime > 0 and not self.waitForALLoadTimer:timer(true, waitForALUnloadTime, dt) then
-                        -- AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "LoadAtDestinationTask:update wait time for AutoLoad...")
-                        -- return
-                    -- end
                 else
                     if self.vehicle.ad.trailerModule:wasAtSuitableTrigger() or ((AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_ONLYPICKUP or AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_PICKUPANDDELIVER) and AutoDrive.getSetting("useFolders")) then
                         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update wasAtSuitableTrigger -> self:finished")
                         self:finished()
                     end
+                    self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
                 end
                 if self.vehicle.ad.trailerModule:isActiveAtTrigger() then
                     -- update to catch if no longer active at trigger
@@ -102,27 +109,38 @@ function LoadAtDestinationTask:update(dt)
                 else
                     -- try to load somehow while standing at destination
                     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update not isActiveAtTrigger")
-                    self.loadRetryTimer:timer(true, LoadAtDestinationTask.LOAD_RETRY_TIME, dt)
+                    self.loadRetryTimer:timer(true, self.retryTime, dt)
                     if self.loadRetryTimer:done() then
                         -- performance: avoid to initiate loading while standing at destination to often
                         self.loadRetryTimer:timer(false)      -- clear timer
                         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update try loading somehow")
-                        local _, _, isFull, _ = AutoDrive.getAllFillLevels(self.trailers)
+
+                        self.fillLevel, _, self.filledToUnload, self.fillFreeCapacity = AutoDrive.getAllFillLevels(self.trailers)
                         if self.activatedUALLoading == true then
-                            local objectsAvailable = AutoDrive.objectsToLoadAvailable(self.vehicle, self.trailers)
-                            if objectsAvailable and (self.ualIterations < self.numberOfSelectedFillTypes) then
-                                self.ualIterations = self.ualIterations + 1
-                                self.vehicle.ad.stateModule:nextSelectedFillType()
+                            -- AL loading activated
+                            if self.lastFillLevel ~= self.fillLevel and self.fillFreeCapacity > 0 then
+                                -- objects loaded and not full - set retryTime to AL wait time, min LOAD_RETRY_TIME to try load more objects of the selected fillType
+                                self.lastFillLevel = self.fillLevel
+                                self.retryTime = math.max(LoadAtDestinationTask.LOAD_RETRY_TIME, AutoDrive.getSetting("ALUnloadWaitTime", self.vehicle))
                             else
-                                isFull = true
+                                -- no objects loaded - continue with next fillType or end
+                                local objectsAvailable = AutoDrive.objectsToLoadAvailable(self.vehicle, self.trailers)
+                                if objectsAvailable and (self.ualIterations < self.numberOfSelectedFillTypes) then
+                                    self.ualIterations = self.ualIterations + 1
+                                    self.vehicle.ad.stateModule:nextSelectedFillType()
+                                    self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
+                                else
+                                    self:finished()
+                                end
                             end
-                        end
-                        self.vehicle.ad.trailerModule:update(dt)
-                        if not self.vehicle.ad.trailerModule:isActiveAtTrigger() then
-                            -- check fill levels only if not still filling something
-                            if isFull then
-                                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update leftCapacity <= -> self:finished")
-                                self:finished()
+                        else
+                            self.vehicle.ad.trailerModule:update(dt)
+                            if not self.vehicle.ad.trailerModule:isActiveAtTrigger() then
+                                -- check fill levels only if not still filling something
+                                if self.filledToUnload then
+                                    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update leftCapacity <= -> self:finished")
+                                    self:finished()
+                                end
                             end
                         end
                     end

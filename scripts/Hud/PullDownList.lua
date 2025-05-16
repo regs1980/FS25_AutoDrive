@@ -588,7 +588,7 @@ function ADPullDownList:getNewState_FillType(vehicle)
         if self.autoLoadFillTypes ~= nil then
             local currentFillTypeID = vehicle.ad.stateModule:getFillType()
             if currentFillTypeID == AutoDrive.UAL_FILLTYPE_ALL then
-                self.text = self.autoLoadFillTypes[1].fillTypeName -- first item in list is for all fillTypes in UAL
+                self.text = self.options[1][1].displayName -- first item in list is for all fillTypes in UAL
             else
                 self.text = g_fillTypeManager:getFillTypeTitleByIndex(currentFillTypeID) or ""
             end
@@ -928,7 +928,7 @@ function ADPullDownList:sortFillTypes()
         return a < b
     end
     for id, _ in pairs(self.options) do
-    table.sort(self.options[id], sort_func)
+        table.sort(self.options[id], sort_func)
     end
 end
 

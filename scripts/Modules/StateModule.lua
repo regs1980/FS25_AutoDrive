@@ -946,7 +946,9 @@ function ADStateModule:setFillType(fillType)
 end
 
 function ADStateModule:toggleFillTypeSelection(fillType)
-    if fillType > 0 and fillType ~= AutoDrive.UAL_FILLTYPE_ALL then -- AutoDrive.UAL_FILLTYPE_ALL is for all fillTypes in UAL
+    if fillType > 0 and self.fillType ~= AutoDrive.UAL_FILLTYPE_ALL and fillType ~= AutoDrive.UAL_FILLTYPE_ALL then 
+        -- AutoDrive.UAL_FILLTYPE_ALL is for all fillTypes in UAL
+        -- do not toggle UAL_FILLTYPE_ALL or additional fillTypes to UAL_FILLTYPE_ALL
         if table.contains(self.selectedFillTypes, fillType) then
             table.removeValue(self.selectedFillTypes, fillType)
             if self.fillType == fillType and #self.selectedFillTypes > 0 then
