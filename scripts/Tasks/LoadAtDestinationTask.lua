@@ -120,7 +120,7 @@ function LoadAtDestinationTask:update(dt)
                             -- AL loading activated
                             if self.numberOfSelectedFillTypes > 1 then
                                 -- multiple selected
-                                if self.lastFillLevel ~= self.fillLevel and self.fillFreeCapacity > 0 and self.numberOfSelectedFillTypes > 0 then
+                                if self.lastFillLevel ~= self.fillLevel and self.fillFreeCapacity > 0 and not self.filledToUnload then
                                     -- objects loaded and not full - set retryTime to AL wait time, min LOAD_RETRY_TIME to try load more objects of the selected fillType
                                     self.lastFillLevel = self.fillLevel
                                     self.retryTime = math.max(LoadAtDestinationTask.LOAD_RETRY_TIME, AutoDrive.getSetting("ALUnloadWaitTime", self.vehicle))
@@ -131,7 +131,7 @@ function LoadAtDestinationTask:update(dt)
                                         self.ualIterations = self.ualIterations + 1
                                         self.vehicle.ad.stateModule:nextSelectedFillType()
                                         self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
-                                    else
+                                    elseif self.filledToUnload then
                                         self:finished()
                                     end
                                 end
