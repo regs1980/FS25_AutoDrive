@@ -1097,6 +1097,16 @@ end
 function AutoDrive:startAutoDrive()
     if self.isServer then
 
+        if self.spec_locomotive then
+            -- fix FS25 #262
+            if self.maxRotTime == 0 then
+                self.maxRotTime = 1
+            end
+            if self.minRotTime == 0 then
+                self.minRotTime = -1
+            end
+        end
+
         if g_currentMission.aiSystem and g_currentMission.aiSystem.activeJobVehicles then
             for index, jobVehicle in pairs(g_currentMission.aiSystem.activeJobVehicles) do
                 if self == jobVehicle then
