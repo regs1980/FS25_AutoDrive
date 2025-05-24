@@ -2,14 +2,9 @@
 <hud name="Wide">
     <size width="14" height="3"/>
     <elements>
-        <element name="toggleTarget" x="0" y="2"/>
-        <element name="pulldownTarget" x="1" y="2" width="6"/>
-
-        <element name="toggleUnload" x="0" y="1"/>
-        <element name="pulldownUnload" x="1" y="1" width="6"/>
-
-        <element name="toggleFilltype" x="0" y="0"/>
-        <element name="pulldownFilltype" x="1" y="0" width="6"/>
+        <element name="pulldownTarget" x="0" y="0"/>
+        <element name="pulldownUnload" x="0" y="1"/>
+        <element name="pulldownFilltype" x="0" y="2"/>
 
         <element name="record" x="7" y="1" edit="true"/>
         <element name="routesManager" x="8" y="1" edit="true"/>
@@ -20,12 +15,12 @@
         <element name="fieldSpeed" x="12" y="1"/>
         <element name="settings" x="13" y="1"/>
 
-        <element name="startStop" x="7" y="0"/>
-        <element name="mode" x="8" y="0"/>
-        <element name="continue" x="9" y="0"/>
-        <element name="park" x="10" y="0"/>
-        <element name="loopCounter" x="11" y="0"/>
-        <element name="speed" x="12" y="0"/>
-        <element name="editor" x="13" y="0"/>
+        <element name="startStop" x="7" y="2"/>
+        <element name="mode" x="8" y="2"/>
+        <element name="continue" x="9" y="2"/>
+        <element name="park" x="10" y="2"/>
+        <element name="loopCounter" x="11" y="2"/>
+        <element name="speed" x="12" y="2"/>
+        <element name="editor" x="13" y="2"/>
     </elements>
 </hud>

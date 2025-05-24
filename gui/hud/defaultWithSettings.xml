@@ -2,34 +2,29 @@
 <hud name="Default with settings">
     <size width="7" height="5"/>
     <elements>
-        <element name="toggleTarget" x="0" y="4"/>
-        <element name="pulldownTarget" x="1" y="4" width="6"/>
+        <element name="pulldownTarget" x="0" y="0"/>
+        <element name="pulldownUnload" x="0" y="1"/>
+        <element name="pulldownFilltype" x="0" y="2"/>
 
-        <element name="toggleUnload" x="0" y="3"/>
-        <element name="pulldownUnload" x="1" y="3" width="6"/>
+        <element name="record" x="0" y="3" edit="true"/>
+        <element name="routesManager" x="1" y="3" edit="true"/>
+        <element name="createMarker" x="2" y="3" edit="true"/>
+        <element name="removeWaypoint" x="3" y="3" edit="true"/>
+        <element name="editMarker" x="4" y="3" edit="true"/>
+        <element name="startHelper" x="0" y="3" edit="false"/>
+        <element name="rotateTargets" x="1" y="3" edit="false"/>
+        <element name="exitField" x="2" y="3" edit="false"/>
+        <element name="restrictToField" x="3" y="3" edit="false"/>
+        <element name="avoidFruit" x="4" y="3" edit="false"/>
+        <element name="fieldSpeed" x="5" y="3"/>
+        <element name="settings" x="6" y="3"/>
 
-        <element name="toggleFilltype" x="0" y="2"/>
-        <element name="pulldownFilltype" x="1" y="2" width="6"/>
-
-        <element name="record" x="0" y="1" edit="true"/>
-        <element name="routesManager" x="1" y="1" edit="true"/>
-        <element name="createMarker" x="2" y="1" edit="true"/>
-        <element name="removeWaypoint" x="3" y="1" edit="true"/>
-        <element name="editMarker" x="4" y="1" edit="true"/>
-        <element name="startHelper" x="0" y="1" edit="false"/>
-        <element name="rotateTargets" x="1" y="1" edit="false"/>
-        <element name="exitField" x="2" y="1" edit="false"/>
-        <element name="restrictToField" x="3" y="1" edit="false"/>
-        <element name="avoidFruit" x="4" y="1" edit="false"/>
-        <element name="fieldSpeed" x="5" y="1"/>
-        <element name="settings" x="6" y="1"/>
-
-        <element name="startStop" x="0" y="0"/>
-        <element name="mode" x="1" y="0"/>
-        <element name="continue" x="2" y="0"/>
-        <element name="park" x="3" y="0"/>
-        <element name="loopCounter" x="4" y="0"/>
-        <element name="speed" x="5" y="0"/>
-        <element name="editor" x="6" y="0"/>
+        <element name="startStop" x="0" y="4"/>
+        <element name="mode" x="1" y="4"/>
+        <element name="continue" x="2" y="4"/>
+        <element name="park" x="3" y="4"/>
+        <element name="loopCounter" x="4" y="4"/>
+        <element name="speed" x="5" y="4"/>
+        <element name="editor" x="6" y="4"/>
     </elements>
 </hud>
