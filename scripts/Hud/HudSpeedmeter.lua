@@ -1,11 +1,12 @@
 ADHudSpeedmeter = ADInheritsFrom(ADGenericHudElement)
 
-function ADHudSpeedmeter:new(posX, posY, width, height, fieldSpeed)
+function ADHudSpeedmeter:new(posX, posY, width, height, fieldSpeed, editMode)
     local o = ADHudSpeedmeter:create()
     o:init(posX, posY, width, height)
     o.primaryAction = "input_increaseSpeed"
     o.secondaryAction = "input_decreaseSpeed"
     o.image = "ad_gui.speedmeter"
+    o.editMode = editMode
 
     if fieldSpeed then
         o.primaryAction = "input_increaseFieldSpeed"
@@ -22,6 +23,10 @@ function ADHudSpeedmeter:new(posX, posY, width, height, fieldSpeed)
 end
 
 function ADHudSpeedmeter:onDraw(vehicle, uiScale)
+    self:updateState(vehicle)
+    if not self.isVisible then
+        return
+    end
     self.ov:render()
 
     if AutoDrive.pullDownListExpanded == 0 then
@@ -39,6 +44,10 @@ function ADHudSpeedmeter:onDraw(vehicle, uiScale)
         local posY = self.position.y + AutoDrive.Hud.gapHeight
         renderText(posX, posY, adFontSize, text)
     end
+end
+
+function ADHudSpeedmeter:updateState(vehicle)
+    self.isVisible = self.editMode == nil or self.editMode == AutoDrive.isEditorModeEnabled()
 end
 
 function ADHudSpeedmeter:act(vehicle, posX, posY, isDown, isUp, button)

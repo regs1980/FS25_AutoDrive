@@ -150,6 +150,7 @@ function AutoDriveHud:loadHud()
 	self.isMoving = false
 	self.isShowingTips = false
 	self.isEditingHud = false
+	self.isMovingElement = nil
 end
 
 function AutoDriveHud:createHudAt(hudX, hudY)
@@ -191,6 +192,7 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	self.hudEditorPosY = self.posY + self.height - self.hudEditorHeight
 
 	self.hudElements = {}
+	self.hudEditorElements = {}
 
 	-- background
 	local headerY = self.posY + (self.elementHeight + self.gapHeight) * self.numElementsV + self.gapHeight
@@ -209,7 +211,7 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 
 	-- hud elements
 	for _, element in ipairs(self.elements) do
-		self:addElement(element)
+		self:addElement(element, self.hudElements)
 	end
 
 	-- Refreshing layer sequence must be called, after all elements have been added
@@ -218,20 +220,22 @@ end
 
 function AutoDriveHud:createHudEditor()
 	table.insert(self.hudElements, ADHudIcon:new(self.hudEditorPosX, self.hudEditorPosY, self.hudEditorWidth, self.hudEditorHeight, "ad_gui.Background", 0, "editorBackground"))
-	self:addElement({ name = "decHudWidth", x = 0, y = 0, hudEditor = true })
-	self:addElement({ name = "incHudWidth", x = 1, y = 0, hudEditor = true })
-	self:addElement({ name = "decHudHeight", x = 2, y = 0, hudEditor = true })
-	self:addElement({ name = "incHudHeight", x = 3, y = 0, hudEditor = true })
-	self:addElement({ name = "rotatePresets", x = 4, y = 0, hudEditor = true })
-	self:addElement({ name = "editor", x = 11, y = 0, hudEditor = true })
+	self:addElement({ name = "decHudWidth", x = 0, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({ name = "incHudWidth", x = 1, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({ name = "decHudHeight", x = 2, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({ name = "incHudHeight", x = 3, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({ name = "rotatePresets", x = 4, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({ name = "editor", x = 11, y = 0, hudEditor = true }, self.hudElements)
 	for name, config in pairs(AutoDriveHud.ELEMENTS) do
 		if config.editor == nil and config.x ~= nil and config.y ~= nil then
-			self:addElement({ name = name, x = config.x, y = config.y, hudEditor = true })
+			local elements = {}
+			self:addElement({ name = name, x = config.x, y = config.y, hudEditor = true }, elements)
+			self.hudEditorElements[name] = elements
 		end
 	end
 end
 
-function AutoDriveHud:addElement(element)
+function AutoDriveHud:addElement(element, elementList)
 	local config = AutoDriveHud.ELEMENTS[element.name]
 	if config == nil then
 		Logging.error("Unknown HUD element: %s", element.name)
@@ -245,6 +249,8 @@ function AutoDriveHud:addElement(element)
 	local posX, posY, numV = self.posX, self.posY, self.numElementsV
 	if element.hudEditor then
 		posX, posY, numV = self.hudEditorPosX, self.hudEditorPosY, self.hudEditorElementsV
+	elseif element.absolutePos ~= nil then
+		posX, posY, numV = element.absolutePos.x, element.absolutePos.y, 1
 	elseif element.x + config.w > self.numElementsH then
 		return
 	elseif element.y + config.h > self.numElementsV then
@@ -266,30 +272,30 @@ function AutoDriveHud:addElement(element)
 
 	if config.button ~= nil then
 		local btn = config.button
-		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(), h, btn[1], btn[2], btn[3], btn[4], btn[5], btn[6], btn[7], btn[8], btn.tip, 1, edit))
+		table.insert(elementList, ADHudButton:new(X(), Y(), W(), h, btn[1], btn[2], btn[3], btn[4], btn[5], btn[6], btn[7], btn[8], btn.tip, 1, edit))
 	elseif config.speed ~= nil then
-		table.insert(self.hudElements, ADHudSpeedmeter:new(X(), Y(), W(), h, config.speed.field))
+		table.insert(elementList, ADHudSpeedmeter:new(X(), Y(), W(), h, config.speed.field, edit))
 	elseif config.settings ~= nil then
-		table.insert(self.hudElements, ADHudSettingsButton:new(X(), Y(), W(), h, config.settings[1], config.settings.tip, 1, edit))
+		table.insert(elementList, ADHudSettingsButton:new(X(), Y(), W(), h, config.settings[1], config.settings.tip, 1, edit))
 	elseif config.editor ~= nil then
-		table.insert(self.hudElements, ADHudEditorButton:new(X(), Y(), W(), h, config.editor[1], config.editor.tip))
+		table.insert(elementList, ADHudEditorButton:new(X(), Y(), W(), h, config.editor[1], config.editor.tip))
 
 	elseif element.name == "pulldownTarget" then
-		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, edit))
-		self.targetPullDownList = ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_TARGET, 1)
-		table.insert(self.hudElements, self.targetPullDownList)
+		table.insert(elementList, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticPickupTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticPickupTarget", 1, edit))
+		self.targetPullDownList = ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_TARGET, 1, edit)
+		table.insert(elementList, self.targetPullDownList)
 	elseif element.name == "pulldownUnload" then
-		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, edit))
-		table.insert(self.hudElements, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1))
+		table.insert(elementList, ADHudButton:new(X(), Y(), W(1), h, "input_toggleAutomaticUnloadTarget", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleAutomaticUnloadTarget", 1, edit))
+		table.insert(elementList, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_UNLOAD, 1, edit))
 	elseif element.name == "pulldownFilltype" then
-		table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(1), h, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, edit))
-		table.insert(self.hudElements, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_FILLTYPE, 1))
-		table.insert(self.hudElements, HudHarvesterInfo:new(X(1), Y(), W(6), self.listItemHeight))
+		table.insert(elementList, ADHudButton:new(X(), Y(), W(1), h, "input_toggleLoadByFillLevel", nil, nil, nil, nil, nil, nil, nil, "input_ADToggleLoadByFillLevel", 1, edit))
+		table.insert(elementList, ADPullDownList:new(X(1), Y(), W(6), self.listItemHeight, ADPullDownList.TYPE_FILLTYPE, 1, edit))
+		table.insert(elementList, HudHarvesterInfo:new(X(1), Y(), W(6), self.listItemHeight))
 	elseif element.name == "loopCounter" then
 		if vehicle == nil or vehicle.ad.stateModule:getMode() ~= AutoDrive.MODE_BGA then
-	 		table.insert(self.hudElements, ADHudCounterButton:new(X(), Y(), W(), h, "loop_counter"))
+	 		table.insert(elementList, ADHudCounterButton:new(X(), Y(), W(), h, "loop_counter", edit))
 		else
-			table.insert(self.hudElements, ADHudButton:new(X(), Y(), W(), h, "input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, edit))
+			table.insert(elementList, ADHudButton:new(X(), Y(), W(), h, "input_bunkerUnloadType", nil, nil, nil, nil, nil, nil, nil, "input_ADbunkerUnloadType", 1, edit))
 		end
 	else
 		Logging.error("Unknown HUD element: %s", element.name)
@@ -330,6 +336,13 @@ function AutoDriveHud:drawHud(vehicle)
             for _, element in ipairs(self.hudElements) do
                 element:onDraw(vehicle, uiScale)
             end
+			if self.hudEditorElements ~= nil then
+				for _, elements in pairs(self.hudEditorElements) do
+					for _, element in ipairs(elements) do
+						element:onDraw(vehicle, uiScale)
+					end
+				end
+			end
         end
 	end
 end
@@ -340,6 +353,13 @@ function AutoDriveHud:update(dt)
             element:update(dt)
         end
     end
+	if self.hudEditorElements ~= nil then
+		for _, elements in pairs(self.hudEditorElements) do
+			for _, element in ipairs(elements) do
+				element:update(dt)
+			end
+		end
+	end
 end
 
 function AutoDriveHud:toggleHudExtension(vehicle)
@@ -375,6 +395,14 @@ end
 
 function AutoDriveHud:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp, button)
 	-- returns "handled"
+	if self.isMovingElement ~= nil then
+		if (button == 1 and isUp) or not AutoDrive.isMouseActiveForHud() then
+			self:stopMovingHudElement(button == 1 and isUp)
+		else
+			self:moveHudElement(posX, posY)
+		end
+		return true -- handled
+	end
 	if self.hudElements ~= nil then
 		-- Start with highest layer value (last in array), and then iterate backwards.
 		for i = #self.hudElements, 1, -1 do
@@ -389,6 +417,12 @@ function AutoDriveHud:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp,
 				end
 				return true -- handled
 			end
+		end
+	end
+	if self.hudEditorElements ~= nil then
+		local mouseEventHandled = self:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown, isUp, button)
+		if mouseEventHandled then
+			return true -- handled
 		end
 	end
 	if AutoDrive.pullDownListExpanded > 0 and button >= 1 and button <= 3 and isUp then

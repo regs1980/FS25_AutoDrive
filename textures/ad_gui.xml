@@ -97,11 +97,12 @@
         <slice id="messageBackground" uvs="0px 1056px 512px 64px"/>
         <slice id="rotatePresets" uvs="1944px 288px 64px 64px"/>
         <slice id="destination" uvs="2012px 84px 32px 32px"/>
+        <slice id="dropTarget" uvs="2012px 120px 32px 32px"/>
         <slice id="Header" uvs="516px 1056px 512px 32px"/>
         <slice id="Header_message" uvs="1032px 1056px 512px 32px"/>
-        <slice id="input_goTo_1" uvs="2012px 120px 32px 32px"/>
-        <slice id="input_toggleHud" uvs="2012px 156px 32px 32px"/>
-        <slice id="input_toggleHudExtension" uvs="2012px 192px 32px 32px"/>
+        <slice id="input_goTo_1" uvs="2012px 156px 32px 32px"/>
+        <slice id="input_toggleHud" uvs="2012px 192px 32px 32px"/>
+        <slice id="input_toggleHudExtension" uvs="2012px 228px 32px 32px"/>
         <slice id="4xlongBorderBottomFilled" uvs="516px 1092px 512px 16px"/>
         <slice id="4xlongBorderStretchFilled" uvs="1032px 1092px 512px 16px"/>
         <slice id="4xlongBorderTopFilled" uvs="516px 1112px 512px 16px"/>

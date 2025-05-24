@@ -14,8 +14,6 @@ function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryActi
     o.toolTip = toolTip or ""
     o.state = state or 0
     o.editMode = editMode
-    o.isVisible = false
-
     o.layer = 5
 
     o.images = o:readImages()
@@ -51,9 +49,10 @@ end
 
 function ADHudButton:onDraw(vehicle, uiScale)
     self:updateState(vehicle)
-    if self.isVisible then
-        self.ov:render()
+    if not self.isVisible then
+        return
     end
+    self.ov:render()
 end
 
 function ADHudButton:updateState(vehicle)
@@ -229,59 +228,56 @@ function ADHudButton:getNewState(vehicle)
 end
 
 function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
-    if self.isVisible then
-        vehicle.ad.sToolTip = self.toolTip
-        vehicle.ad.nToolTipWait = 5
-        vehicle.ad.sToolTipInfo = nil
-        vehicle.ad.toolTipIsSetting = false
+    vehicle.ad.sToolTip = self.toolTip
+    vehicle.ad.nToolTipWait = 5
+    vehicle.ad.sToolTipInfo = nil
+    vehicle.ad.toolTipIsSetting = false
 
-        if self.primaryAction == "input_parkVehicle" then
-            local actualParkDestination = vehicle.ad.stateModule:getParkDestinationAtJobFinished()
-            if actualParkDestination >= 1 and ADGraphManager:getMapMarkerById(actualParkDestination) ~= nil then
-                vehicle.ad.sToolTipInfo = ADGraphManager:getMapMarkerById(actualParkDestination).name
-            end
-        end
-
-        if AutoDrive.Hud.isEditingHud and self.primaryAction ~= "input_debug" then
-            return false
-        end
-
-        if self.primaryAction == "input_toggleAutomaticUnloadTarget" or self.primaryAction == "input_toggleAutomaticPickupTarget" then
-            self:actOnIcons(vehicle, posX, posY, isDown, isUp, button)
-            return
-        end
-
-        if button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.primaryAction)
-            return true
-        elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.secondaryAction)
-            return true
-        elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.tertiaryAction)
-            return true
-        elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.quatenaryAction)
-            return true
-        elseif button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.fifthAction)
-            return true
-        elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.sixthAction)
-            return true
-        elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.seventhAction)
-            return true
-        elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
-            ADInputManager:onInputCall(vehicle, self.eighthAction)
-            return true
-        end
-
-        if button > 0 and button < 4 and isDown then
-            return true, true
+    if self.primaryAction == "input_parkVehicle" then
+        local actualParkDestination = vehicle.ad.stateModule:getParkDestinationAtJobFinished()
+        if actualParkDestination >= 1 and ADGraphManager:getMapMarkerById(actualParkDestination) ~= nil then
+            vehicle.ad.sToolTipInfo = ADGraphManager:getMapMarkerById(actualParkDestination).name
         end
     end
 
+    if AutoDrive.Hud.isEditingHud and self.primaryAction ~= "input_debug" then
+        return false
+    end
+
+    if self.primaryAction == "input_toggleAutomaticUnloadTarget" or self.primaryAction == "input_toggleAutomaticPickupTarget" then
+        self:actOnIcons(vehicle, posX, posY, isDown, isUp, button)
+        return
+    end
+
+    if button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.primaryAction)
+        return true
+    elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.secondaryAction)
+        return true
+    elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.tertiaryAction)
+        return true
+    elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and not AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.quatenaryAction)
+        return true
+    elseif button == 1 and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.fifthAction)
+        return true
+    elseif (button == 3 or button == 2) and isUp and not AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.sixthAction)
+        return true
+    elseif button == 1 and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.seventhAction)
+        return true
+    elseif (button == 3 or button == 2) and isUp and AutoDrive.leftLSHIFTmodifierKeyPressed and AutoDrive.leftCTRLmodifierKeyPressed then
+        ADInputManager:onInputCall(vehicle, self.eighthAction)
+        return true
+    end
+
+    if button > 0 and button < 4 and isDown then
+        return true, true
+    end
     return false
 end
 

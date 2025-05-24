@@ -2,12 +2,10 @@ ADGenericHudElement = {}
 ADGenericHudElement_mt = {__index = ADGenericHudElement}
 
 function ADGenericHudElement:init(posX, posY, width, height)
-    --local newInst = {}
-    --setmetatable(newInst, ADGenericHudElement_mt)
     self.position = {x = posX, y = posY}
     self.size = {width = width, height = height}
     self.layer = 10
-    --return newInst;
+    self.isVisible = false
 end
 
 function ADGenericHudElement:hit(posX, posY, layer)
@@ -15,7 +13,7 @@ function ADGenericHudElement:hit(posX, posY, layer)
 end
 
 function ADGenericHudElement:mouseEvent(vehicle, posX, posY, isDown, isUp, button, layer)
-    if self:hit(posX, posY, layer) then
+    if self.isVisible and self:hit(posX, posY, layer) then
         return self:act(vehicle, posX, posY, isDown, isUp, button)
     end
     return false

@@ -4,18 +4,18 @@ ADHudCounterButton.STATE_INFINITE = 1
 ADHudCounterButton.STATE_ACTIVE = 2
 ADHudCounterButton.STATE_INACTIVE = 3
 
-function ADHudCounterButton:new(posX, posY, width, height, mode)
+function ADHudCounterButton:new(posX, posY, width, height, mode, editMode)
     local o = ADHudCounterButton:create()
     o:init(posX, posY, width, height)
     o.state = 1
     o.counter = 1
     o.mode = mode
+    o.editMode = editMode
     o.images = {
         [ADHudCounterButton.STATE_INFINITE] = "ad_gui." .. mode .. "_inf",
         [ADHudCounterButton.STATE_ACTIVE] = "ad_gui." .. mode .. "_active",
         [ADHudCounterButton.STATE_INACTIVE] = "ad_gui." .. mode .. "_inactive",
     }
-
     o.layer = 5
     o.ov = g_overlayManager:createOverlay(o.images[o.state], o.position.x, o.position.y, o.size.width, o.size.height)
     return o
@@ -26,6 +26,7 @@ function ADHudCounterButton:updateState(vehicle)
     self.ov:setSliceId(self.images[newState])
     self.state = newState
     self.counter = newCounter
+    self.isVisible = self.editMode == nil or self.editMode == AutoDrive.isEditorModeEnabled()
 end
 
 function ADHudCounterButton:getNewState(vehicle)
@@ -50,6 +51,10 @@ end
 
 function ADHudCounterButton:onDraw(vehicle, uiScale)
     self:updateState(vehicle)
+    if not self.isVisible then
+        return
+    end
+
     self.ov:render()
 
     if AutoDrive.pullDownListExpanded == 0 then

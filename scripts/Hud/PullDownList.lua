@@ -40,12 +40,13 @@ function ADPullDownList:initReusableOverlaysOnlyOnce()
     ADPullDownList.ovCollapseAll = overlayReuseOrNew(ADPullDownList.ovCollapseAll, self.imageCollapseAll)
 end
 
-function ADPullDownList:new(posX, posY, width, height, type, selected)
+function ADPullDownList:new(posX, posY, width, height, type, selected, editMode)
     local o = ADPullDownList:create()
     o:init(posX, posY, width, height)
     o.selected = selected
     o.hovered = selected
     o.type = type
+    o.editMode = editMode
     o.size.height = AutoDrive.Hud.elementHeight
     self.autoLoadFillTypes = nil
 
@@ -79,7 +80,6 @@ function ADPullDownList:new(posX, posY, width, height, type, selected)
     o.ovExpand = g_overlayManager:createOverlay(o.imageExpand, o.rightIconPos.x, o.rightIconPos.y, o.iconSize.width, o.iconSize.height)
 
     o.state = ADPullDownList.STATE_COLLAPSED
-    o.isVisible = true
 
     o:createSelection()
 
@@ -103,7 +103,7 @@ end
 
 function ADPullDownList:onDraw(vehicle, uiScale)
     self:updateState(vehicle)
-    if self.isVisible == false then
+    if not self.isVisible then
         return
     end
 
@@ -383,7 +383,9 @@ function ADPullDownList:updateState(vehicle)
 end
 
 function ADPullDownList:updateVisibility(vehicle)
-    if AutoDrive.Hud.isEditingHud then
+    if self.editMode ~= nil and self.editMode ~= AutoDrive.isEditorModeEnabled() then
+        self.isVisible = false
+    elseif AutoDrive.Hud.isEditingHud then
         self.isVisible = true
     elseif self.type == ADPullDownList.TYPE_UNLOAD then
         self.isVisible = vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_UNLOAD or vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD
