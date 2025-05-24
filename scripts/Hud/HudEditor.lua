@@ -7,6 +7,7 @@ function ADHudEditorButton:new(posX, posY, width, height, primaryAction, toolTip
     o.toolTip = toolTip or ""
     o.state = 0
     o.isVisible = true
+    o.editMode = nil
     o.layer = 5
     o.images = o:readImages()
     o.ov = g_overlayManager:createOverlay(o.images[o.state], o.position.x, o.position.y, o.size.width, o.size.height)
@@ -15,25 +16,23 @@ end
 
 
 function ADHudEditorButton:act(vehicle, posX, posY, isDown, isUp, button)
-    if self.isVisible then
-        vehicle.ad.sToolTip = self.toolTip
-        vehicle.ad.nToolTipWait = 5
-        vehicle.ad.sToolTipInfo = nil
-        vehicle.ad.toolTipIsSetting = false
+    vehicle.ad.sToolTip = self.toolTip
+    vehicle.ad.nToolTipWait = 5
+    vehicle.ad.sToolTipInfo = nil
+    vehicle.ad.toolTipIsSetting = true
 
-        if isUp and button == 1 then
-            local func = AutoDriveHud[self.primaryAction]
-            if type(func) ~= "function" then
-                Logging.error("[AutoDrive] HudEditorButton '%s' = '%s'", self.primaryAction, type(func))
-                return false
-            end
-            func(AutoDrive.Hud, vehicle)
-            return true
+    if isUp and button == 1 then
+        local func = AutoDriveHud[self.primaryAction]
+        if type(func) ~= "function" then
+            Logging.error("[AutoDrive] HudEditorButton '%s' = '%s'", self.primaryAction, type(func))
+            return false
         end
-        
-        if button > 0 and button < 4 and isDown then
-            return true, true
-        end
+        func(AutoDrive.Hud, vehicle)
+        return true
+    end
+    
+    if button > 0 and button < 4 and isDown then
+        return true, true
     end
 
     return false

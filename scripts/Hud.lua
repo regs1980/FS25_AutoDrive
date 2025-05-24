@@ -40,11 +40,11 @@ AutoDriveHud.ELEMENTS = {
 	["exitField"] = { w=1, h=1, x=9, y=1, settings={[1]="exitField", tip="gui_ad_exitField"}},
 	["restrictToField"] = { w=1, h=1, x=10, y=1, settings={[1]="restrictToField", tip="gui_ad_restrictToField"}},
 	["avoidFruit"] = { w=1, h=1, x=11, y=1, settings={[1]="avoidFruit", tip="gui_ad_avoidFruit"}},
-	["decHudWidth"] = { w=1, h=1, editor={[1]="decHudWidth"}},
-	["incHudWidth"] = { w=1, h=1, editor={[1]="incHudWidth"}},
-	["decHudHeight"] = { w=1, h=1, editor={[1]="decHudHeight"}},
-	["incHudHeight"] = { w=1, h=1, editor={[1]="incHudHeight"}},
-	["rotatePresets"] = { w=1, h=1, editor={[1]="rotatePresets"}},
+	["decHudWidth"] = { w=1, h=1, editor={[1]="decHudWidth", tip="gui_ad_decrementHudWidth"}},
+	["incHudWidth"] = { w=1, h=1, editor={[1]="incHudWidth", tip="gui_ad_incrementHudWidth"}},
+	["decHudHeight"] = { w=1, h=1, editor={[1]="decHudHeight", tip="gui_ad_decrementHudHeight"}},
+	["incHudHeight"] = { w=1, h=1, editor={[1]="incHudHeight", tip="gui_ad_incrementHudHeight"}},
+	["rotatePresets"] = { w=1, h=1, editor={[1]="rotatePresets", tip="gui_ad_rotateHudPresets"}},
 }
 
 function AutoDriveHud:new()
@@ -207,7 +207,7 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	-- header icons
 	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHud"))
 	table.insert(self.hudElements, ADHudButton:new(self.posX + self.width - 2 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "input_toggleHudExtension"))
-	table.insert(self.hudElements, ADHudEditorButton:new(self.posX + self.width - 3 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "toggleEditHud"))
+	table.insert(self.hudElements, ADHudEditorButton:new(self.posX + self.width - 3 * self.headerIconWidth, headerY, self.headerIconWidth, self.headerIconHeight, "toggleEditHud", "gui_ad_toggleHudEditor"))
 
 	-- hud elements
 	for _, element in ipairs(self.elements) do

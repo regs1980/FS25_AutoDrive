@@ -388,5 +388,11 @@
 		<text name="gui_ad_editorTip_9"								text="1. node er kryds, anden det's nabo:" />
 		<text name="gui_ad_editorTip_10"								text="LCTRL: Skift segment type (normal/dobbel)" />
 		<text name="gui_ad_editorTip_11"								text="LSHIFT = Skift side vej" />
+		<text name="gui_ad_decrementHudWidth"							text="Decrease HUD width by 1" />
+		<text name="gui_ad_incrementHudWidth"							text="Increase HUD width by 1" />
+		<text name="gui_ad_decrementHudHeight"							text="Decrease HUD height by 1" />
+		<text name="gui_ad_incrementHudHeight"							text="Increase HUD height by 1" />
+		<text name="gui_ad_rotateHudPresets"							text="Cycle HUD presets" />
+		<text name="gui_ad_toggleHudEditor"							text="En/Disable HUD editor" />
 	</texts>
 </l10n>
