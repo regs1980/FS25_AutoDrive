@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Yes - AutoDrive unloaders try to plan a path forwards to adapt to 90° turns of the combine. / No - Unloaders will reverse before turn" />
 		<text name="gui_ad_ALUnload"									text="Autoload: Unload Position" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Off-no automatic unload, center-unload on loading platform, left / right vehicle unload position (Position depend on vehicle setup, not AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Unload Off" />
 		<text name="gui_ad_AL_center"									text="Unload center" />
 		<text name="gui_ad_AL_left"									text="Unload left" />

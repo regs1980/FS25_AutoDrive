@@ -127,7 +127,7 @@ function ADStateModule:readFromXMLFile(xmlFile, key)
     local selectedFillTypes = xmlFile:getValue(key .. "#selectedFillTypes")
     if selectedFillTypes ~= nil then
         self.selectedFillTypes = AutoDrive.stringToNumberList(selectedFillTypes)
-    else
+    elseif self.fillType ~= AutoDrive.UAL_FILLTYPE_ALL then
         self.selectedFillTypes = {self.fillType}
     end
 
@@ -937,6 +937,7 @@ end
 function ADStateModule:setFillType(fillType)
     if fillType > 0 and self.fillType ~= fillType then
         self.fillType = fillType
+        AutoDrive:setALFillType(self.vehicle, fillType)
         if not table.contains(self.selectedFillTypes, fillType) then
             self.selectedFillTypes = {fillType}
         end
@@ -945,7 +946,9 @@ function ADStateModule:setFillType(fillType)
 end
 
 function ADStateModule:toggleFillTypeSelection(fillType)
-    if fillType > 0 then
+    if fillType > 0 and self.fillType ~= AutoDrive.UAL_FILLTYPE_ALL and fillType ~= AutoDrive.UAL_FILLTYPE_ALL then 
+        -- AutoDrive.UAL_FILLTYPE_ALL is for all fillTypes in UAL
+        -- do not toggle UAL_FILLTYPE_ALL or additional fillTypes to UAL_FILLTYPE_ALL
         if table.contains(self.selectedFillTypes, fillType) then
             table.removeValue(self.selectedFillTypes, fillType)
             if self.fillType == fillType and #self.selectedFillTypes > 0 then
@@ -965,18 +968,24 @@ end
 
 function ADStateModule:toggleAllFillTypeSelections(fillType)
     if fillType > 0 then
-        local supportedFillTypes = AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(self.vehicle)
+        local supportedFillTypes = AutoDrive.getSupportedFillTypesOfAllUnitsAlphabetically(self.vehicle, AutoDrive.UAL_FILLTYPE_ALL)
+        -- do not toggle fillType AutoDrive.UAL_FILLTYPE_ALL!
         if supportedFillTypes and #supportedFillTypes > 0 then
             for _, selected in pairs(supportedFillTypes) do
                 if not table.contains(self.selectedFillTypes, selected) then
                     -- at least one supported fillType not yet selected. Select all
+                    self.fillType = selected
                     self.selectedFillTypes = supportedFillTypes
                     self:raiseDirtyFlag()
                     return
                 end
             end
             -- all fillTypes selected - clear selection and only select the given item
-            self.selectedFillTypes = {fillType}
+            if fillType == AutoDrive.UAL_FILLTYPE_ALL then
+                self.selectedFillTypes = {}
+            else
+                self.selectedFillTypes = {fillType}
+            end
             self.fillType = fillType
             self:raiseDirtyFlag()
         end
@@ -1033,6 +1042,28 @@ function ADStateModule:selectPreferredFillTypeFromFillLevels(fillLevels)
         if loopsLeft <= 0 then
             break
         end
+    end
+end
+
+function ADStateModule:nextSelectedFillType()
+    if self.selectedFillTypes and #self.selectedFillTypes > 0 then
+        for index, fillType in ipairs(self.selectedFillTypes) do
+            if self.fillType == fillType then
+                if self.selectedFillTypes[index + 1] ~= nil and g_fillTypeManager:getFillTypeByIndex(self.selectedFillTypes[index + 1]) ~= nil then
+                    -- found valid next selectedFillType
+                    self.fillType = self.selectedFillTypes[index + 1]
+                    AutoDrive:setALFillType(self.vehicle, self.selectedFillTypes[index + 1])
+                else
+                    if self.selectedFillTypes[1] ~= nil and g_fillTypeManager:getFillTypeByIndex(self.selectedFillTypes[1]) ~= nil then
+                        -- select the first selectedFillType
+                        self.fillType = self.selectedFillTypes[1]
+                        AutoDrive:setALFillType(self.vehicle, self.selectedFillTypes[1])
+                    end
+                end
+                break
+            end
+        end
+        self:raiseDirtyFlag()
     end
 end
 

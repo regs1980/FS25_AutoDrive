@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Sim - motoristas tentam planejar um caminho à frente para se adaptar às manobras de 90° da colheitadeira. / Não - Motoristas irão manobrar antes de virar" />
 		<text name="gui_ad_ALUnload"									text="Carga automática: Posição de descarga" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Sem descarga automática, descarga central na plataforma de carga, posição de descarga esquerda/direita do veículo (Posição depende da configuração do veículo, não AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Descarregar" />
 		<text name="gui_ad_AL_center"									text="Centro de descarga" />
 		<text name="gui_ad_AL_left"									text="Descarregar à esquerda" />

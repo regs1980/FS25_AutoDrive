@@ -1095,9 +1095,11 @@ function AutoDrive.setValidSupportedFillType(vehicle, excludedImplementIndex)
         end
     end
 
+    vehicle.ad.hasAL = false
     if trailers then
         for _, trailer in ipairs(trailers) do
             if AutoDrive:hasAL(trailer) and (excludedVehicles == nil or not table.contains(excludedVehicles, trailer)) then
+                vehicle.ad.hasAL = true
                 alFillType = AutoDrive:getALCurrentFillType(trailer)
                 if alFillType ~= nil then
                     -- first found is sufficient
@@ -1134,6 +1136,6 @@ function AutoDrive:setValidSupportedFillTypesForAllVehicles()
     -- This is called once via AutoDrive:init. We initially suppress filltype updates to deal with 
     -- the random order of onPostAttachImplement calls. This function repeats those suppressed calls.
     for _, vehicle in pairs(self:getAllVehicles()) do
-        self:setValidSupportedFillType(vehicle)
+        AutoDrive.setValidSupportedFillType(vehicle)
     end
 end

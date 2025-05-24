@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Ja - AutoDrive aflæssere forsøger at planlægge en vej fremad for at tilpasse sig 90° drejninger af mejetærskeren. / Nej - Aflæssere vil bakke før sving" />
 		<text name="gui_ad_ALUnload"									text="AutoLoad: Aflæsposition" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Fra-ingen automatisk aflæsning, midter-aflæsning på læsseplatform, venstre/bag/højre køretøjs aflæsningsposition (position afhænger af køretøjets opsætning, ikke AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Aflæsning fra" />
 		<text name="gui_ad_AL_center"									text="Aflæsning midt" />
 		<text name="gui_ad_AL_left"									text="Aflæsning venstre" />

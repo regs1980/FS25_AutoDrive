@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Ja - AutoDrive lossers proberen een pad naar voren te plannen om zich aan te passen aan de 90° draaiingen van de oogstmachine. / Nee - ontladers zullen omkeren voor ze draaien" />
 		<text name="gui_ad_ALUnload"									text="Autoload: Los positie" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Uit-niet automatisch lossen, midden-centraal lossen op de laadplaats, links-/ rechts-/ lospositie van het voertuig (De positie hangt af van de instelling van het voertuig, niet van AD!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Lossen uit" />
 		<text name="gui_ad_AL_center"									text="Lossen midden" />
 		<text name="gui_ad_AL_left"									text="Lossen links" />

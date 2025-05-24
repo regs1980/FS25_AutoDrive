@@ -92,6 +92,8 @@ AutoDrive.CHASEPOS_RIGHT = -1
 AutoDrive.CHASEPOS_REAR = 3
 AutoDrive.CHASEPOS_FRONT = 4
 
+AutoDrive.UAL_FILLTYPE_ALL = 1 -- value for set all materials in UniversalAutoload!
+
 AutoDrive.colors = {
 	ad_color_singleConnection = { 0, 1, 0, 1 },
 	ad_color_dualConnection = { 0, 0, 1, 1 },

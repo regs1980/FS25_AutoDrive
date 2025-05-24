@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Yes - AutoDrive unloaders try to plan a path forwards to adapt to 90° turns of the combine. / No - Unloaders will reverse before turn" />
 		<text name="gui_ad_ALUnload"									text="Autoload: Kirakodási pozíció" />
 		<text name="gui_ad_ALUnload_tooltip"							text="Ki - nincs automatikus kirakodás, középső kirakodás a rakodóplatformon, a jármű bal / jobb oldali kirakodási helyzete (a pozíció a jármű beállításától függ, nem AD-tól!)" />
+		<text name="gui_ad_Text_all"									text="All" />
 		<text name="gui_ad_AL_off"										text="Autoload kirakodás tiltva" />
 		<text name="gui_ad_AL_center"									text="Autoload kirakodás középre" />
 		<text name="gui_ad_AL_left"									text="Autoload kirakodás balra" />

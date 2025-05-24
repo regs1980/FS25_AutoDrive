@@ -213,8 +213,8 @@
 		<text name="gui_ad_shovelHeight_tooltip"						text="Falls die automatisch erkannte Zielhöhe nicht korrekt auf dem Boden ist, nutze diesen Wert zum Anpassen." />
 		<text name="gui_ad_showMarkersOnMap"							text="Ziele auf Karte" />
 		<text name="gui_ad_showMarkersOnMap_tooltip"					text="Zeigt die Ziele auf der Karte an." />
-		<text name="gui_ad_mainMenuMap"								text="Main menu map" />
-		<text name="gui_ad_ingameMap"									text="Ingame map" />
+		<text name="gui_ad_mainMenuMap"								text="Übersichtskarte" />
+		<text name="gui_ad_ingameMap"									text="Minikarte" />
 		<text name="gui_ad_both"										text="Both" />
 		<text name="gui_ad_switchToMarkersOnMap"						text="Ziele anwählbar" />
 		<text name="gui_ad_switchToMarkersOnMap_tooltip"				text="Ziele als Ziel/Abladepunkt übernehmen, wenn auf Karte geklickt." />
@@ -246,6 +246,7 @@
 		<text name="gui_ad_useForwardTurningManoeuvre_tooltip"			text="Ja - Abfahrer planen eine Vorwärtswende, wenn Drescher wendet. / Nein - Abfahrer setzen kurz zurück." />
 		<text name="gui_ad_ALUnload"									text="Autoload: Abladeposition" />
 		<text name="gui_ad_ALUnload_tooltip"							text="aus-kein Abladen, mittig-auf Ladefläche abladen, links-, rechts-auf Standard-Entladeposition (Positionen sind im Fahrzeug festgelegt, nicht in AD!)" />
+		<text name="gui_ad_Text_all"									text="Alle" />
 		<text name="gui_ad_AL_off"										text="abladen aus" />
 		<text name="gui_ad_AL_center"									text="abladen mittig" />
 		<text name="gui_ad_AL_left"									text="abladen links" />
