@@ -29,7 +29,7 @@ function ADHudIcon:onDrawHeader(vehicle, uiScale)
     local adPosX = self.position.x + AutoDrive.Hud.gapWidth
     local adPosY = self.position.y + (self.size.height - textHeight) / 2
 
-    if AutoDrive.Hud.isShowingTips then
+    if AutoDrive.Hud.isShowingTips or AutoDrive.Hud.isEditingHud then
         adPosY = self.position.y + (AutoDrive.Hud.gapHeight)
     end
 
@@ -41,6 +41,11 @@ function ADHudIcon:onDrawHeader(vehicle, uiScale)
         adPosY = adPosY + (textHeight + AutoDrive.Hud.gapHeight) * self.lastLineCount
         self:renderEditorTips(textHeight, adFontSize, adPosX, adPosY)
     end
+    if AutoDrive.Hud.isEditingHud then
+        adPosY = adPosY + (textHeight + AutoDrive.Hud.gapHeight) * self.lastLineCount
+        self:renderHudEditorTips(textHeight, adFontSize, adPosX, adPosY)
+    end
+
 end
 
 function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
@@ -78,25 +83,53 @@ function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
 end
 
 function ADHudIcon:renderEditorTips(textHeight, fontSize, posX, posY)
-    local editorTips = {}
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_11"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_10"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_9"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_8"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_7"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_6"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_5"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_4"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_3"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_2"))
-    table.insert(editorTips, g_i18n:getText("gui_ad_editorTip_1"))
+    local editorTips = {
+        g_i18n:getText("gui_ad_editorTip_11"),
+        g_i18n:getText("gui_ad_editorTip_10"),
+        g_i18n:getText("gui_ad_editorTip_9"),
+        g_i18n:getText("gui_ad_editorTip_8"),
+        g_i18n:getText("gui_ad_editorTip_7"),
+        g_i18n:getText("gui_ad_editorTip_6"),
+        g_i18n:getText("gui_ad_editorTip_5"),
+        g_i18n:getText("gui_ad_editorTip_4"),
+        g_i18n:getText("gui_ad_editorTip_3"),
+        g_i18n:getText("gui_ad_editorTip_2"),
+        g_i18n:getText("gui_ad_editorTip_1")
+    }
 
-    for tipId, tip in pairs(editorTips) do
+    local gap = textHeight / 2
+    posY = posY + gap  -- gap below tips
+
+    for tipId, tip in ipairs(editorTips) do
         if AutoDrive.pullDownListExpanded == 0 then
             renderText(posX, posY, fontSize, tip)
             posY = posY + textHeight + AutoDrive.Hud.gapHeight
             if tipId == 3 or tipId == 6 then
-                posY = posY + textHeight + AutoDrive.Hud.gapHeight
+                posY = posY + gap
+            end
+        end
+    end
+end
+
+function ADHudIcon:renderHudEditorTips(textHeight, fontSize, posX, posY)
+    local editorTips = {
+        g_i18n:getText("gui_ad_hudEditorTip_6"),
+        g_i18n:getText("gui_ad_hudEditorTip_5"),
+        g_i18n:getText("gui_ad_hudEditorTip_4"),
+        g_i18n:getText("gui_ad_hudEditorTip_3"),
+        g_i18n:getText("gui_ad_hudEditorTip_2"),
+        g_i18n:getText("gui_ad_hudEditorTip_1"),
+    }
+
+    local gap = textHeight / 2
+    posY = posY + gap  -- gap below tips
+
+    for tipId, tip in ipairs(editorTips) do
+        if AutoDrive.pullDownListExpanded == 0 then
+            renderText(posX, posY, fontSize, tip)
+            posY = posY + textHeight + AutoDrive.Hud.gapHeight
+            if tipId == 1 or tipId == 4 then
+                posY = posY + gap
             end
         end
     end

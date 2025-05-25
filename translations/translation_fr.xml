@@ -394,5 +394,16 @@
 		<text name="gui_ad_incrementHudHeight"							text="Increase HUD height by 1" />
 		<text name="gui_ad_rotateHudPresets"							text="Cycle HUD presets" />
 		<text name="gui_ad_toggleHudEditor"							text="En/Disable HUD editor" />
+		<text name="gui_ad_saveHud"									text="Save" />
+		<text name="gui_ad_nextHudPreset_tooltip_1"					text="next: default HUD" />
+		<text name="gui_ad_nextHudPreset_tooltip_2"					text="next: default HUD with settings" />
+		<text name="gui_ad_nextHudPreset_tooltip_3"					text="next: wide HUD" />
+		<text name="gui_ad_nextHudPreset_tooltip_4"					text="next: wide HUD with settings" />
+		<text name="gui_ad_hudEditorTip_1"								text="Drag elements from the editor to the HUD" />
+		<text name="gui_ad_hudEditorTip_2"								text="Right click on a HUD element to remove it" />
+		<text name="gui_ad_hudEditorTip_3"								text="Quick-start by using 'Cycle presets'" />
+		<text name="gui_ad_hudEditorTip_4"								text="Toggle 'Edit Mode' to edit both HUD layers" />
+		<text name="gui_ad_hudEditorTip_5"								text="Closing the editor reverts unsaved changes" />
+		<text name="gui_ad_hudEditorTip_6"								text="The HUD layout applies to all save games" />
 	</texts>
 </l10n>

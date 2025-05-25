@@ -12,7 +12,11 @@ AutoDrive.mouseOverHud = false
 AutoDriveHud.debug = false
 
 AutoDriveHud.defaultHeaderHeight = 0.016
-AutoDriveHud.extendedHeaderHeight = 0.200
+AutoDriveHud.headerHeightWithTips = 0.185
+AutoDriveHud.headerHeightWithEditor = 0.115
+AutoDriveHud.elementSize = 32
+AutoDriveHud.elementGap = 3
+AutoDriveHud.listItemSize = 20
 
 AutoDriveHud.ELEMENTS = {
 	-- table of all possible hud elements, x/y are used for the editor
@@ -40,11 +44,12 @@ AutoDriveHud.ELEMENTS = {
 	["exitField"] = { w=1, h=1, x=9, y=1, settings={[1]="exitField", tip="gui_ad_exitField"}},
 	["restrictToField"] = { w=1, h=1, x=10, y=1, settings={[1]="restrictToField", tip="gui_ad_restrictToField"}},
 	["avoidFruit"] = { w=1, h=1, x=11, y=1, settings={[1]="avoidFruit", tip="gui_ad_avoidFruit"}},
-	["decHudWidth"] = { w=1, h=1, editor={[1]="decHudWidth", tip="gui_ad_decrementHudWidth"}},
-	["incHudWidth"] = { w=1, h=1, editor={[1]="incHudWidth", tip="gui_ad_incrementHudWidth"}},
-	["decHudHeight"] = { w=1, h=1, editor={[1]="decHudHeight", tip="gui_ad_decrementHudHeight"}},
-	["incHudHeight"] = { w=1, h=1, editor={[1]="incHudHeight", tip="gui_ad_incrementHudHeight"}},
-	["rotatePresets"] = { w=1, h=1, editor={[1]="rotatePresets", tip="gui_ad_rotateHudPresets"}},
+	["decHudWidth"] = { w=1, h=1, editor={[1]="input_decHudWidth", tip="gui_ad_decrementHudWidth"}},
+	["incHudWidth"] = { w=1, h=1, editor={[1]="input_incHudWidth", tip="gui_ad_incrementHudWidth"}},
+	["decHudHeight"] = { w=1, h=1, editor={[1]="input_decHudHeight", tip="gui_ad_decrementHudHeight"}},
+	["incHudHeight"] = { w=1, h=1, editor={[1]="input_incHudHeight", tip="gui_ad_incrementHudHeight"}},
+	["rotateHudPresets"] = { w=1, h=1, editor={[1]="input_rotateHudPresets", tip="gui_ad_rotateHudPresets"}},
+	["saveHud"] = { w=1, h=1, editor={[1]="input_saveHud", tip="gui_ad_saveHud"}},
 }
 
 function AutoDriveHud:new()
@@ -98,59 +103,12 @@ function AutoDriveHud:new()
 		g_fillTypeManager:getFillTypeIndexByName("WEED"),
 		g_fillTypeManager:getFillTypeIndexByName("WOOL")
 	}
+	o.isMoving = false
+	o.isShowingTips = false
+	o.isEditingHud = false
+	o.isMovingElement = nil
+	o.hudEditorElements = {}
 	return o
-end
-
-function AutoDriveHud:loadHud()
-	-- local filename = AutoDrive.directory .. "gui/hud/default.xml"
-	-- local filename = AutoDrive.directory .. "gui/hud/defaultWithSettings.xml"
-	-- local filename = AutoDrive.directory .. "gui/hud/wide.xml"
-	local filename = AutoDrive.directory .. "gui/hud/wideWithSettings.xml"
-	
-	local xml = loadXMLFile("Hud_xml", filename)
-	self.numElementsH = getXMLInt(xml, "hud.size#width")
-	self.numElementsV = getXMLInt(xml, "hud.size#height")
-	self.elementSize = 32
-	self.elementGap = 3
-	self.listItemSize = 20
-	self.elements = {}
-
-	local i = 0
-	while true do
-		local key = string.format("hud.elements.element(%d)", i)
-		if not hasXMLProperty(xml, key) then
-			break
-		end
-		local name = getXMLString(xml, key .. "#name")
-		local x = getXMLInt(xml, key .. "#x")
-		local y = getXMLInt(xml, key .. "#y")
-		local edit = getXMLBool(xml, key .. "#edit")
-		i = i + 1
-		self.elements[i] = { name = name, x = x, y = y, edit = edit }
-	end
-
-	if AutoDrive.HudX == nil or AutoDrive.HudY == nil then
-		local uiScale = g_gameSettings:getValue("uiScale")
-		if AutoDrive.getSetting("guiScale") ~= 0 then
-			uiScale = AutoDrive.getSetting("guiScale")
-		end
-
-		self.width, self.height = getNormalizedScreenValues(
-			(self.numElementsH * (self.elementSize + self.elementGap) + self.elementGap) * uiScale,
-			(self.numElementsV * (self.elementSize + self.elementGap) + self.elementGap) * uiScale)
-
-		self.posX = 1 - self.width
-		self.posY = 0.31
-		AutoDrive.HudX = self.posX
-		AutoDrive.HudY = self.posY
-	else
-		self.posX = AutoDrive.HudX
-		self.posY = AutoDrive.HudY
-	end
-	self.isMoving = false
-	self.isShowingTips = false
-	self.isEditingHud = false
-	self.isMovingElement = nil
 end
 
 function AutoDriveHud:createHudAt(hudX, hudY)
@@ -163,7 +121,9 @@ function AutoDriveHud:createHudAt(hudX, hudY)
 	end
 
 	if self.isShowingTips then
-		self.headerHeight = AutoDriveHud.extendedHeaderHeight * uiScale
+		self.headerHeight = AutoDriveHud.headerHeightWithTips * uiScale
+	elseif self.isEditingHud then
+		self.headerHeight = AutoDriveHud.headerHeightWithEditor * uiScale
 	else
 		self.headerHeight = AutoDriveHud.defaultHeaderHeight * uiScale
 	end
@@ -220,12 +180,13 @@ end
 
 function AutoDriveHud:createHudEditor()
 	table.insert(self.hudElements, ADHudIcon:new(self.hudEditorPosX, self.hudEditorPosY, self.hudEditorWidth, self.hudEditorHeight, "ad_gui.Background", 0, "editorBackground"))
-	self:addElement({ name = "decHudWidth", x = 0, y = 0, hudEditor = true }, self.hudElements)
-	self:addElement({ name = "incHudWidth", x = 1, y = 0, hudEditor = true }, self.hudElements)
-	self:addElement({ name = "decHudHeight", x = 2, y = 0, hudEditor = true }, self.hudElements)
-	self:addElement({ name = "incHudHeight", x = 3, y = 0, hudEditor = true }, self.hudElements)
-	self:addElement({ name = "rotatePresets", x = 4, y = 0, hudEditor = true }, self.hudElements)
-	self:addElement({ name = "editor", x = 11, y = 0, hudEditor = true }, self.hudElements)
+	self:addElement({name="decHudWidth", x=0, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="incHudWidth", x=1, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="decHudHeight", x=2, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="incHudHeight", x=3, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="rotateHudPresets", x=4, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="saveHud", x=5, y=0, hudEditor=true }, self.hudElements)
+	self:addElement({name="editor", x=11, y=0, hudEditor=true }, self.hudElements)
 	for name, config in pairs(AutoDriveHud.ELEMENTS) do
 		if config.editor == nil and config.x ~= nil and config.y ~= nil then
 			local elements = {}
@@ -336,11 +297,9 @@ function AutoDriveHud:drawHud(vehicle)
             for _, element in ipairs(self.hudElements) do
                 element:onDraw(vehicle, uiScale)
             end
-			if self.hudEditorElements ~= nil then
-				for _, elements in pairs(self.hudEditorElements) do
-					for _, element in ipairs(elements) do
-						element:onDraw(vehicle, uiScale)
-					end
+			for _, elements in pairs(self.hudEditorElements) do
+				for _, element in ipairs(elements) do
+					element:onDraw(vehicle, uiScale)
 				end
 			end
         end
@@ -353,17 +312,15 @@ function AutoDriveHud:update(dt)
             element:update(dt)
         end
     end
-	if self.hudEditorElements ~= nil then
-		for _, elements in pairs(self.hudEditorElements) do
-			for _, element in ipairs(elements) do
-				element:update(dt)
-			end
+	for _, elements in pairs(self.hudEditorElements) do
+		for _, element in ipairs(elements) do
+			element:update(dt)
 		end
 	end
 end
 
 function AutoDriveHud:toggleHudExtension(vehicle)
-	self.isShowingTips = not self.isShowingTips	
+	self.isShowingTips = not self.isShowingTips
 	self:createHudAt(self.posX, self.posY)
 end
 
@@ -395,13 +352,19 @@ end
 
 function AutoDriveHud:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp, button)
 	-- returns "handled"
-	if self.isMovingElement ~= nil then
-		if (button == 1 and isUp) or not AutoDrive.isMouseActiveForHud() then
-			self:stopMovingHudElement(button == 1 and isUp)
-		else
-			self:moveHudElement(posX, posY)
+	if self.isEditingHud then
+		if self.isMovingElement ~= nil then
+			if (button == 1 and isUp) or not AutoDrive.isMouseActiveForHud() then
+				self:stopMovingHudElement(button == 1 and isUp)
+			else
+				self:moveHudElement(posX, posY)
+			end
+			return true -- handled
 		end
-		return true -- handled
+
+		if self:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown, isUp, button) then
+			return true -- handled
+		end
 	end
 	if self.hudElements ~= nil then
 		-- Start with highest layer value (last in array), and then iterate backwards.
@@ -417,12 +380,6 @@ function AutoDriveHud:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp,
 				end
 				return true -- handled
 			end
-		end
-	end
-	if self.hudEditorElements ~= nil then
-		local mouseEventHandled = self:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown, isUp, button)
-		if mouseEventHandled then
-			return true -- handled
 		end
 	end
 	if AutoDrive.pullDownListExpanded > 0 and button >= 1 and button <= 3 and isUp then

@@ -5,7 +5,6 @@
         <element name="pulldownTarget" x="0" y="0"/>
         <element name="pulldownUnload" x="0" y="1"/>
         <element name="pulldownFilltype" x="0" y="2"/>
-
         <element name="record" x="7" y="1" edit="true"/>
         <element name="routesManager" x="8" y="1" edit="true"/>
         <element name="createMarker" x="9" y="1" edit="true"/>
@@ -14,7 +13,6 @@
         <element name="startHelper" x="11" y="1" edit="false"/>
         <element name="fieldSpeed" x="12" y="1"/>
         <element name="settings" x="13" y="1"/>
-
         <element name="startStop" x="7" y="2"/>
         <element name="mode" x="8" y="2"/>
         <element name="continue" x="9" y="2"/>
