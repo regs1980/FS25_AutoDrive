@@ -48,13 +48,18 @@ function ADHudIcon:onDrawHeader(vehicle, uiScale)
 
 end
 
+function ADHudIcon:updateTooltip(vehicle)
+end
+
 function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
     local textHeight = getTextHeight(fontSize, "text")
     local textToShow = "AutoDrive"
     textToShow = textToShow .. " - " .. AutoDrive.version
     textToShow = textToShow .. " - " .. AutoDriveHud:getModeName(vehicle)
     textToShow = self:addVehicleDriveTimeString(vehicle, textToShow)
-    textToShow = self:addTooltipString(vehicle, textToShow)
+    if vehicle.ad.toolTipOnNewLine ~= true then
+        textToShow = self:addTooltipString(vehicle, textToShow)
+    end
 
     local taskInfo = vehicle.ad.stateModule:getCurrentLocalizedTaskInfo()
     if taskInfo ~= "" then
@@ -66,8 +71,13 @@ function ADHudIcon:renderDefaultText(vehicle, fontSize, posX, posY)
             textToShow = textToShow .. " - " .. "Fallback: " .. tostring(vehicle.ad.pathFinderModule.fallBackMode)
         end
     end
-
     local lines = self:splitTextByLength(textToShow, fontSize, AutoDrive.Hud.headerLabelWidth)
+    if vehicle.ad.toolTipOnNewLine == true then
+        local toolTipText = self:addTooltipString(vehicle, "")
+        if toolTipText ~= "" then
+            table.insert(lines, string.sub(toolTipText, 4))
+        end
+    end
     
     if #lines ~= self.lastLineCount and self.ov ~= nil then
         self.ov:setDimension(nil, self.size.height + (textHeight + AutoDrive.Hud.gapHeight) * (#lines - 1))        
@@ -154,7 +164,7 @@ function ADHudIcon:addTooltipString(vehicle, currentText)
         if vehicle.ad.toolTipIsSetting then
             currentText = currentText .. " - " .. g_i18n:getText(vehicle.ad.sToolTip)
         else
-            currentText = currentText .. " - " .. string.sub(g_i18n:getText(vehicle.ad.sToolTip), 5, string.len(g_i18n:getText(vehicle.ad.sToolTip)))
+            currentText = currentText .. " - " .. string.sub(g_i18n:getText(vehicle.ad.sToolTip), 5)
         end
 
         if vehicle.ad.sToolTipInfo ~= nil then

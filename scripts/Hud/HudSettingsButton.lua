@@ -2,13 +2,12 @@ ADHudSettingsButton = ADInheritsFrom(ADGenericHudElement)
 
 function ADHudSettingsButton:new(posX, posY, width, height, setting, toolTip, state, editMode)
     local o = ADHudSettingsButton:create()
-    o:init(posX, posY, width, height)
+    o:init(posX, posY, width, height, toolTip)
     o.setting = setting
-    o.toolTip = toolTip
     o.state = state
     o.editMode = editMode
     o.layer = 5
-
+    o.toolTipIsSetting = true
     o.images = o:readImages()
 
     o.ov = g_overlayManager:createOverlay(o.images[o.state], o.position.x, o.position.y, o.size.width, o.size.height)
@@ -48,11 +47,6 @@ function ADHudSettingsButton:updateState(vehicle)
 end
 
 function ADHudSettingsButton:act(vehicle, posX, posY, isDown, isUp, button)
-    vehicle.ad.sToolTip = self.toolTip
-    vehicle.ad.nToolTipWait = 5
-    vehicle.ad.sToolTipInfo = nil
-    vehicle.ad.toolTipIsSetting = true
-
     if not AutoDrive.Hud.isEditingHud and button == 1 and isUp then
         local currentState = AutoDrive.getSettingState(self.setting, vehicle)
         currentState = (currentState + 1)

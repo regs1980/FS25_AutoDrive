@@ -2,7 +2,7 @@ ADHudButton = ADInheritsFrom(ADGenericHudElement)
 
 function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryAction, tertiaryAction, quatenaryAction, fifthAction, sixthAction, seventhAction, eighthAction, toolTip, state, editMode)
     local o = ADHudButton:create()
-    o:init(posX, posY, width, height)
+    o:init(posX, posY, width, height, toolTip)
     o.primaryAction = primaryAction
     o.secondaryAction = secondaryAction
     o.tertiaryAction = tertiaryAction
@@ -11,7 +11,6 @@ function ADHudButton:new(posX, posY, width, height, primaryAction, secondaryActi
     o.sixthAction = sixthAction
     o.seventhAction = seventhAction
     o.eighthAction = eighthAction
-    o.toolTip = toolTip or ""
     o.state = state or 0
     o.editMode = editMode
     o.layer = 5
@@ -229,18 +228,17 @@ function ADHudButton:getNewState(vehicle)
     return newState
 end
 
-function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
-    vehicle.ad.sToolTip = self.toolTip
-    vehicle.ad.nToolTipWait = 5
-    vehicle.ad.sToolTipInfo = nil
-    vehicle.ad.toolTipIsSetting = false
-
+function ADHudButton:updateTooltip(vehicle)
+    ADHudButton:superClass().updateTooltip(self, vehicle)
     if self.primaryAction == "input_parkVehicle" then
         local actualParkDestination = vehicle.ad.stateModule:getParkDestinationAtJobFinished()
         if actualParkDestination >= 1 and ADGraphManager:getMapMarkerById(actualParkDestination) ~= nil then
             vehicle.ad.sToolTipInfo = ADGraphManager:getMapMarkerById(actualParkDestination).name
         end
     end
+end
+
+function ADHudButton:act(vehicle, posX, posY, isDown, isUp, button)
 
     if AutoDrive.Hud.isEditingHud and self.primaryAction ~= "input_debug" then
         return false

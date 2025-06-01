@@ -1,11 +1,22 @@
 ADGenericHudElement = {}
 ADGenericHudElement_mt = {__index = ADGenericHudElement}
 
-function ADGenericHudElement:init(posX, posY, width, height)
+function ADGenericHudElement:init(posX, posY, width, height, toolTip)
     self.position = {x = posX, y = posY}
     self.size = {width = width, height = height}
     self.layer = 10
     self.isVisible = false
+    self.toolTip = toolTip or ""
+    self.toolTipIsSetting = false
+    self.toolTipOnNewLine = false
+end
+
+function ADGenericHudElement:updateTooltip(vehicle)
+    vehicle.ad.sToolTip = self.toolTip
+    vehicle.ad.nToolTipWait = 5
+    vehicle.ad.sToolTipInfo = nil
+    vehicle.ad.toolTipIsSetting = self.toolTipIsSetting
+    vehicle.ad.toolTipOnNewLine = self.toolTipOnNewLine
 end
 
 function ADGenericHudElement:hit(posX, posY, layer)
@@ -13,10 +24,12 @@ function ADGenericHudElement:hit(posX, posY, layer)
 end
 
 function ADGenericHudElement:mouseEvent(vehicle, posX, posY, isDown, isUp, button, layer)
+    local result = false
     if self.isVisible and self:hit(posX, posY, layer) then
-        return self:act(vehicle, posX, posY, isDown, isUp, button)
+        result = self:act(vehicle, posX, posY, isDown, isUp, button)
+        self:updateTooltip(vehicle)
     end
-    return false
+    return result
 end
 
 function ADGenericHudElement:onDraw(vehicle, uiScale)

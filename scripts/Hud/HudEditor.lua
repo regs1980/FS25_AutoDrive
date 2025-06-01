@@ -5,28 +5,27 @@ ADHudEditorButton = ADInheritsFrom(ADHudButton)
 
 function ADHudEditorButton:new(posX, posY, width, height, primaryAction, toolTip)
     local o = ADHudEditorButton:create()
-    o:init(posX, posY, width, height)
+    o:init(posX, posY, width, height, toolTip)
     o.primaryAction = primaryAction
-    o.toolTip = toolTip or ""
     o.state = 0
     o.isVisible = true
     o.editMode = nil
+    o.toolTipIsSetting = true
+    o.toolTipOnNewLine = true
     o.layer = 5
     o.images = o:readImages()
     o.ov = g_overlayManager:createOverlay(o.images[o.state], o.position.x, o.position.y, o.size.width, o.size.height)
     return o
 end
 
-function ADHudEditorButton:act(vehicle, posX, posY, isDown, isUp, button)
-    vehicle.ad.sToolTip = self.toolTip
-    vehicle.ad.nToolTipWait = 5
-    vehicle.ad.sToolTipInfo = nil
-    vehicle.ad.toolTipIsSetting = true
-
+function ADHudEditorButton:updateTooltip(vehicle)
+    ADHudEditorButton:superClass().updateTooltip(self, vehicle)
     if self.primaryAction == "input_rotateHudPresets" then
         vehicle.ad.sToolTipInfo = g_i18n:getText("gui_ad_nextHudPreset_tooltip_" .. AutoDrive.Hud.nextHudPreset)
     end
+end
 
+function ADHudEditorButton:act(vehicle, posX, posY, isDown, isUp, button)
     if isUp and button == 1 then
         local func = AutoDriveHud[self.primaryAction]
         if type(func) ~= "function" then
@@ -40,7 +39,6 @@ function ADHudEditorButton:act(vehicle, posX, posY, isDown, isUp, button)
     if button > 0 and button < 4 and isDown then
         return true, true
     end
-
     return false
 end
 

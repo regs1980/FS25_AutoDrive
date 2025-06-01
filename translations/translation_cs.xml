@@ -405,5 +405,12 @@
 		<text name="gui_ad_hudEditorTip_4"								text="Toggle 'Edit Mode' to edit both HUD layers" />
 		<text name="gui_ad_hudEditorTip_5"								text="Closing the editor reverts unsaved changes" />
 		<text name="gui_ad_hudEditorTip_6"								text="The HUD layout applies to all save games" />
+		<text name="gui_ad_loop_counter_tooltip"						text="Set how often the task is repeated" />
+		<text name="gui_ad_speedmeter_tooltip"							text="Maximum road speed" />
+		<text name="gui_ad_speedmeter_field_tooltip"					text="Maximum field speed" />
+		<text name="gui_ad_target_tooltip"								text="Target" />
+		<text name="gui_ad_load_tooltip"								text="Load target" />
+		<text name="gui_ad_unload_tooltip"								text="Unload target" />
+		<text name="gui_ad_filltype_tooltip"							text="Filltype" />
 	</texts>
 </l10n>

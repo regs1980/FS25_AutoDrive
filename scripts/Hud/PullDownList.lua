@@ -48,7 +48,8 @@ function ADPullDownList:new(posX, posY, width, height, type, selected, editMode)
     o.type = type
     o.editMode = editMode
     o.size.height = AutoDrive.Hud.elementHeight
-    self.autoLoadFillTypes = nil
+    o.autoLoadFillTypes = nil
+    o.toolTipIsSetting = true
 
     AutoDrive.pullDownListExpanded = 0
 -- icons in list 1/2 size of HUD icons?
@@ -93,6 +94,27 @@ function ADPullDownList:new(posX, posY, width, height, type, selected, editMode)
     o:initReusableOverlaysOnlyOnce()
 
     return o
+end
+
+function ADPullDownList:updateTooltip(vehicle)
+    ADPullDownList:superClass().updateTooltip(self, vehicle)
+    if self.type == ADPullDownList.TYPE_TARGET then
+        if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_PICKUPANDDELIVER then
+            vehicle.ad.sToolTip = "gui_ad_load_tooltip"
+        elseif vehicle.ad.stateModule:getMode() == AutoDrive.MODE_DELIVERTO then
+            vehicle.ad.sToolTip = "gui_ad_unload_tooltip"
+        else
+            vehicle.ad.sToolTip = "gui_ad_target_tooltip"
+        end
+    elseif self.type == ADPullDownList.TYPE_UNLOAD then
+        if vehicle.ad.stateModule:getMode() == AutoDrive.MODE_LOAD then
+            vehicle.ad.sToolTip = "gui_ad_load_tooltip"
+        else
+            vehicle.ad.sToolTip = "gui_ad_unload_tooltip"
+        end
+    elseif self.type == ADPullDownList.TYPE_FILLTYPE then
+        vehicle.ad.sToolTip = "gui_ad_filltype_tooltip"
+    end
 end
 
 function ADPullDownList:update(dt)

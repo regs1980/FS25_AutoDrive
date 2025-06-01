@@ -17,6 +17,8 @@ function ADHudCounterButton:new(posX, posY, width, height, mode, editMode)
         [ADHudCounterButton.STATE_INACTIVE] = "ad_gui." .. mode .. "_inactive",
     }
     o.layer = 5
+    o.toolTipIsSetting = true
+    o.toolTip = "gui_ad_" .. mode .. "_tooltip"
     o.ov = g_overlayManager:createOverlay(o.images[o.state], o.position.x, o.position.y, o.size.width, o.size.height)
     return o
 end

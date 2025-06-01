@@ -3,18 +3,21 @@ ADHudSpeedmeter = ADInheritsFrom(ADGenericHudElement)
 function ADHudSpeedmeter:new(posX, posY, width, height, fieldSpeed, editMode)
     local o = ADHudSpeedmeter:create()
     o:init(posX, posY, width, height)
-    o.primaryAction = "input_increaseSpeed"
-    o.secondaryAction = "input_decreaseSpeed"
-    o.image = "ad_gui.speedmeter"
-    o.editMode = editMode
 
     if fieldSpeed then
         o.primaryAction = "input_increaseFieldSpeed"
         o.secondaryAction = "input_decreaseFieldSpeed"
         o.image = "ad_gui.speedmeter_field"
+        o.toolTip = "gui_ad_speedmeter_field_tooltip"
+    else
+        o.primaryAction = "input_increaseSpeed"
+        o.secondaryAction = "input_decreaseSpeed"
+        o.image = "ad_gui.speedmeter"
+        o.toolTip = "gui_ad_speedmeter_tooltip"
     end
-
+    o.editMode = editMode
     o.layer = 5
+    o.toolTipIsSetting = true
     o.isFieldSpeed = fieldSpeed
 
     o.ov = g_overlayManager:createOverlay(o.image, o.position.x, o.position.y, o.size.width, o.size.height)
