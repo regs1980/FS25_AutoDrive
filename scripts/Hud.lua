@@ -106,7 +106,7 @@ function AutoDriveHud:new()
 	o.isMoving = false
 	o.isShowingTips = false
 	o.isEditingHud = false
-	o.isMovingElement = nil
+	o.movingElement = nil
 	o.hudEditorElements = {}
 	return o
 end
@@ -353,7 +353,7 @@ end
 function AutoDriveHud:mouseEventOnHudElements(vehicle, posX, posY, isDown, isUp, button)
 	-- returns "handled"
 	if self.isEditingHud then
-		if self.isMovingElement ~= nil then
+		if self.movingElement ~= nil then
 			if (button == 1 and isUp) or not AutoDrive.isMouseActiveForHud() then
 				self:stopMovingHudElement(button == 1 and isUp)
 			else

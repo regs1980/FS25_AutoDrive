@@ -173,6 +173,7 @@ function AutoDriveHud:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown,
             if element:hit(posX, posY, layer) then
                 if button == 1 and isDown then
                     self:startMovingHudElement(posX, posY, name)
+                    self:moveHudElement(posX, posY)
                     return true
                 end
                 local mouseEventHandled, _ = element:mouseEvent(vehicle, posX, posY, isDown, isUp, button, layer)
@@ -186,8 +187,25 @@ function AutoDriveHud:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown,
     if (button == 2 or button == 3) and isUp then
         local target = self:getDropLocation(posX, posY, 1)
         if target ~= nil then
-            self.elements = self:removeOverlappingElements(target.x, target.y, 1)
+            self.elements, _ = self:getOverlappingElements(target.x, target.y, 1)
             self:createHudAt(self.posX, self.posY)
+            return true
+        end
+    end
+    -- handle drag in the hud (this also stops mouse events on the hud)
+    if button == 1 and (isUp or isDown) then
+        local target = self:getDropLocation(posX, posY, 1)
+        if target ~= nil then
+            if isDown then
+                local elements_kept, elements_removed = self:getOverlappingElements(target.x, target.y, 1)
+                if #elements_removed == 1 then
+                    -- start dragging the hud element
+                    self:startMovingHudElement(posX, posY, elements_removed[1].name)
+                    self.elements = elements_kept
+                    self:createHudAt(self.posX, self.posY)
+                    self:moveHudElement(posX, posY)
+                end
+            end
             return true
         end
     end
@@ -195,7 +213,7 @@ function AutoDriveHud:mouseEventOnHudEditorElements(vehicle, posX, posY, isDown,
 end
 
 function AutoDriveHud:startMovingHudElement(posX, posY, element)
-	self.isMovingElement = {name=element}
+	self.movingElement = {name=element}
 	self.lastMousePosX = posX
 	self.lastMousePosY = posY
 end
@@ -210,7 +228,7 @@ function AutoDriveHud:getDropLocation(posX, posY, width)
 end
 
 function AutoDriveHud:moveHudElement(posX, posY)
-    local name = self.isMovingElement.name
+    local name = self.movingElement.name
     local config = self.ELEMENTS[name]
     local x, y = posX - self.elementWidth / 2 - self.gapWidth, posY - self.elementHeight / 2 - self.gapHeight
 
@@ -227,13 +245,13 @@ function AutoDriveHud:moveHudElement(posX, posY)
         local h = config.h * (self.elementHeight + self.gapHeight) - self.gapHeight
         table.insert(elements, ADHudIcon:new(x, y, w, h, "ad_gui.dropTarget", 1, "drop_target"))
     end
-    self.isMovingElement.target = target
+    self.movingElement.target = target
 	self.hudEditorElements["_moving_"] = elements
 end
 
-function AutoDriveHud:removeOverlappingElements(x, y, w)
+function AutoDriveHud:getOverlappingElements(x, y, w)
     local edit = AutoDrive.isEditorModeEnabled()
-    local elements, i  = {}, 0
+    local elements_removed, elements_kept, r, k  = {}, {}, 0, 0
 
     -- find elements to remove
     for _, element in pairs(self.elements) do
@@ -244,18 +262,21 @@ function AutoDriveHud:removeOverlappingElements(x, y, w)
                 remove = true
             end
         end
-        if not remove then
-            i = i + 1
-            elements[i] = element
+        if remove then
+            r = r + 1
+            elements_removed[r] = element
+        else
+            k = k + 1
+            elements_kept[k] = element
         end
     end
-    return elements
+    return elements_kept, elements_removed
 end
 
 function AutoDriveHud:dropElement(name, target)
     local config = self.ELEMENTS[name]
     local edit = AutoDrive.isEditorModeEnabled()
-    local elements = self:removeOverlappingElements(target.x, target.y, config.w)
+    local elements, _ = self:getOverlappingElements(target.x, target.y, config.w)
 
     -- add the new element
     local i = #elements + 1
@@ -265,11 +286,11 @@ function AutoDriveHud:dropElement(name, target)
 end
 
 function AutoDriveHud:stopMovingHudElement(drop)
-    if drop and self.isMovingElement ~= nil and self.isMovingElement.target ~= nil then
-        self:dropElement(self.isMovingElement.name, self.isMovingElement.target)
+    if drop and self.movingElement ~= nil and self.movingElement.target ~= nil then
+        self:dropElement(self.movingElement.name, self.movingElement.target)
     end
     self.hudEditorElements["_moving_"] = nil
-    self.isMovingElement = nil
+    self.movingElement = nil
 end
 
 function AutoDriveHud:loadHudFromXml(xml)
