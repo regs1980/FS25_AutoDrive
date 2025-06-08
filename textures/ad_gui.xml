@@ -104,8 +104,8 @@
         <slice id="input_goTo_1" uvs="2012px 156px 32px 32px"/>
         <slice id="input_toggleHud" uvs="2012px 192px 32px 32px"/>
         <slice id="input_toggleHudExtension" uvs="2012px 228px 32px 32px"/>
-        <slice id="4xlongBorderBottomFilled" uvs="648px 1092px 512px 16px"/>
-        <slice id="4xlongBorderStretchFilled" uvs="1164px 1092px 512px 16px"/>
-        <slice id="4xlongBorderTopFilled" uvs="648px 1112px 512px 16px"/>
+        <slice id="4xlongBorderBottomFilled" uvs="648px 1092px 500px 16px"/>
+        <slice id="4xlongBorderStretchFilled" uvs="1152px 1092px 500px 16px"/>
+        <slice id="4xlongBorderTopFilled" uvs="648px 1112px 500px 16px"/>
     </slices>
 </texture>
