@@ -1446,10 +1446,10 @@ function ADGraphManager:getIsPointSubPrio(wayPointId)
     return wayPoint ~= nil and bit32.band(wayPoint.flags, AutoDrive.FLAG_SUBPRIO) > 0
 end
 
-function ADGraphManager:setWayPointFlags(wayPointId, flags)
+function ADGraphManager:setWayPointFlags(wayPointId, flags, sendEvent)
     local wayPoint = self:getWayPointById(wayPointId)
     if wayPoint ~= nil and flags ~= nil then
-        self:moveWayPoint(wayPointId, wayPoint.x, wayPoint.y, wayPoint.z, flags)
+        self:moveWayPoint(wayPointId, wayPoint.x, wayPoint.y, wayPoint.z, flags, sendEvent)
 
         self:markChanges()
     end
@@ -1659,11 +1659,49 @@ function ADGraphManager:setConnectionBetweenWayPointsInSection(vehicle, directio
     end
 end
 
+function ADGraphManager:setConnectionBetweenWayPointsInSection_s(startNodeId, nextNodeId, wayPointsDirection, sendEvent)
+    if wayPointsDirection > 0 and  wayPointsDirection < 4 then
+        if sendEvent == nil or sendEvent == true then
+            -- Propagating way point deletion all over the network
+            AutoDriveSectionEvent.sendEvent(AutoDriveSectionEvent.OPERATION_CONNECTION_DIRECTION, startNodeId, nextNodeId, wayPointsDirection)
+        else
+            local sectionWayPoints = ADGraphManager:getWayPointsInSection(startNodeId, nextNodeId, wayPointsDirection)
+
+            if sectionWayPoints ~= nil and #sectionWayPoints > 2 then
+                for i = 1, #sectionWayPoints - 1 do
+                    ADGraphManager:setConnectionBetween(
+                        ADGraphManager:getWayPointById(sectionWayPoints[i]),
+                        ADGraphManager:getWayPointById(sectionWayPoints[i + 1]),
+                        wayPointsDirection,
+                        false   -- initiated already by event
+                    )
+                end
+            end
+        end
+    end
+end
+
 function ADGraphManager:setWayPointsFlagsInSection(vehicle, flags)
     if vehicle.ad.sectionWayPoints ~= nil and #vehicle.ad.sectionWayPoints > 2 then
         for i = 2, #vehicle.ad.sectionWayPoints - 1 do
             -- do not set start and end wayPoint as these are the connections to other lines
             ADGraphManager:setWayPointFlags(vehicle.ad.sectionWayPoints[i], flags)
+        end
+    end
+end
+
+function ADGraphManager:setWayPointsFlagsInSection_s(startNodeId, nextNodeId, flags, sendEvent)
+    if sendEvent == nil or sendEvent == true then
+        -- Propagating way point deletion all over the network
+        AutoDriveSectionEvent.sendEvent(AutoDriveSectionEvent.OPERATION_CONNECTION_FLAGS, startNodeId, nextNodeId, flags)
+    else
+        local wayPointsDirection = ADGraphManager:getIsWayPointJunction(startNodeId, nextNodeId)
+        local sectionWayPoints = ADGraphManager:getWayPointsInSection(startNodeId, nextNodeId, wayPointsDirection)
+        if sectionWayPoints ~= nil and #sectionWayPoints > 2 then
+            for i = 2, #sectionWayPoints - 1 do
+                -- do not set start and end wayPoint as these are the connections to other lines
+                ADGraphManager:setWayPointFlags(sectionWayPoints[i], flags, false)
+            end
         end
     end
 end
@@ -1700,6 +1738,49 @@ function ADGraphManager:deleteWayPointsInSection(vehicle)
         table.sort(pointsToDelete, sort_func)
         for i = 1, #pointsToDelete do
             ADGraphManager:removeWayPoint(pointsToDelete[i])
+        end
+    end
+end
+
+function ADGraphManager:deleteWayPointsInSection_s(startNodeId, nextNodeId, sendEvent)
+    if sendEvent == nil or sendEvent == true then
+        -- Propagating way point deletion all over the network
+        AutoDriveSectionEvent.sendEvent(AutoDriveSectionEvent.OPERATION_CONNECTION_DELETE, startNodeId, nextNodeId)
+    else
+        local wayPointsDirection = ADGraphManager:getIsWayPointJunction(startNodeId, nextNodeId)
+        local sectionWayPoints = ADGraphManager:getWayPointsInSection(startNodeId, nextNodeId, wayPointsDirection)
+        if sectionWayPoints ~= nil and #sectionWayPoints > 2 then
+            local pointsToDelete = {}
+            for i = 2, #sectionWayPoints - 1 do
+                table.insert(pointsToDelete, sectionWayPoints[i])
+            end
+
+            -- delete last wayPoint if not connected to a junction
+            local lastWayPointID = sectionWayPoints[#sectionWayPoints]
+            local lastWayPoint = self:getWayPointById(lastWayPointID)
+            local connectedIds = {}
+            for _, incomingId in pairs(lastWayPoint.incoming) do
+                if not table.contains(connectedIds, incomingId) then
+                    table.insert(connectedIds, incomingId)
+                end
+            end
+            for _, outId in pairs(lastWayPoint.out) do
+                if not table.contains(connectedIds, outId) then
+                    table.insert(connectedIds, outId)
+                end
+            end
+            if #connectedIds == 1 then
+                table.insert(pointsToDelete, lastWayPointID)
+            end
+
+            -- sort the wayPoints to delete in descant order to ensure correct linkage deletion
+            local sort_func = function(a, b)
+                return a > b
+            end
+            table.sort(pointsToDelete, sort_func)
+            for i = 1, #pointsToDelete do
+                ADGraphManager:removeWayPoint(pointsToDelete[i], false)
+            end
         end
     end
 end
