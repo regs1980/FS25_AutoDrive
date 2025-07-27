@@ -209,7 +209,7 @@ function AutoDrive.isVehicleInBunkerSiloArea(vehicle)
         -- check only for bunker silo if should unload to improve performance
         return false
     end
-    for _, trigger in pairs(ADTriggerManager.getUnloadTriggers()) do
+    for _, trigger in pairs(ADTriggerManager.getBunkerSilos()) do
         local x, y, z = getWorldTranslation(vehicle.components[1].node)
         local tx, _, tz = x, y, z + 1
         if trigger ~= nil and trigger.bunkerSiloArea ~= nil then
