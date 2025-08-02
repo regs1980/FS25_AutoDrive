@@ -473,7 +473,7 @@ function AutoDrive.dumpTable(inputTable, name, maxDepth, currentDepth)
 	end
 end
 
-addConsoleCommand("adSetDebugChannel", "Set new debug channel", "setDebugChannel", AutoDrive)
+-- addConsoleCommand("adSetDebugChannel", "Set new debug channel", "setDebugChannel", AutoDrive)
 
 function AutoDrive:setDebugChannel(newDebugChannel)
 	if newDebugChannel ~= nil then
@@ -495,7 +495,7 @@ function AutoDrive:setDebugChannel(newDebugChannel)
 	AutoDrive.showNetworkEvents()
 end
 
-addConsoleCommand("adDumpTable", "Dump Table to log", "dumpTableToLog", AutoDrive)
+-- addConsoleCommand("adDumpTable", "Dump Table to log", "dumpTableToLog", AutoDrive)
 
 function AutoDrive:dumpTableToLog(input, ...)
 	local f = getfenv(0).loadstring('return ' .. input)
