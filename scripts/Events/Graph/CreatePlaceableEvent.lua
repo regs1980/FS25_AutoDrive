@@ -105,7 +105,6 @@ function CreatePlaceableEvent:run(connection)
         CreatePlaceableEvent.sendEvent(self.wayPoints, self.mapMarkers)
     else
         -- If the event is coming from the server, both clients and server have to create the way point
-        -- ADGraphManager:createSplineConnection(self.start, self.wayPoints, self.target, self.dualConnection, false)
         AutoDrivePlaceableData:createPlaceable(self.wayPoints, self.mapMarkers, false)
     end
 end

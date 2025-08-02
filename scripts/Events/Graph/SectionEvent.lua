@@ -1,6 +1,7 @@
 AutoDriveSectionEvent = {}
 AutoDriveSectionEvent_mt = Class(AutoDriveSectionEvent, Event)
 
+AutoDriveSectionEvent.OPERATION_NONE = 0
 AutoDriveSectionEvent.OPERATION_CONNECTION_DIRECTION = 1
 AutoDriveSectionEvent.OPERATION_CONNECTION_FLAGS = 2
 AutoDriveSectionEvent.OPERATION_CONNECTION_DELETE = 3
@@ -14,9 +15,9 @@ end
 
 function AutoDriveSectionEvent.new(operation, startNodeId, endNodeId, arg1)
     local self = AutoDriveSectionEvent.emptyNew()
-    self.operation = operation
-    self.startNodeId = startNodeId
-    self.endNodeId = endNodeId
+    self.operation = operation or AutoDriveSectionEvent.OPERATION_NONE
+    self.startNodeId = startNodeId or 0
+    self.endNodeId = endNodeId or 0
     self.arg1 = arg1 or 0
     return self
 end
@@ -43,11 +44,11 @@ function AutoDriveSectionEvent:run(connection)
     else
         -- ADGraphManager:setConnectionBetween(self.operation, self.startNode, self.endNode, false)
         if self.operation == AutoDriveSectionEvent.OPERATION_CONNECTION_DIRECTION then
-            ADGraphManager:setConnectionBetweenWayPointsInSection_s(self.startNodeId, self.endNodeId, self.arg1, false)
+            ADGraphManager:setConnectionBetweenWayPointsInSection(self.startNodeId, self.endNodeId, self.arg1, false)
         elseif self.operation == AutoDriveSectionEvent.OPERATION_CONNECTION_FLAGS then
-            ADGraphManager:setWayPointsFlagsInSection_s(self.startNodeId, self.endNodeId, self.arg1, false)
+            ADGraphManager:setWayPointsFlagsInSection(self.startNodeId, self.endNodeId, self.arg1, false)
         elseif self.operation == AutoDriveSectionEvent.OPERATION_CONNECTION_DELETE then
-            ADGraphManager:deleteWayPointsInSection_s(self.startNodeId, self.endNodeId, false)
+            ADGraphManager:deleteWayPointsInSection(self.startNodeId, self.endNodeId, false)
         end
     end
 end
