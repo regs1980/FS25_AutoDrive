@@ -78,11 +78,12 @@ function ClearCropTask:update(dt)
     end
 
     -- Check if the driver and trailers have left the crop yet
-    if not AutoDrive.isVehicleOrTrailerInCrop(self.vehicle, true) then
-        ClearCropTask.debugMsg(self.vehicle, "ClearCropTask:update not isVehicleOrTrailerInCrop")
-        self:finished()
-        return
-    end
+    -- TODO: due to missing doku for FSDensityMapUtil.getFruitArea this is not working properly, so deactivated until a suitable solution is found
+    -- if not AutoDrive.isVehicleOrTrailerInCrop(self.vehicle, true) then
+    --     ClearCropTask.debugMsg(self.vehicle, "ClearCropTask:update not isVehicleOrTrailerInCrop")
+    --     self:finished()
+    --     return
+    -- end
     self.stuckTimer:timer(true, ClearCropTask.STUCK_TIME, dt)
     if self.stuckTimer:done() then
         ClearCropTask.debugMsg(self.vehicle, "ClearCropTask:update stuckTimer:done")
