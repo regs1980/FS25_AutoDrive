@@ -61,6 +61,7 @@ function ClearCropTask:setUp()
         table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.harvester, 0, self.vehicleTrainLength * 1))
         table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.harvester, 0, self.vehicleTrainLength * 2))
         table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.harvester, 0, self.vehicleTrainLength * 3))
+        table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.harvester, 0, self.vehicleTrainLength * 4))
     else
         table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.vehicle, (ClearCropTask.TARGET_DISTANCE_SIDE / 2) * cleartowards, ClearCropTask.TARGET_DISTANCE_FRONT_STEP * 0.5))
         table.insert(self.wayPoints, AutoDrive.createWayPointRelativeToVehicle(self.vehicle, ClearCropTask.TARGET_DISTANCE_SIDE * cleartowards, ClearCropTask.TARGET_DISTANCE_FRONT_STEP * 1))
