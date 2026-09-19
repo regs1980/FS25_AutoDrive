@@ -72,14 +72,18 @@ function ADSpecialDrivingModule:stopAndHoldVehicle(dt)
         if spec and spec.hasReverseDriving and spec.isReverseDriving then
             speedSign = -speedSign
         end
+        -- The brake pedal value is passed on to WheelsUtil.updateWheelsPhysics unclamped, where it ends up as
+        -- getBrakeForce() * brakePedal. Values above 1 lock the wheels, so the braking distance grows instead of
+        -- shrinking and lateral grip is lost, which makes trailers jackknife. Normalized to the valid range while
+        -- keeping the original ratios between the speed steps.
         if self.vehicle.lastSpeedReal * 3600 > 10 then
-            self.vehicle:updateVehiclePhysics(-speedSign * 15   , 0, true, dt)
+            self.vehicle:updateVehiclePhysics(-speedSign * 1.0, 0, true, dt)
         elseif self.vehicle.lastSpeedReal * 3600 > 5 then
-            self.vehicle:updateVehiclePhysics(-speedSign * 10, 0, true, dt)
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.67, 0, true, dt)
         elseif self.vehicle.lastSpeedReal * 3600 > 1 then
-            self.vehicle:updateVehiclePhysics(-speedSign * 5, 0, true, dt)
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.33, 0, true, dt)
         elseif self.vehicle.lastSpeedReal * 3600 > 0.2 then
-            self.vehicle:updateVehiclePhysics(-speedSign * 3, 0, true, dt)
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.2, 0, true, dt)
         else
             self.vehicle:updateVehiclePhysics(0.0001, 0, true, dt) -- enable handbrake
         end
