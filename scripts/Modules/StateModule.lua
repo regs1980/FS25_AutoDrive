@@ -1005,6 +1005,8 @@ function ADStateModule:setFillType(fillTypeID)
                         self.selectedFillTypes = {fillTypeID}
                     end
                 end
+            else
+                self.fillType = FillType.UNKNOWN
             end
         end
         self:raiseDirtyFlag()

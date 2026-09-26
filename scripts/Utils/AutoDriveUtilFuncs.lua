@@ -58,6 +58,12 @@ function AutoDrive:checkIsConnected(toCheck, other)
     if toCheck == other then
         return true
     end
+    local vehicleHasObjectMounted = toCheck.getHasObjectMounted and toCheck:getHasObjectMounted(other)
+    if vehicleHasObjectMounted then
+        -- consider belt mounted objects
+        return true
+    end
+
     for _, implement in pairs(AutoDrive.getAllImplements(toCheck, true)) do
         if implement == other then
             return true
