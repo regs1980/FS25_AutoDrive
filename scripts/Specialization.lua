@@ -1498,17 +1498,28 @@ function AutoDrive.passToExternalMod_AI(vehicle)
 
     if (not vehicle.ad.isStoppingWithError and distanceToStart < 30) then
         local success, errorMessage
+        local isDirectStart = false
         if vehicle.getLastJob then
             if (vehicle.getIsOnField and vehicle:getIsOnField()) then
                 AutoDrive.debugPrint(vehicle, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive.passToExternalMod pass to other mod...")
                 local fieldJob = vehicle:getLastJob()
+                if fieldJob and fieldJob:isa(AIJobFieldWork) and fieldJob.positionAngleParameter and fieldJob.positionAngleParameter.getPosition then
+                    -- consider field jobs only
+                    local jx, jz = fieldJob.positionAngleParameter:getPosition()
+                    local distance = MathUtil.vector2Length(x - jx, z - jz)
+                    if distance > 10 then
+                        -- last job far away so start a fresh one
+                        fieldJob = nil
+                        isDirectStart = true -- needed to apply the correct values for new job
+                    end
+                end
                 if fieldJob == nil then
                     -- no job present - generate fielwork job new
                     fieldJob = g_currentMission.aiJobTypeManager:createJob(AIJobType.FIELDWORK)
                 end
                 if fieldJob then
-                        -- job present - continue fielwork job
-                    fieldJob:applyCurrentState(vehicle, g_currentMission, vehicle:getOwnerFarmId(), false)
+                        -- job present
+                    fieldJob:applyCurrentState(vehicle, g_currentMission, vehicle:getOwnerFarmId(), isDirectStart)
                     fieldJob:setValues()
                     success, errorMessage = fieldJob:validate(vehicle:getOwnerFarmId())
                     if success then
