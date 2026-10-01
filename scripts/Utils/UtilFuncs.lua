@@ -495,13 +495,6 @@ function AutoDrive:setDebugChannel(newDebugChannel)
 	AutoDrive.showNetworkEvents()
 end
 
--- addConsoleCommand("adDumpTable", "Dump Table to log", "dumpTableToLog", AutoDrive)
-
-function AutoDrive:dumpTableToLog(input, ...)
-	local f = getfenv(0).loadstring('return ' .. input)
-	AutoDrive.dumpTable(f(), "Table:" .. input, 1)
-end
-
 function AutoDrive:createSplineInterpolationBetween(startNode, endNode)
 	if startNode == nil or endNode == nil then
 		return
