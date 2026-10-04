@@ -16,7 +16,9 @@ function AutoDrive.checkForVehiclesInBox(boundingBox, excludedVehicles)
                 end
             end
         end
-        if (otherVehicle.spec_conveyorBelt) or (otherVehicle.trainSystem ~= nil) -- ignore conveyorBelts and train vehicles
+        if (otherVehicle.spec_conveyorBelt)-- ignore conveyorBelts
+            or (otherVehicle.trainSystem ~= nil) -- ignore train vehicles
+            or (otherVehicle.spec_umbilicalPumpExtender) -- ignore pumps and hoses bridge
         then
             isExcluded = true
         end
