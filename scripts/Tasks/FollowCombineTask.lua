@@ -100,8 +100,8 @@ function FollowCombineTask:update(dt)
                 FollowCombineTask.debugMsg(self.vehicle, "FollowCombineTask:update STATE_CHASING - filled chopper")
                 self.state = FollowCombineTask.STATE_FINISHED -- finish immediate
                 return
-            elseif self.filledToUnload and self.chaseSide ~= nil and self.chaseSide == AutoDrive.CHASEPOS_REAR then
-                FollowCombineTask.debugMsg(self.vehicle, "FollowCombineTask:update STATE_CHASING - filledToUnload chopper")
+            elseif self.filled and self.chaseSide ~= nil and self.chaseSide == AutoDrive.CHASEPOS_REAR then
+                FollowCombineTask.debugMsg(self.vehicle, "FollowCombineTask:update STATE_CHASING CHASEPOS_REAR - filled chopper")
                 local x, y, z = getWorldTranslation(self.vehicle.components[1].node)
                 self.reverseStartLocation = {x = x, y = y, z = z}
                 self.state = FollowCombineTask.STATE_REVERSING -- reverse to get room from harvester

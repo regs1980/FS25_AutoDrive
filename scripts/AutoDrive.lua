@@ -1,5 +1,5 @@
 AutoDrive = {}
-AutoDrive.version = "3.0.1.2"
+AutoDrive.version = "3.0.1.4"
 
 AutoDrive.directory = g_currentModDirectory
 
@@ -63,6 +63,7 @@ AutoDrive.SCAN_DIALOG_RESULT_DONE = 4
 AutoDrive.scanDialogState = AutoDrive.SCAN_DIALOG_NONE
 
 AutoDrive.foldTimeout = 30000         -- 30 s time to fold all implements
+AutoDrive.ALDelayTimeout = 2000         -- 2 s time to let UAL apply belts
 AutoDrive.MAX_BUNKERSILO_LENGTH = 100 -- length of bunker silo where speed should be lowered
 
 -- number of frames for performance modulo operation
@@ -76,6 +77,7 @@ AutoDrive.FLAG_NONE = 0
 AutoDrive.FLAG_SUBPRIO = 1
 AutoDrive.FLAG_TRAFFIC_SYSTEM = 2
 AutoDrive.FLAG_TRAFFIC_SYSTEM_CONNECTION = 4
+AutoDrive.FLAG_FIELD_POINT = 8
 
 -- add this to measured size of vehicles
 AutoDrive.DIMENSION_ADDITION = 0.2
@@ -96,7 +98,7 @@ AutoDrive.UAL_FILLTYPE_ALL = 1 -- value for set all materials in UniversalAutolo
 
 AutoDrive.MAX_REFUEL_TRIGGER_DISTANCE = 15
 AutoDrive.REFUEL_LEVEL = 0.15
-AutoDrive.BUNKERSILO_CONNECTED_DISTANCE = 10
+AutoDrive.BUNKERSILO_CONNECTED_DISTANCE = 1
 
 AutoDrive.colors = {
 	ad_color_singleConnection = { 0, 1, 0, 1 },
@@ -533,6 +535,17 @@ function AutoDrive:init()
 		AutoDrive.selectedWayPointSample = createSample("AutoDrive_selectedWayPoint")
 		loadSample(AutoDrive.selectedWayPointSample, fileName, false)
 	end
+    -- collect swath fillTypes
+    AutoDrive.windrowCutFillTypes = {}
+    AutoDrive.windrowFillTypes = {}
+    for fruitTypeIndex, fruitType in pairs(g_fruitTypeManager:getFruitTypes()) do
+        if fruitType.windrowCutFillType ~= nil then
+            AutoDrive.windrowCutFillTypes[fruitTypeIndex] = fruitType.windrowCutFillType.index
+        end
+        if fruitType.windrowFillType ~= nil then
+            AutoDrive.windrowFillTypes[fruitTypeIndex] = fruitType.windrowFillType.index
+        end
+    end
 	AutoDrivePlaceableData:setActive(true)
 	AutoDrive:setValidSupportedFillTypesForAllVehicles()
 	AutoDrive:autostartHelpers()

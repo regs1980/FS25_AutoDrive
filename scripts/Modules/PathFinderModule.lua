@@ -78,11 +78,11 @@ PathFinderModule.PP_CELL_Z = 9
 PathFinderModule.GRID_SIZE_FACTOR = 0.5
 PathFinderModule.GRID_SIZE_FACTOR_SECOND_UNLOADER = 1.1
 
-PathFinderModule.PP_MAX_EAGER_LOOKAHEAD_STEPS = 1
+PathFinderModule.PP_MAX_EAGER_LOOKAHEAD_STEPS = 10
 
 PathFinderModule.MIN_FRUIT_VALUE = 50
 PathFinderModule.SLOPE_DETECTION_THRESHOLD = math.rad(20)
-PathFinderModule.NEW_PF_STEP_FACTOR = 4
+PathFinderModule.NEW_PF_STEP_FACTOR = 20
 --[[
 from Giants Engine:
 AITurnStrategy.SLOPE_DETECTION_THRESHOLD  = 0.5235987755983
@@ -122,8 +122,9 @@ function PathFinderModule:reset()
     self.goingToPipe = false
     self.chasingVehicle = false
     self.isSecondChasingVehicle = false
+    self.pathFinderTime = AutoDrive.getSetting("pathFinderTime")
     self.max_pathfinder_steps = 0
-    self.vehicleMinHeight = math.max(self.vehicle.size and self.vehicle.size.height and self.vehicle.size.height, 5) -- min height for collision detection 5m
+    self.vehicleMinHeight = math.max(self.vehicle.size and self.vehicle.size.height and self.vehicle.size.height, 6) -- min height for collision detection 5m
 
     if AutoDrive.getSetting("Pathfinder") == 1 then
         self.PP_UP = 0
@@ -149,6 +150,7 @@ function PathFinderModule:reset()
         self.dubinsDone = false
         self.dubinsCount = 0
         self.isNewPF = true
+        self.pathFinderTime = 3
     else
         self.PP_UP = 0
         self.PP_UP_RIGHT = 1
@@ -396,7 +398,7 @@ function PathFinderModule:startPathPlanningTo(targetPoint, targetVector)
     self.fallBackMode1 = false  -- disable restrict to field
     self.fallBackMode2 = false  -- disable restrict to field border
     self.fallBackMode3 = false  -- disable avoid fruit
-    self.max_pathfinder_steps = PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * AutoDrive.getSetting("pathFinderTime")
+    self.max_pathfinder_steps = PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * self.pathFinderTime
 
     self.fruitToCheck = nil
 
@@ -722,7 +724,7 @@ function PathFinderModule:update(dt)
         local fallBackModeAllowed1 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode1)    -- disable restrict to field
         local fallBackModeAllowed2 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode2)    -- disable restrict to field border
         local fallBackModeAllowed3 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.avoidFruitSetting) and (not self.fallBackMode3)    -- disable avoid fruit
-        local increaseStepsAllowed = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.max_pathfinder_steps < PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * AutoDrive.getSetting("pathFinderTime"))    -- increase number of steps if possible
+        local increaseStepsAllowed = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.max_pathfinder_steps < PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * self.pathFinderTime)    -- increase number of steps if possible
 
         -- Only allow auto restart when planning path to network and we can adjust target wayPoint
         local retryAllowed = self.destinationId ~= nil and self.retryCounter < self.PATHFINDER_MAX_RETRIES
@@ -763,7 +765,7 @@ function PathFinderModule:update(dt)
                 )
             )
             self.max_pathfinder_steps = self.max_pathfinder_steps + PathFinderModule.MAX_PATHFINDER_STEPS_COMBINE_TURN
-            self.max_pathfinder_steps = math.min(self.max_pathfinder_steps, PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * AutoDrive.getSetting("pathFinderTime"))
+            self.max_pathfinder_steps = math.min(self.max_pathfinder_steps, PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * self.pathFinderTime)
             self.fallBackMode1 = false
             self.fallBackMode2 = false
             self.fallBackMode3 = false
@@ -1217,7 +1219,7 @@ function PathFinderModule:checkGridCell(cell)
     if not cell.isRestricted and not cell.hasCollision then
         -- check for obstacles
         local shapeDefinition = self:getShapeDefByDirectionType(cell)   --> return shape for the cell according to direction, on ground level, self.vehicleMinHeight
-        local ignoreObstaclesUpToHeight = 0.5
+        local ignoreObstaclesUpToHeight = 0.2
         local shapes = overlapBox(shapeDefinition.x, shapeDefinition.y + ignoreObstaclesUpToHeight, shapeDefinition.z, 0, shapeDefinition.angleRad, 0, shapeDefinition.widthX, shapeDefinition.height - ignoreObstaclesUpToHeight, shapeDefinition.widthZ, "collisionTestCallbackIgnore", nil, self.mask, true, true, true, true)
         cell.hasCollision = cell.hasCollision or (shapes > 0)
         if cell.hasCollision then
@@ -1902,7 +1904,6 @@ function PathFinderModule:smoothResultingPPPath_Refined()
 
             local widthOfColBox = self.minTurnRadius
             local sideLength = widthOfColBox * PathFinderModule.GRID_SIZE_FACTOR
-            local y = worldPos.y
             local foundCollision = false
 
             if stepsThisFrame > math.max(1, (ADScheduler:getStepsPerFrame() * 0.4)) then
@@ -2004,14 +2005,15 @@ function PathFinderModule:smoothResultingPPPath_Refined()
 
                 local corner4X = node.x - math.cos(rightAngle) * sideLength
                 local corner4Z = node.z + math.sin(rightAngle) * sideLength
+                local y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, nodeAhead.x, 1, nodeAhead.z)
 
                 if not hasCollision then
                     if self.isNewPF then
                         self.collisionhits = 0
-                        local shapes = overlapBox(worldPos.x + vectorX / 2, y + 3, worldPos.z + vectorZ / 2, 0, angleRad, 0, length / 2 + 2.5, 2.65, sideLength + 1.5, "collisionTestCallback", self, self.mask, true, true, true, true)
+                        local shapes = overlapBox(worldPos.x + vectorX / 2, y + self.vehicleMinHeight / 2, worldPos.z + vectorZ / 2, 0, angleRad, 0, length / 2 + 2.5, self.vehicleMinHeight / 2, sideLength + 1.5, "collisionTestCallback", self, self.mask, true, true, true, true)
                         hasCollision = hasCollision or (self.collisionhits > 0)
                     else
-                        local shapes = overlapBox(worldPos.x + vectorX / 2, y + 3, worldPos.z + vectorZ / 2, 0, angleRad, 0, length / 2 + 2.5, 2.65, sideLength + 1.5, "Ignore", nil, self.mask, true, true, true, true)
+                        local shapes = overlapBox(worldPos.x + vectorX / 2, y + self.vehicleMinHeight / 2, worldPos.z + vectorZ / 2, 0, angleRad, 0, length / 2 + 2.5, self.vehicleMinHeight / 2, sideLength + 1.5, "Ignore", nil, self.mask, true, true, true, true)
                         hasCollision = hasCollision or (shapes > 0)
                     end
 
@@ -2143,7 +2145,7 @@ function PathFinderModule:smoothResultingPPPath_Refined()
                 end
             end
 
-            if foundCollision or ((self.smoothIndex + self.totalEagerSteps) >= (#self.wayPoints - unfilteredEndPointCount)) then
+            if foundCollision or ((self.smoothIndex + self.totalEagerSteps) >= (#self.wayPoints - unfilteredEndPointCount)) or self.totalEagerSteps > PathFinderModule.PP_MAX_EAGER_LOOKAHEAD_STEPS then
                 self.smoothIndex = self.smoothIndex + math.max(1, (self.lookAheadIndex))
                 self.totalEagerSteps = 0
             end
@@ -2326,7 +2328,7 @@ function PathFinderModule:drawDebugNewPF()
             for x, node in pairs(row) do
                 local shapeDefinition = node.shapeDefinition
                 if shapeDefinition then
-                    DebugUtil.drawOverlapBox(shapeDefinition.x, shapeDefinition.y + 3, shapeDefinition.z, 0, shapeDefinition.angleRad, 0, shapeDefinition.widthX, 2.65, shapeDefinition.widthZ, 1, 1, 1)
+                    DebugUtil.drawOverlapBox(shapeDefinition.x, shapeDefinition.y + shapeDefinition.height / 2, shapeDefinition.z, 0, shapeDefinition.angleRad, 0, shapeDefinition.widthX, shapeDefinition.height / 2, shapeDefinition.widthZ, 1, 1, 1)
                 end
                 -- cell outline
                 local gridFactor = PathFinderModule.GRID_SIZE_FACTOR
@@ -2428,7 +2430,13 @@ function PathFinderModule:drawDebugNewPF()
             for x, node in pairs(row) do
                 local corners = node.corners
                 i = i + 1
-                local text = string.format("%d",i)
+                local sizeMax = self.vehicle.size.width / 2
+                local cell = node
+                if cell.height then
+                    DebugUtil.drawOverlapBox(cell.worldPos.x, cell.worldPos.y + cell.height / 2, cell.worldPos.z, 0, cell.t, 0, sizeMax, cell.height / 2, sizeMax, 0, 0, 1)
+                end
+
+                -- local text = string.format("%d",i)
                 -- Utils.renderTextAtWorldPosition(x, node.worldPos.y + 3, z, text, getCorrectTextSize(0.013), 0)
                 local tempY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, node.corners[1].x, 1, node.corners[1].z)
                 if node.isOnField then
@@ -2524,7 +2532,7 @@ function PathFinderModule:isDriveableAstar(cell)
     if not cell.isRestricted then
         -- check for obstacles
         self.collisionhits = 0
-        local shapes = overlapBox(cell.shapeDefinition.x, cell.shapeDefinition.y + 3, cell.shapeDefinition.z, 0, cell.shapeDefinition.angleRad, 0, cell.shapeDefinition.widthX, 2.65, cell.shapeDefinition.widthZ, "collisionTestCallback", self, self.mask, true, true, true, true)
+        local shapes = overlapBox(cell.shapeDefinition.x, cell.shapeDefinition.y + cell.shapeDefinition.height / 2, cell.shapeDefinition.z, 0, cell.shapeDefinition.angleRad, 0, cell.shapeDefinition.widthX, cell.shapeDefinition.height / 2, cell.shapeDefinition.widthZ, "collisionTestCallback", self, self.mask, true, true, true, true)
         cell.hasCollision = cell.hasCollision or (self.collisionhits > 0)
         cell.isRestricted = cell.isRestricted or cell.hasCollision
         if cell.hasCollision then
@@ -2797,7 +2805,7 @@ function PathFinderModule:setupNew(behindStartCell, startCell, targetCell, userd
     self.initNew = true
 end
 
-function PathFinderModule:createWayPointsNew()    
+function PathFinderModule:createWayPointsNew()
     if self.smoothStep == 0 then
         self.wayPoints = {}
         for index, cell in ipairs(self.path) do
@@ -2810,6 +2818,8 @@ function PathFinderModule:createWayPointsNew()
     end
     -- shortcut the path if possible
     self:smoothResultingPPPath_Refined()
+    -- self.smoothStep = 2
+    -- self.smoothDone = true
 
     if self.smoothStep == 2 then
         self:appendWayPointsNew()
@@ -2901,7 +2911,7 @@ function PathFinderModule:isDriveableDubins(cell)
     if not cell.isRestricted then
         -- check for obstacles
         self.collisionhits = 0
-        local shapes = overlapBox(cell.worldPos.x, cell.worldPos.y + 3, cell.worldPos.z, 0, cell.t, 0, sizeMax, 2.65, sizeMax, "collisionTestCallback", self, self.mask, true, true, true, true)
+        local shapes = overlapBox(cell.worldPos.x, cell.worldPos.y + cell.height / 2, cell.worldPos.z, 0, cell.t, 0, sizeMax, cell.height / 2, sizeMax, "collisionTestCallback", self, self.mask, true, true, true, true)
         cell.hasCollision = cell.hasCollision or (self.collisionhits > 0)
         cell.isRestricted = cell.isRestricted or cell.hasCollision
         if cell.hasCollision then
@@ -2964,6 +2974,7 @@ function PathFinderModule:getDubinsPath()
                     local cell = get_node(wayPoint.x, wayPoint.z)
                     cell.worldPos = {x = wayPoint.x, y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, wayPoint.x, 1, wayPoint.z), z = wayPoint.z}
                     cell.t = wayPoint.t
+                    cell.height = self.vehicleMinHeight
                     cell.incomming = fromCell
                     fromCell = cell
                     if not self:isDriveableDubins(cell) then

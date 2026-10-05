@@ -54,6 +54,8 @@ function ADSpecialDrivingModule:update(dt)
         self.reverseTarget = nil
     end
     self.isReversing = false
+    self.targetLX = nil
+    self.targetLZ = nil
 end
 
 function ADSpecialDrivingModule:isStoppingVehicle()
@@ -61,6 +63,54 @@ function ADSpecialDrivingModule:isStoppingVehicle()
 end
 
 function ADSpecialDrivingModule:stopAndHoldVehicle(dt)
+    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADSpecialDrivingModule:stopAndHoldVehicle start self.targetLX %s", tostring(self.targetLX))
+    if self.targetLX then
+        self:stopAndHoldVehicle_org(dt)
+    else
+        local speedSign = AutoDrive.sign(self.vehicle.lastSignedSpeed)
+        local spec = self.vehicle.spec_reverseDriving
+        if spec and spec.hasReverseDriving and spec.isReverseDriving then
+            speedSign = -speedSign
+        end
+        -- The brake pedal value is passed on to WheelsUtil.updateWheelsPhysics unclamped, where it ends up as
+        -- getBrakeForce() * brakePedal. Values above 1 lock the wheels, so the braking distance grows instead of
+        -- shrinking and lateral grip is lost, which makes trailers jackknife. Normalized to the valid range while
+        -- keeping the original ratios between the speed steps.
+        if self.vehicle.lastSpeedReal * 3600 > 10 then
+            self.vehicle:updateVehiclePhysics(-speedSign * 1.0, 0, true, dt)
+        elseif self.vehicle.lastSpeedReal * 3600 > 5 then
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.67, 0, true, dt)
+        elseif self.vehicle.lastSpeedReal * 3600 > 1 then
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.33, 0, true, dt)
+        elseif self.vehicle.lastSpeedReal * 3600 > 0.2 then
+            self.vehicle:updateVehiclePhysics(-speedSign * 0.2, 0, true, dt)
+        else
+            self.vehicle:updateVehiclePhysics(0.0001, 0, true, dt) -- enable handbrake
+        end
+
+        if self.vehicle.ad and self.vehicle.ad.specialDrivingModule then
+            local speedReal = self.vehicle.lastSpeedReal * 3600
+            self.vehicle.ad.specialDrivingModule.stoppedTimer:timer(math.abs(speedReal) < 1 and (self.vehicle.ad.trailerModule:getCanStopMotor()), 10000, dt)
+            if self.vehicle.ad.specialDrivingModule.stoppedTimer:done() then
+                self.vehicle.ad.specialDrivingModule.motorShouldBeStopped = true
+                if self.vehicle.ad.specialDrivingModule:shouldStopMotor() and self.vehicle:getIsMotorStarted() and (not g_currentMission.missionInfo.automaticMotorStartEnabled) then
+                    if self.setCruiseControlState then
+                        self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
+                        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADSpecialDrivingModule:stopAndHoldVehicle updateVehiclePhysics - 0, 0, true, 16")
+                        self:updateVehiclePhysics(0, 0, true, dt)
+                        self:raiseActive()
+                    end
+                    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADSpecialDrivingModule:stopAndHoldVehicle stopMotor")
+                    self.vehicle:stopMotor()
+                end
+            end
+        end
+    end
+    self.vehicle:raiseActive()
+end
+
+function ADSpecialDrivingModule:stopAndHoldVehicle_org(dt)
+    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADSpecialDrivingModule:stopAndHoldVehicle_org start self.targetLX %s", tostring(self.targetLX))
     if self.vehicle.spec_locomotive and self.vehicle.ad and self.vehicle.ad.trainModule then
         self.vehicle.ad.trainModule:stopAndHoldVehicle(dt)
         return
@@ -92,6 +142,7 @@ function ADSpecialDrivingModule:stopAndHoldVehicle(dt)
     if self.stoppedTimer:done() then
         self.motorShouldBeStopped = true
         if self:shouldStopMotor() and self.vehicle:getIsMotorStarted() then
+            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADSpecialDrivingModule:stopAndHoldVehicle_org stopMotor")
             self.vehicle:stopMotor()
         end
     end

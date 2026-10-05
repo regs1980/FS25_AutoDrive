@@ -48,9 +48,9 @@ function ADCollisionDetectionModule:detectObstacle()
             local worldOffsetX, worldOffsetY, worldOffsetZ =  AutoDrive.localDirectionToWorld(self.vehicle, sensorLocation.x, 0, sensorLocation.z)
             for _, trigger in pairs(ADTriggerManager.getBunkerSilos()) do
                 if trigger and trigger.bunkerSiloArea ~= nil then
-                    local x1, z1 = trigger.bunkerSiloArea.sx, trigger.bunkerSiloArea.sz
-                    local x2, z2 = trigger.bunkerSiloArea.wx, trigger.bunkerSiloArea.wz
-                    local x3, z3 = trigger.bunkerSiloArea.hx, trigger.bunkerSiloArea.hz
+                    local x1, z1 = trigger.bunkerSiloArea.inner.sx, trigger.bunkerSiloArea.inner.sz
+                    local x2, z2 = trigger.bunkerSiloArea.inner.wx, trigger.bunkerSiloArea.inner.wz
+                    local x3, z3 = trigger.bunkerSiloArea.inner.hx, trigger.bunkerSiloArea.inner.hz
                     if MathUtil.hasRectangleLineIntersection2D(x1, z1, x2 - x1, z2 - z1, x3 - x1, z3 - z1, vehX + worldOffsetX, vehZ + worldOffsetZ, 0, 1) then
                         frontSensorDynamicInBunkerArea = true
                         break

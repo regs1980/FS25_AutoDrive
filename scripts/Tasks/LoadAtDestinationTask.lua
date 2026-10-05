@@ -97,10 +97,10 @@ function LoadAtDestinationTask:update(dt)
                         self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
                     end
                 else
-                    if (AutoDrive.checkForContinueOnEmptyLoadTrigger(self.vehicle) and self.vehicle.ad.trailerModule:wasAtSuitableTrigger())
-                        or ((AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_ONLYPICKUP or AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_PICKUPANDDELIVER) and AutoDrive.getSetting("useFolders"))
+                    if ((AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_ONLYPICKUP or AutoDrive.getSetting("rotateTargets", self.vehicle) == AutoDrive.RT_PICKUPANDDELIVER) and AutoDrive.getSetting("useFolders"))
+                        or (AutoDrive.getSetting("unloadFillLevel", self.vehicle) == 0)
                     then
-                        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update checkForContinueOnEmptyLoadTrigger -> self:finished")
+                        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update -> self:finished")
                         self:finished()
                         return
                     end
@@ -134,12 +134,12 @@ function LoadAtDestinationTask:update(dt)
                                         self.ualIterations = self.ualIterations + 1
                                         self.vehicle.ad.stateModule:nextSelectedFillType()
                                         self.retryTime = LoadAtDestinationTask.LOAD_RETRY_TIME
-                                    elseif self.filledToUnload then
+                                    elseif self.filledToUnload or (AutoDrive.getSetting("unloadFillLevel", self.vehicle) == 0) then
                                         self:finished()
                                         return
                                     end
                                 end
-                            elseif self.filledToUnload then
+                            elseif self.filledToUnload or (AutoDrive.getSetting("unloadFillLevel", self.vehicle) == 0) then
                                 self:finished()
                                 return
                             end
@@ -147,7 +147,7 @@ function LoadAtDestinationTask:update(dt)
                             self.vehicle.ad.trailerModule:update(dt)
                             if not self.vehicle.ad.trailerModule:isActiveAtTrigger() then
                                 -- check fill levels only if not still filling something
-                                if self.filledToUnload then
+                                if self.filledToUnload or (AutoDrive.getSetting("unloadFillLevel", self.vehicle) == 0) then
                                     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update leftCapacity <= -> self:finished")
                                     self:finished()
                                     return
@@ -170,11 +170,6 @@ function LoadAtDestinationTask:update(dt)
                 self.vehicle.ad.specialDrivingModule:stopVehicle()
                 self.vehicle.ad.specialDrivingModule:update(dt)
             else
-                if AutoDrive.checkForContinueOnEmptyLoadTrigger(self.vehicle) and self.vehicle.ad.trailerModule:wasAtSuitableTrigger() then
-                    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_VEHICLEINFO, "LoadAtDestinationTask:update not isActiveAtTrigger + should continue + wasAtSuitableTrigger -> finished")
-                    self:finished()
-                    return
-                end
                 if self.isReverseTriggerReached then
                     self.fillLevel, _, self.filledToUnload, self.fillFreeCapacity = AutoDrive.getAllFillLevels(self.trailers)
                     if self.filledToUnload then

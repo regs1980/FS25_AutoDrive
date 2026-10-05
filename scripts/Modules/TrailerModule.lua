@@ -28,8 +28,10 @@ function ADTrailerModule:reset()
     self.bunkerTrigger = nil
     self.bunkerTrailer = nil
     self.trigger = nil
+    self.lastTrigger = nil
     self.isLoadingToFillUnitIndex = nil
     self.isLoadingToTrailer = nil
+    self.isFillingToTrailer = nil
     self.blocked = false
     self.filledToUnload = false
     self.fillLevel = 0
@@ -60,12 +62,21 @@ function ADTrailerModule:reset()
         self.stuckInBunkerTimer:timer(false)      -- clear timer
     end
     self:clearTrailerUnloadTimers()
-    self.fillUnits = 0
     self.trailers, self.trailerCount = AutoDrive.getAllUnits(self.vehicle)
+    self.fillUnits = 0
+    self.hasAL = false
     if self.trailerCount > 0 then
         for _, trailer in pairs(self.trailers) do
-            if trailer.getFillUnits ~= nil then
-                self.fillUnits = self.fillUnits + #trailer:getFillUnits()
+            self.hasAL = self.hasAL or AutoDrive:hasAL(trailer)
+            if not self.hasAL then
+                local fillUnits = trailer:getFillUnits()
+                if fillUnits then
+                    self.fillUnits = self.fillUnits + #trailer:getFillUnits()
+                    for fillUnitIndex, _ in pairs(fillUnits) do
+                        -- reset activated Trigger
+                        fillUnits[fillUnitIndex].lastTrigger = nil
+                    end
+                end
             end
         end
     end
@@ -73,16 +84,14 @@ function ADTrailerModule:reset()
     AutoDrive.setAugerPipeOpen(self.trailers, false)
     self:handleTrailerReversing(false)
     self.count = 0
-    self.hasAL = false
-    for i=1, self.trailerCount do
-        self.hasAL = self.hasAL or AutoDrive:hasAL(self.trailers[i])
-    end
     self.activeAL = false
     self.actualDistanceToUnloadTrigger = math.huge
     self.oldDistanceToUnloadTrigger = math.huge
     self.lastUnloadRotateTrigger = nil
     self.unloadRotate = false
     self.countLoading = 0
+    self.wasAtTrigger = false
+    self.fillFound = false
 end
 
 function ADTrailerModule:isActiveAtTrigger()
@@ -118,9 +127,9 @@ function ADTrailerModule:getBunkerSiloSpeed()
             local normalVector = {x = -rz, z = rx}
 
             --                                                                                  vecW
-            local x1, z1 = trigger.bunkerSiloArea.sx, trigger.bunkerSiloArea.sz --              1 ---- 2
-            --local x2, z2 = trigger.bunkerSiloArea.wx, trigger.bunkerSiloArea.wz--     vecH    | ---- |
-            local x3, z3 = trigger.bunkerSiloArea.hx, trigger.bunkerSiloArea.hz --              | ---- |
+            local x1, z1 = trigger.bunkerSiloArea.inner.sx, trigger.bunkerSiloArea.inner.sz --              1 ---- 2
+            --local x2, z2 = trigger.bunkerSiloArea.inner.wx, trigger.bunkerSiloArea.inner.wz--     vecH    | ---- |
+            local x3, z3 = trigger.bunkerSiloArea.inner.hx, trigger.bunkerSiloArea.inner.hz --              | ---- |
             --local x4, z4 = x2 + (x3 - x1), z2 + (z3 - z1) --                                  3 ---- 4    4 = 2 + vecH
 
             local vecH = {x = (x3 - x1), z = (z3 - z1)}
@@ -287,15 +296,23 @@ function ADTrailerModule:updateLoad(dt)
 
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad start self.trigger %s", tostring(self.trigger))
     local fillUnitFull = AutoDrive.getIsFillUnitFull(self.isLoadingToTrailer, self.isLoadingToFillUnitIndex)
-    local fillFound = false
-    local checkForContinue = false
     local checkFillUnitFull = false
 
     -- update trigger timer
-    if self.trigger ~= nil and self.trigger.stoppedTimer ~= nil then
+    if self.trigger ~= nil and self.trigger.isLoading ~= nil and self.trigger.stoppedTimer ~= nil then
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad update trigger timer self.trigger.isLoading %s", tostring(self.trigger.isLoading))
-        self.trigger.stoppedTimer:timer(not self.trigger.isLoading,300,dt)
+        self.trigger.stoppedTimer:timer(not self.trigger.isLoading, 300, dt)
         if self.trigger.isLoading then
+            -- if still loading reset retry timer
+            self.loadRetryTimer:timer(false, ADTrailerModule.LOAD_RETRY_TIME)     -- reset the timer to try load again
+        end
+    end
+
+    -- update timer for filling triggers
+    if self.trigger ~= nil and self.trigger.isFilling ~= nil and self.trigger.stoppedTimer ~= nil then
+        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad update trigger timer self.trigger.isFilling %s", tostring(self.trigger.isFilling))
+        self.trigger.stoppedTimer:timer(not self.trigger.isFilling, 300, dt)
+        if self.trigger.isFilling then
             -- if still loading reset retry timer
             self.loadRetryTimer:timer(false, ADTrailerModule.LOAD_RETRY_TIME)     -- reset the timer to try load again
         end
@@ -303,6 +320,7 @@ function ADTrailerModule:updateLoad(dt)
 
     -- update retry timer
     self.loadRetryTimer:timer(true, ADTrailerModule.LOAD_RETRY_TIME, dt)
+
     -- update load delay timer
     self.loadDelayTimer:timer(self.lastFillLevel >= self.fillLevel and self.trigger == self, ADTrailerModule.LOAD_DELAY_TIME, dt)
 
@@ -320,9 +338,7 @@ function ADTrailerModule:updateLoad(dt)
             if pair.hasFill then
                 -- initiate load only if fill is available
                 AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad Try loading at trigger now pair.fillUnitIndex %s", tostring(pair.fillUnitIndex))
-                fillFound = true
                 -- start loading
-
                 self.vehicle.ad.stateModule:selectPreferredFillTypeFromFillLevels(pair.fillLevels)
                 self:tryLoadingAtTrigger(pair.trailer, pair.trigger, pair.fillUnitIndex)
                 return
@@ -333,55 +349,79 @@ function ADTrailerModule:updateLoad(dt)
         local waterTrailer = AutoDrive.getWaterTrailerInWater(self.vehicle, self.trailers)
         if waterTrailer ~= nil and waterTrailer.setIsWaterTrailerFilling ~= nil then
             waterTrailer:setIsWaterTrailerFilling(true)
-            fillFound = true
             self.isLoading = true
             self.trigger = waterTrailer         -- need a trigger to not search again
             AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad WaterTrailer found water -> start load")
             return
         end
 
-        if not self.isLoading then
-            -- try overload from liquid trailers, containers etc.
-            if AutoDrive.startFillTrigger(self.trailers) ~= nil then
-                -- no further actions required, monitoring via fill level - see load from source without trigger
-                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload fillTrigger found -> load already started")
-            elseif AutoDrive.startLoadTreePlanter(self.trailers) ~= nil then
-                -- no further actions required, monitoring via fill level - see load from source without trigger
-                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload treePlanter found -> load already started")
-            end           
+        -- try overload from liquid trailers, containers etc.
+        local trigger, wasAtTrigger, isFillingToTrailer = AutoDrive.startFillTrigger(self.trailers)
+        if trigger then
+            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload fillTrigger found -> load already started")
+            self.isLoading = true
+            self.trigger = trigger
+            self.isFillingToTrailer = isFillingToTrailer
+            return
+        end
+
+        -- try load tree planter
+        local trigger = AutoDrive.startLoadTreePlanter(self.trailers)
+        if trigger then
+            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload treePlanter found -> load already started")
+            self.isLoading = true
+            self.trigger = trigger
+            return
+        end
+
+        -- try load from conveyor belt
+        for _, otherVehicle in pairs(AutoDrive.getAllVehicles()) do
+            if otherVehicle.spec_conveyorBelt and otherVehicle:getRootVehicle() ~= self.vehicle then
+                local otherVehicleX, _, otherVehicleZ = getWorldTranslation(otherVehicle.components[1].node)
+                local vehicleX, _, vehicleZ = getWorldTranslation(self.vehicle.components[1].node)
+                local distance = MathUtil.vector2Length(otherVehicleX - vehicleX, otherVehicleZ - vehicleZ)
+                if distance <= AutoDrive.getMaxTriggerDistance(self.vehicle) then
+                    local currentDischargeNode = otherVehicle:getCurrentDischargeNode()
+                    if currentDischargeNode and otherVehicle:getIsDischargeNodeActive(currentDischargeNode) then
+                        if otherVehicle:getDischargeState() ~= Dischargeable.DISCHARGE_STATE_OFF then
+                            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad overload conveyor belt found -> load already started")
+                            self.isLoading = true
+                            self.trigger = otherVehicle
+                            return
+                        end
+                    end
+                end
+            end
         end
 
         -- check for load from source without trigger
         if self.lastFillLevel < self.fillLevel then
             AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad load from source without trigger...")
-            fillFound = true
             self.isLoading = true
             self.trigger = self                 -- need a trigger to not search again
+            self.fillFound = true
             -- update load delay timer
             self.loadDelayTimer:timer(false, ADTrailerModule.LOAD_DELAY_TIME)
         end
 
-        if #loadPairs == 0 and waterTrailer == nil and self.trigger ~= self then
-            self.isLoading = false
+        if not self.isLoading then
             self.trigger = nil
             AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad loadPairs == 0, Nothing found to load - continue drive -> return")
             return
-        else
-            if fillFound then
-                -- load already initiated - see above
-            else
-                checkForContinue = true
-            end
         end
     end
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad check for load done self.trigger %s", tostring(self.trigger))
     if self.trigger ~= nil and self.trigger.stoppedTimer ~= nil and self.trigger.stoppedTimer:done() then
-        -- load from trigger
+        -- load from trigger - siloTrigger / liquid triggers
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad loading finished - check fill level...")
         checkFillUnitFull = true
     elseif self.trigger ~= nil and self.trigger.stoppedTimer == nil and self.trigger.spec_waterTrailer ~= nil and self.trigger.spec_waterTrailer.isFilling ~= nil and not self.trigger.spec_waterTrailer.isFilling then
         -- load water
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad WaterTrailer full")
+        checkFillUnitFull = true
+    elseif self.trigger ~= nil and self.trigger.isa and self.trigger:isa(Vehicle) and self.trigger.spec_conveyorBelt and self.trigger:getDischargeState() == Dischargeable.DISCHARGE_STATE_OFF then
+        -- load from conveyorBelt
+        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad conveyorBelt not discharging")
         checkFillUnitFull = true
     elseif self.trigger ~= nil and self.trigger.stoppedTimer == nil and self.trigger == self and self.loadDelayTimer:done() and self.lastFillLevel >= self.fillLevel then
         -- load from source without trigger
@@ -394,46 +434,13 @@ function ADTrailerModule:updateLoad(dt)
     end
 
     if checkFillUnitFull then
-        if fillUnitFull
-            or (self.trigger ~= nil and self.trigger.stoppedTimer == nil and self.trigger.spec_waterTrailer ~= nil and self.trigger.spec_waterTrailer.isFilling ~= nil and not self.trigger.spec_waterTrailer.isFilling)
-            or (self.trigger ~= nil and self.trigger.stoppedTimer == nil and self.trigger == self and self.loadDelayTimer:done() and self.lastFillLevel >= self.fillLevel)
-        then
-            self.isLoading = false
-            self.trigger = nil
-            self.isLoadingToFillUnitIndex = 0
-            self.isLoadingToTrailer = nil
-            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad fillUnitFull %s", tostring(fillUnitFull))
-            return
-        else
-            checkForContinue = true
-        end
-    end
-
-    if checkForContinue then
-        if AutoDrive.checkForContinueOnEmptyLoadTrigger(self.vehicle) or self.filledToUnload then
-            -- continue or unload fill level reached
-            self.isLoading = false
-            self.trigger = nil
-            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad continue -> return")
-            return
-        else
-            -- not continue - retry cycle
-            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad retry cycle")
-            self.isLoading = true
-            if self.loadRetryTimer:done() then
-                -- initiate load animation
-                local loadPairs = AutoDrive.getTriggerAndTrailerPairs(self.vehicle, dt)
-                for _, pair in pairs(loadPairs) do
-                    self:tryLoadingAtTrigger(pair.trailer, pair.trigger, pair.fillUnitIndex)
-                end
-                -- self.trigger = nil
-                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad try loading again after some time")
-                self.loadRetryTimer:timer(false, ADTrailerModule.LOAD_RETRY_TIME)     -- reset the timer to try load again
-                return
-            else
-                -- wait for fill
-            end
-        end
+        self.isLoading = false
+        self.trigger = nil
+        self.isLoadingToFillUnitIndex = nil
+        self.isLoadingToTrailer = nil
+        self.isFillingToTrailer = nil
+        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad fillUnitFull %s", tostring(fillUnitFull))
+        return
     end
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateLoad end")
 end
@@ -458,7 +465,7 @@ function ADTrailerModule:stopUnloading()
 end
 
 function ADTrailerModule:updateUnload(dt)
-    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload ")
+    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload start")
     AutoDrive.setAugerPipeOpen(self.trailers,  AutoDrive.getDistanceToUnloadPosition(self.vehicle) <= AutoDrive.getMaxTriggerDistance(self.vehicle))
 
     if not self.isUnloading and not (self.lastUnloadRotateTrigger) then
@@ -466,7 +473,7 @@ function ADTrailerModule:updateUnload(dt)
         -- Check if we can unload at some trigger
             for _, trailer in pairs(self.trailers) do
                 local unloadTrigger = self:lookForPossibleUnloadTrigger(trailer)
-                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload not self.isUnloading unloadTrigger %s", tostring(unloadTrigger))
+                AutoDrive.debugPrint(trailer, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload not self.isUnloading unloadTrigger %s", tostring(unloadTrigger))
                 if unloadTrigger ~= nil then
                     if trailer.unloadDelayTimer == nil then
                         trailer.unloadDelayTimer = AutoDriveTON:new()
@@ -498,7 +505,8 @@ function ADTrailerModule:updateUnload(dt)
             self.unloadRetryTimer:timer(self.isUnloading, ADTrailerModule.UNLOAD_RETRY_TIME, dt)
 
             if allTrailersClosed and (fillUnitEmpty or self.unloadRotate) then
-            -- all trailers closed and empty or rotate
+                -- all trailers closed and empty or rotate
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload unloadDelayTimer:done 1")
                 self.unloadDelayTimer:timer(false)      -- clear timer
                 self.isUnloading = false
                 self.unloadingToBunkerSilo = false
@@ -506,19 +514,23 @@ function ADTrailerModule:updateUnload(dt)
                     self.isUnloadingWithTrailer:setDischargeState(Dischargeable.DISCHARGE_STATE_OFF)
                 end
             elseif fillUnitEmpty and self.unloadingToBunkerSilo then
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload unloadDelayTimer:done 2")
                 self.unloadDelayTimer:timer(false)      -- clear timer
                 self.unloadingToBunkerSilo = false
             elseif allTrailersClosed and self.isUnloadingWithTrailer ~= nil and self.isUnloadingWithTrailer.spec_pipe ~= nil then
                 -- unload auger wagon to another trailer
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload unloadDelayTimer:done 3")
                 self.unloadDelayTimer:timer(false)      -- clear timer
                 self.isUnloading = false
             elseif self.unloadRetryTimer:done() and self.isUnloadingWithTrailer ~= nil and self.unloadingToBunkerSilo == false then
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload unloadDelayTimer:done 4")
                 if self.isUnloadingWithTrailer ~= nil and self.isUnloadingWithTrailer.setDischargeState then
                     self.isUnloadingWithTrailer:setDischargeState(Dischargeable.DISCHARGE_STATE_OBJECT)
                 end
                 self.unloadRetryTimer:timer(false)      -- clear timer
             elseif not (self.vehicle.ad.drivePathModule:getIsReversing()) and self.unloadingToBunkerSilo and self.stuckInBunkerTimer:done() then
                 -- stuck in silo bunker
+                AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload unloadDelayTimer:done 5")
                 if self.isUnloadingWithTrailer ~= nil and self.isUnloadingWithTrailer.setDischargeState then
                     self.isUnloadingWithTrailer:setDischargeState(Dischargeable.DISCHARGE_STATE_OFF)
                 end
@@ -526,8 +538,21 @@ function ADTrailerModule:updateUnload(dt)
                 self.isUnloading = false
                 self.unloadingToBunkerSilo = false
             end
+            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "isUnloading %s allTrailersClosed %s fillUnitEmpty %s unloadRotate %s unloadingToBunkerSilo %s isUnloadingWithTrailer %s unloadRetryTimer %s spec_pipe %s getIsReversing %s stuckInBunkerTimer %s "
+            , tostring(self.isUnloading)
+            , tostring(allTrailersClosed)
+            , tostring(fillUnitEmpty)
+            , tostring(self.unloadRotate)
+            , tostring(self.unloadingToBunkerSilo)
+            , tostring(self.isUnloadingWithTrailer)
+            , tostring(self.unloadRetryTimer:done())
+            , tostring(self.isUnloadingWithTrailer and self.isUnloadingWithTrailer.spec_pipe or 999)
+            , tostring(self.vehicle.ad.drivePathModule:getIsReversing())
+            , tostring(self.stuckInBunkerTimer:done())
+            )
         end
     end
+    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:updateUnload end")
 end
 
 function ADTrailerModule:tryLoadingAtTrigger(trailer, trigger, fillUnitIndex)
@@ -583,6 +608,7 @@ end
 
 function ADTrailerModule:startLoadingAtTrigger(trigger, fillType, fillUnitIndex, trailer)
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:startLoadingAtTrigger start trigger %s fillUnitIndex %s", tostring(trigger), tostring(fillUnitIndex))
+    local spec = trailer.spec_fillUnit
     trigger.autoStart = true
     trigger.selectedFillType = fillType
     trigger:onFillTypeSelection(fillType)
@@ -596,12 +622,12 @@ function ADTrailerModule:startLoadingAtTrigger(trigger, fillType, fillUnitIndex,
 
         self.isLoading = true
         self.trigger = trigger
+        self.fillFound = true
         self.isLoadingToFillUnitIndex = fillUnitIndex
         self.isLoadingToTrailer = trailer
         self.countLoading = self.countLoading + 1
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:startLoadingAtTrigger self.trigger %s", tostring(self.trigger))
     end
-
     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:startLoadingAtTrigger end")
 end
 
@@ -652,11 +678,11 @@ function ADTrailerModule:lookForPossibleUnloadTrigger(trailer)
 end
 
 function ADTrailerModule:startUnloadingIntoTrigger(trailer, trigger)
-    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:startUnloadingIntoTrigger start")
+    AutoDrive.debugPrint(trailer, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:startUnloadingIntoTrigger start")
 
     if trigger.bunkerSiloArea == nil then
         -- tip trigger
-        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "Start unloading - fillUnitIndex: %s", tostring(trailer:getCurrentDischargeNode().fillUnitIndex))
+        AutoDrive.debugPrint(trailer, AutoDrive.DC_TRAILERINFO, "Start unloading - fillUnitIndex: %s", tostring(trailer:getCurrentDischargeNode().fillUnitIndex))
         trailer:setDischargeState(Dischargeable.DISCHARGE_STATE_OBJECT)
 
         if self.unloadRotate then
@@ -670,8 +696,8 @@ function ADTrailerModule:startUnloadingIntoTrigger(trailer, trigger)
     elseif trigger.bunkerSiloArea ~= nil then
         -- bunker silo
         if (not self.vehicle.ad.drivePathModule:getIsReversing() and not (self.vehicle.lastSpeedReal * 3600 < 1)) -- forward through bunker silo
-            or (self.vehicle.ad.drivePathModule:getIsReversing() and self.vehicle:getLastSpeed() < 1) then -- reverse into bunker silo
-            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "Start unloading into bunkersilo - fillUnitIndex: %s", tostring(trailer:getCurrentDischargeNode().fillUnitIndex))
+            or (self.vehicle.ad.drivePathModule:getIsReversing() and self.vehicle:getLastSpeed() < 0.5) then -- reverse into bunker silo
+            AutoDrive.debugPrint(trailer, AutoDrive.DC_TRAILERINFO, "Start unloading into bunkersilo - fillUnitIndex: %s", tostring(trailer:getCurrentDischargeNode().fillUnitIndex))
             trailer:setDischargeState(Dischargeable.DISCHARGE_STATE_GROUND)
             self.isUnloading = true
             self.unloadingToBunkerSilo = true
@@ -725,6 +751,7 @@ function ADTrailerModule:areAllTrailersClosed(dt)
 end
 
 function ADTrailerModule:wasAtSuitableTrigger()
+    -- return self.wasAtTrigger
     if self.fillUnits > 0 and self.countLoading >= (self.fillUnits + 1) * (#self.vehicle.ad.stateModule:getSelectedFillTypes() + 2) then
         -- consider some more load starts to ensure catch up sufficient
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:wasAtSuitableTrigger return true")
@@ -733,6 +760,10 @@ function ADTrailerModule:wasAtSuitableTrigger()
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAILERINFO, "ADTrailerModule:wasAtSuitableTrigger return false")
         return false
     end
+end
+
+function ADTrailerModule:isOverloadingFromFillable()
+    return self.isActiveAtTrigger and self.isFillingToTrailer
 end
 
 function ADTrailerModule:clearTrailerUnloadTimers()

@@ -527,6 +527,14 @@ function ADSensor:setTriggered(triggered)
     end
 end
 
+function ADSensor:setSwathDetection(enabled)
+    if enabled ~= nil and enabled == true then
+        self.swathDetection = true
+    else
+        self.swathDetection = false
+    end
+end
+
 function ADSensor:setTriggerType(triggerType)
     if triggerType ~= nil then
         self.triggerType = triggerType

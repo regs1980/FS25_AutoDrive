@@ -61,6 +61,9 @@
 		<text name="input_ADToggleAutomaticPickupTarget"				text="AD: Переключати автоматично цілі завантаження" />
 		<text name="input_ADToggleAutomaticUnloadTarget"				text="AD: Переключати автоматично цілі розвантаження" />
 		<text name="input_ADToggleLoadByFillLevel"						text="AD: Перемикання завантаження по рівня заповнення" />
+		<text name="input_ADCopySettings"								text="AD: Copy settings" />
+		<text name="input_ADPasteSettings"								text="AD: Paste settings" />
+		<text name="input_ADCreateFieldPoints"							text="AD: Create Field Points" />
 		<text name="hud_avoidFruit"									text="AD: Уникати посівів" />
 		<text name="hud_startHelper"									text="AD: Запустити AI/CP в пункті призначення" />
 		<text name="AD_parkVehicle_noPosSet"							text="Місце для паркування не назначено. Щоб назначити вибрану локацію, як місце паркування, нажміть правою кнопкою миші на цій же кнопці." />
@@ -91,6 +94,9 @@
 		<text name="AD_lctrl_for_creation"								text="L-CTRL створити" />
 		<text name="AD_lalt_for_deletion"								text="L-ALT видалити" />
 		<text name="AD_lshift_for_reverse"								text="R-SHIFT рух ЗХ" />
+		<text name="AD_settings_copied"								text="Settings copied" />
+		<text name="AD_settings_pasted"								text="Settings pasted" />
+		<text name="AD_settings_clipboard_empty"						text="Copy settings first!" />
 		<text name="gui_ad_Setting"									text="AutoDrive - Налаштування" />
 		<text name="gui_ad_collisionHeigth"							text="Висота перешкод над землею" />
 		<text name="gui_ad_collisionHeigth_tooltip"					text="Налаштування для визначення колізій/перешкод перед автомобілем. Якщо інші транспортні засоби не виявляються під час руху, поступово зменшуйте параметр. (За замовчуванням 2 м)" />
@@ -286,6 +292,10 @@
 		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Record offset in opposite driving direction" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="Move recording from vehicle to the left (-0.1 .. -6m) or right (0.1 .. 6m). Driving reverse wil stop recording!" />
+		<text name="gui_ad_fieldPointOffset"							text="Fieldpoint Offset" />
+		<text name="gui_ad_fieldPointOffset_tooltip"					text="create field points inside (-0.2 .. -6m) or outside (0.2 .. 6m) erzeugen. 0 at field border" />
+		<text name="gui_ad_maxFieldPointDistance"						text="field point max. distance" />
+		<text name="gui_ad_maxFieldPointDistance_tooltip"				text="create field points with max. distance of 2 .. 25 m" />
 		<text name="gui_ad_settingsPage_title"							text="Загальні налаштування - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="Користувацькі налаштування - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Налаштування техніки - AutoDrive" />

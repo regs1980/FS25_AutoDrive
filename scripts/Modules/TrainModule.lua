@@ -40,7 +40,7 @@ function ADTrainModule:reset()
     if self.vehicle:getIsMotorStarted() and not AutoDrive:getIsEntered(self.vehicle) then
         if self.setCruiseControlState then
             self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
-            self:updateVehiclePhysics(0, 0, 0, 16)
+            self:updateVehiclePhysics(0, 0, true, 16)
             self.vehicle:raiseActive()
         end
         self.vehicle:stopMotor()
@@ -93,6 +93,10 @@ function ADTrainModule:update(dt)
     local distance = MathUtil.vector2Length(wayPoint.x - x, wayPoint.z - z)
     local shouldBrake = false
 
+    if self.vehicle.isBroken then
+        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "update self.vehicle.isBroken = false")
+        self.vehicle.isBroken = false
+    end
     self.vehicle.ad.specialDrivingModule:releaseVehicle()
     if self.vehicle.startMotor then
         if not self.vehicle:getIsMotorStarted() and self.vehicle:getCanMotorRun() and not self.vehicle.ad.specialDrivingModule:shouldStopMotor() then
@@ -126,22 +130,23 @@ function ADTrainModule:update(dt)
             AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "ADTrainModule:update shouldBrake speedReal %s", tostring(speedReal))
         end
 
-        if self.vehicle.movingDirection > 0 then
+        local speedSign = AutoDrive.sign(spec.speed)
+        if speedSign > 0 then
             if math.abs(speedReal) > (2 * ADTrainModule.LOAD_UNLOAD_SPEED) then
-                self.vehicle:updateVehiclePhysics(-ADTrainModule.BRAKE_FACTOR, 0, 0, dt)
+                self.vehicle:updateVehiclePhysics(-ADTrainModule.BRAKE_FACTOR, 0, true, dt)
             elseif math.abs(speedReal) > ADTrainModule.LOAD_UNLOAD_SPEED then
-                self.vehicle:updateVehiclePhysics(-1, 0, 0, dt)
+                self.vehicle:updateVehiclePhysics(-1, 0, true, dt)
             end
         else
             -- it happens that the movingDirection becomes 0 or -1, so move away
-            self.vehicle:updateVehiclePhysics(1, 0, 0, dt)
+            -- self.vehicle:updateVehiclePhysics(1, 0, true, dt)
         end
     else
         if (g_updateLoopIndex % (60) == 0) then
             AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "ADTrainModule:update drive forward speedReal %s", tostring(speedReal))
         end
         -- drive forward
-        self.vehicle:updateVehiclePhysics(1, 0, 0, dt)
+        self.vehicle:updateVehiclePhysics(1, 0, true, dt)
     end
     self.vehicle:raiseActive()
 end
@@ -167,9 +172,15 @@ function ADTrainModule:stopAndHoldVehicle(dt)
         end
     end
 
-    if math.abs(speedReal) > 0.001 then
-        if self.vehicle.movingDirection > 0 then
-            self.vehicle:updateVehiclePhysics(-ADTrainModule.BRAKE_FACTOR, 0, 0, dt)
+    local speedSign = AutoDrive.sign(spec.speed)
+    if speedSign ~= 0 then
+        AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "stopAndHoldVehicle updateVehiclePhysics 1")
+        self.vehicle:updateVehiclePhysics(-speedSign, 0, true, dt)
+    else
+        if self.setCruiseControlState then
+            AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "stopAndHoldVehicle updateVehiclePhysics 2")
+            self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
+            self:updateVehiclePhysics(0, 0, true, dt)
         end
     end
     if self.vehicle.ad and self.vehicle.ad.specialDrivingModule then
@@ -181,7 +192,8 @@ function ADTrainModule:stopAndHoldVehicle(dt)
 
                 if self.setCruiseControlState then
                     self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
-                    self:updateVehiclePhysics(0, 0, 0, 16)
+                    AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_TRAINS, "stopAndHoldVehicle updateVehiclePhysics - 0, 0, true, 16")
+                    self:updateVehiclePhysics(0, 0, true, dt)
                     self:raiseActive()
                 end
                 self.vehicle:stopMotor()
@@ -190,7 +202,6 @@ function ADTrainModule:stopAndHoldVehicle(dt)
     end
     self.vehicle:raiseActive()
 end
-
 
 function ADTrainModule:isTargetReached()
     if (g_updateLoopIndex % (60) == 0) then

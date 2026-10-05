@@ -61,6 +61,9 @@
 		<text name="input_ADToggleAutomaticPickupTarget"				text="AD: Automatisches Ladeziel umschalten" />
 		<text name="input_ADToggleAutomaticUnloadTarget"				text="AD: Automatisches Entladeziel umschalten" />
 		<text name="input_ADToggleLoadByFillLevel"						text="AD: Beladung nach Füllstand umschalten" />
+		<text name="input_ADCopySettings"								text="AD: Einstellungen kopieren" />
+		<text name="input_ADPasteSettings"								text="AD: Einstellungen einfügen" />
+		<text name="input_ADCreateFieldPoints"							text="AD: Feldrand Punkte generieren" />
 		<text name="hud_avoidFruit"									text="AD: Fruchtumfahrung" />
 		<text name="hud_startHelper"									text="AD: Starte AI/CP Fahrer am Zielpunkt" />
 		<text name="AD_parkVehicle_noPosSet"							text="Kein Parkplatz zugewiesen." />
@@ -91,6 +94,9 @@
 		<text name="AD_lctrl_for_creation"								text="LSTRG zum Erstellen" />
 		<text name="AD_lalt_for_deletion"								text="LALT zum Löschen" />
 		<text name="AD_lshift_for_reverse"								text="RUMSCH rückwärts fahren" />
+		<text name="AD_settings_copied"								text="Einstellungen kopiert" />
+		<text name="AD_settings_pasted"								text="Einstellungen eingefügt" />
+		<text name="AD_settings_clipboard_empty"						text="Einstellungen erst kopieren!" />
 		<text name="gui_ad_Setting"									text="AutoDrive - Einstellungen" />
 		<text name="gui_ad_collisionHeigth"							text="Kollisionshöhe über Boden" />
 		<text name="gui_ad_collisionHeigth_tooltip"					text="Einstellung der Kollisionserkennung vor dem Fahrzeug. Wenn andere Fahrzeuge während des Fahrens nicht erkannt werden, verringern. (Standard: 2m)" />
@@ -286,6 +292,10 @@
 		<text name="gui_ad_RecordDriveDirectionOffset_tooltip"			text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -6m) oder rechts (0.1 .. 6m). Rückwärts fahren deaktiviert die Aufnahme!" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset"			text="Aufzeichnung Versatz Gegenrichtung" />
 		<text name="gui_ad_RecordOppositeDriveDirectionOffset_tooltip"	text="verschiebt die Aufzeichnung vom Fahrzeug nach links (-0.1 .. -6m) oder rechts (0.1 .. 6m). Rückwärts fahren deaktiviert die Aufnahme!" />
+		<text name="gui_ad_fieldPointOffset"							text="Feldpunkte Versatz" />
+		<text name="gui_ad_fieldPointOffset_tooltip"					text="erzeugte Feldpunkte innen (-0.2 .. -6m) oder aussen (0.2 .. 6m) erzeugen. 0 auf dem Feldrand" />
+		<text name="gui_ad_maxFieldPointDistance"						text="Feldpunkte max. Abstand" />
+		<text name="gui_ad_maxFieldPointDistance_tooltip"				text="erzeugte Feldpunkte mit max. Abstand von 2 .. 25 m" />
 		<text name="gui_ad_settingsPage_title"							text="Einstellungen - AutoDrive" />
 		<text name="gui_ad_userSettingsPage_title"						text="Benutzereinstellungen - AutoDrive" />
 		<text name="gui_ad_vehicleSettingsPage_title"					text="Fahrzeugeinstellungen - AutoDrive" />

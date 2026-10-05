@@ -381,7 +381,7 @@ function AutoDrivePlaceableData.readGraphFromXml(xmlFile, placeable)
     -- user confirmed import
     if AutoDrivePlaceableData.mapMarkers and #AutoDrivePlaceableData.mapMarkers > 0
         and AutoDrivePlaceableData.wayPoints and #AutoDrivePlaceableData.wayPoints > 0 then
-            AutoDrivePlaceableData:createPlaceable(AutoDrivePlaceableData.wayPoints, AutoDrivePlaceableData.mapMarkers)
+        AutoDrivePlaceableData:createPlaceable(AutoDrivePlaceableData.wayPoints, AutoDrivePlaceableData.mapMarkers)
     end
     return 0 -- OK
 end
@@ -392,7 +392,7 @@ function AutoDrivePlaceableData:createPlaceable(wayPoints, mapMarkers, sendEvent
         CreatePlaceableEvent.sendEvent(wayPoints, mapMarkers)
     else
         for _, wp in pairs(wayPoints) do
-            ADGraphManager:createWayPointWithConnections(wp.x, wp.y, wp.z, wp.out, wp.incoming, wp.flags, false, false, false, sendEvent)
+            ADGraphManager:createWayPointWithConnections(wp.x, wp.y, wp.z, wp.out, wp.incoming, wp.flags, false, false, false, nil, sendEvent)
         end
         for _, mapMarker in pairs(mapMarkers) do
             ADGraphManager:createMapMarker(mapMarker.id, mapMarker.name, sendEvent)

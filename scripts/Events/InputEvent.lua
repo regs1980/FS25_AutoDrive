@@ -33,7 +33,9 @@ function AutoDriveInputEventEvent:run(connection)
     if g_server ~= nil then
         local input = ADInputManager.idsToInputs[self.inputId]
         --print(string.format("onInputCall [%s] %s", self.inputId, input))
-        ADInputManager:onInputCall(self.vehicle, input, self.farmId, false)
+        local user = g_currentMission.userManager:getUserByConnection(connection)
+        local uniqueUserId = user and user.getUniqueUserId and user:getUniqueUserId() or nil
+        ADInputManager:onInputCall(self.vehicle, input, self.farmId, uniqueUserId, false)
     end
 end
 

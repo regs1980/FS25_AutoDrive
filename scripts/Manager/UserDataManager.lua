@@ -49,6 +49,7 @@ function ADUserDataManager:loadFromXml()
                     self.users[uniqueId].hudX = Utils.getNoNil(getXMLFloat(xmlFile, uKey .. "#hudX"), AutoDrive.HudX or 0.5)
                     self.users[uniqueId].hudY = Utils.getNoNil(getXMLFloat(xmlFile, uKey .. "#hudY"), AutoDrive.HudY or 0.5)
                     self.users[uniqueId].settings = {}
+                    self.users[uniqueId].settingsClipboard = nil
                     for _, sn in pairs(self.userSettingNames) do
                         local setting = AutoDrive.settings[sn]
                         if setting and not setting.shallNotBeSaved then
@@ -65,6 +66,7 @@ function ADUserDataManager:loadFromXml()
                 local uniqueId = ADUserDataManager.SinglePlayer
                 if self.users[uniqueId] ~= nil then
                     self:applyUserSettings((self.users[uniqueId].hudX or 0.5), (self.users[uniqueId].hudY or 0.5), self.users[uniqueId].settings)
+                    self.users[uniqueId].settingsClipboard = nil
                 end
             end
             Logging.info("[AD] ADUserDataManager: loaded data for %d users", userCount)
@@ -159,4 +161,70 @@ function ADUserDataManager:applyUserSettings(hudX, hudY, settings)
         AutoDrive.setSettingState(sn, sv)
     end
     AutoDrive.Hud:createHudAt(hudX, hudY)
+end
+
+function ADUserDataManager:getSettingsClipboard(vehicle, userId)
+    local uniqueId = userId
+    if self.isSinglePlayerOrHost then
+        -- no client, use a single player user
+        uniqueId = ADUserDataManager.SinglePlayer
+    end
+    if not uniqueId or self.users[uniqueId] == nil or not vehicle or not vehicle.ad or not vehicle.ad.stateModule then
+        return
+    end
+
+    self.users[uniqueId].settingsClipboard = {
+        stateValues = {
+            mode = vehicle.ad.stateModule:getMode(),
+            firstMarkerId = vehicle.ad.stateModule:getFirstMarkerId(),
+            secondMarkerId = vehicle.ad.stateModule:getSecondMarkerId(),
+            fillType = vehicle.ad.stateModule:getFillType(),
+            selectedFillTypes = {unpack(vehicle.ad.stateModule:getSelectedFillTypes() or {})},
+            loadByFillLevel = vehicle.ad.stateModule:getLoadByFillLevel(),
+            loopCounter = vehicle.ad.stateModule:getLoopCounter(),
+            startHelper = vehicle.ad.stateModule:getStartHelper(),
+            usedHelper = vehicle.ad.stateModule:getUsedHelper(),
+        }
+    }
+    self.users[uniqueId].settingsClipboard.settings = {}
+    for settingName, setting in pairs(vehicle.ad.settings) do
+        if setting.isCopyPaste then
+            self.users[uniqueId].settingsClipboard.settings[settingName] = setting.current
+        end
+    end
+    AutoDriveMessageEvent.sendMessageOrNotification(vehicle, ADMessagesManager.messageTypes.INFO, "$l10n_AD_settings_copied;", 2000)
+end
+
+function ADUserDataManager:applySettingsClipboard(vehicle, userId)
+    local uniqueId = userId
+    if self.isSinglePlayerOrHost then
+        -- no client, use a single player user
+        uniqueId = ADUserDataManager.SinglePlayer
+    end
+    if not uniqueId or self.users[uniqueId] == nil or not vehicle or not vehicle.ad or not vehicle.ad.stateModule then
+        return
+    end
+    if self.users[uniqueId].settingsClipboard == nil then
+        AutoDriveMessageEvent.sendMessageOrNotification(vehicle, ADMessagesManager.messageTypes.ERROR, "$l10n_AD_settings_clipboard_empty;", 2000)
+        return
+    end
+    if self.users[uniqueId].settingsClipboard.stateValues then
+        local stateValues = self.users[uniqueId].settingsClipboard.stateValues
+        vehicle.ad.stateModule:setMode(stateValues.mode)
+        vehicle.ad.stateModule:setFirstMarker(stateValues.firstMarkerId)
+        vehicle.ad.stateModule:setSecondMarker(stateValues.secondMarkerId)
+        vehicle.ad.stateModule:setFillType(stateValues.fillType)
+        vehicle.ad.stateModule:setSelectedFillTypes(stateValues.selectedFillTypes)
+        vehicle.ad.stateModule:setLoadByFillLevel(stateValues.loadByFillLevel)
+        vehicle.ad.stateModule:setLoopCounter(stateValues.loopCounter)
+        vehicle.ad.stateModule:setStartHelper(stateValues.startHelper)
+        vehicle.ad.stateModule:setUsedHelper(stateValues.usedHelper)
+    end
+    if self.users[uniqueId].settingsClipboard.settings then
+        for settingName, current in pairs(self.users[uniqueId].settingsClipboard.settings) do
+            AutoDrive.setSettingState(settingName, current, vehicle)
+        end
+        AutoDriveUpdateSettingsEvent.sendEvent(vehicle)
+    end
+    AutoDriveMessageEvent.sendMessageOrNotification(vehicle, ADMessagesManager.messageTypes.INFO, "$l10n_AD_settings_pasted;", 2000)
 end

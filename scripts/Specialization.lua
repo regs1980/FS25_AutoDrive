@@ -56,6 +56,7 @@ function AutoDrive.registerOverwrittenFunctions(vehicleType)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsAIActive",                        AutoDrive.getIsAIActive)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsVehicleControlledByPlayer",       AutoDrive.getIsVehicleControlledByPlayer)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getActiveFarm",                        AutoDrive.getActiveFarm)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "setBroken",                            AutoDrive.setBroken)
 
     -- Disables click to switch, if the user clicks on the hud or the editor mode is active.
     -- see ExternalInterface.lua
@@ -296,6 +297,8 @@ function AutoDrive:onPostLoad(savegame)
     end
 
     self.ad.foldStartTime = 0
+    self.ad.ALDelayStartTime = 0
+
     -- Pure client side state
     self.ad.nToolTipWait = 300
     self.ad.sToolTip = ""
@@ -439,33 +442,42 @@ end
 function AutoDrive:onUpdate(dt)
     if self.isServer and self.ad.stateModule:isActive() then
         self.ad.recordingModule:update(dt)
+        local shouldUStopVehicle = false
+        local allowTaskUpdate = (not AutoDrive.getSetting("FoldImplements", self) or (self.ad.foldStartTime + AutoDrive.foldTimeout < g_time))
+        allowTaskUpdate = allowTaskUpdate and (self.ad.ALDelayStartTime + AutoDrive.ALDelayTimeout < g_time)
 
-        if not AutoDrive.getSetting("FoldImplements", self) or (self.ad.foldStartTime + AutoDrive.foldTimeout < g_time) then
-            self.ad.taskModule:update(dt)
+        if allowTaskUpdate then
+             self.ad.taskModule:update(dt)
         else
-            -- should fold implements
-            if not AutoDrive.getAllImplementsFolded(self) then
-                if (g_updateLoopIndex % (AutoDrive.PERF_FRAMES) == 0) then
-                    -- fold animations take some time, so no need to check and initiate each frame
-                    if self.startMotor then
-                        if not self:getIsMotorStarted() then
-                            self:startMotor()
+            if AutoDrive.getSetting("FoldImplements", self) then
+                -- should fold implements
+                if not AutoDrive.getAllImplementsFolded(self) then
+                    if (g_updateLoopIndex % (AutoDrive.PERF_FRAMES) == 0) then
+                        -- fold animations take some time, so no need to check and initiate each frame
+                        if self.startMotor then
+                            if not self:getIsMotorStarted() then
+                                self:startMotor()
+                            end
                         end
+                        AutoDrive.foldAllImplements(self)
                     end
-                    AutoDrive.foldAllImplements(self)
+                    shouldUStopVehicle = true
+                else
+                    -- all folded - no further tries necessary
+                    self.ad.foldStartTime = 0
+                    AutoDrive.getAllVehicleDimensions(self, true)
+                    self:raiseActive()
                 end
-                if self.ad ~= nil and self.ad.specialDrivingModule ~= nil then
-                    self.ad.specialDrivingModule.motorShouldNotBeStopped = true
-                    self.ad.specialDrivingModule:stopVehicle()
-                    self.ad.specialDrivingModule:update(dt)
-                    self.ad.specialDrivingModule.motorShouldNotBeStopped = false
-                end
-            else
-                -- all folded - no further tries necessary
-                self.ad.foldStartTime = 0
-                AutoDrive.getAllVehicleDimensions(self, true)
-                self:raiseActive()
             end
+            if (self.ad.ALDelayStartTime + AutoDrive.ALDelayTimeout >= g_time) then
+                shouldUStopVehicle = true
+            end
+        end
+        if self.ad ~= nil and self.ad.specialDrivingModule ~= nil and shouldUStopVehicle then
+            self.ad.specialDrivingModule.motorShouldNotBeStopped = true
+            self.ad.specialDrivingModule:stopVehicle()
+            self.ad.specialDrivingModule:update(dt)
+            self.ad.specialDrivingModule.motorShouldNotBeStopped = false
         end
     end
 
@@ -1232,7 +1244,7 @@ function AutoDrive:stopAutoDrive()
             if self.ad.isStoppingWithError == true then
                 self.ad.onRouteToRefuel = false
                 self.ad.onRouteToRepair = false
-                AutoDrive.debugPrint(self, AutoDrive.DC_VEHICLEINFO, "AutoDrive:startAutoDrive self.ad.onRouteToRefuel %s", tostring(self.ad.onRouteToRefuel))
+                AutoDrive.debugPrint(self, AutoDrive.DC_VEHICLEINFO, "AutoDrive:stopAutoDrive self.ad.onRouteToRefuel %s", tostring(self.ad.onRouteToRefuel))
             end
             AutoDrive.updateAutoDriveLights(self, true)
 
@@ -1249,12 +1261,13 @@ function AutoDrive:stopAutoDrive()
                     if self.spec_locomotive then
                         if self.setCruiseControlState then
                             self:setCruiseControlState(Drivable.CRUISECONTROL_STATE_OFF)
-                            self:updateVehiclePhysics(0, 0, 0, 16)
+                            self:updateVehiclePhysics(0, 0, true, 16)
                             self:raiseActive()
                         end
                     end
 
                     if self.stopMotor ~= nil then
+                        AutoDrive.debugPrint(self, AutoDrive.DC_VEHICLEINFO, "AutoDrive:stopAutoDrive stopMotor")
                         self:stopMotor()
                     end
                 end
@@ -1485,17 +1498,28 @@ function AutoDrive.passToExternalMod_AI(vehicle)
 
     if (not vehicle.ad.isStoppingWithError and distanceToStart < 30) then
         local success, errorMessage
+        local isDirectStart = false
         if vehicle.getLastJob then
             if (vehicle.getIsOnField and vehicle:getIsOnField()) then
                 AutoDrive.debugPrint(vehicle, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive.passToExternalMod pass to other mod...")
                 local fieldJob = vehicle:getLastJob()
+                if fieldJob and fieldJob:isa(AIJobFieldWork) and fieldJob.positionAngleParameter and fieldJob.positionAngleParameter.getPosition then
+                    -- consider field jobs only
+                    local jx, jz = fieldJob.positionAngleParameter:getPosition()
+                    local distance = MathUtil.vector2Length(x - jx, z - jz)
+                    if distance > 10 then
+                        -- last job far away so start a fresh one
+                        fieldJob = nil
+                        isDirectStart = true -- needed to apply the correct values for new job
+                    end
+                end
                 if fieldJob == nil then
                     -- no job present - generate fielwork job new
                     fieldJob = g_currentMission.aiJobTypeManager:createJob(AIJobType.FIELDWORK)
                 end
                 if fieldJob then
-                        -- job present - continue fielwork job
-                    fieldJob:applyCurrentState(vehicle, g_currentMission, vehicle:getOwnerFarmId(), false)
+                        -- job present
+                    fieldJob:applyCurrentState(vehicle, g_currentMission, vehicle:getOwnerFarmId(), isDirectStart)
                     fieldJob:setValues()
                     success, errorMessage = fieldJob:validate(vehicle:getOwnerFarmId())
                     if success then
@@ -1787,6 +1811,13 @@ function AutoDrive:getActiveFarm(superFunc)
             -- return farmID only for valid farms, not spectator farm
             return actualFarmID
         end
+    end
+    return superFunc(self)
+end
+
+function AutoDrive:setBroken(superFunc)
+    if self.spec_locomotive then
+        return
     end
     return superFunc(self)
 end

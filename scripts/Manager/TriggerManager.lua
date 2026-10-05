@@ -522,16 +522,16 @@ function ADTriggerManager:getMarkerAtStation(sellingStation, vehicle, maxTrigger
 end
 
 function ADTriggerManager.addBunkerSiloAreaV(bunkerSilo)
-    if bunkerSilo and bunkerSilo.bunkerSiloArea and bunkerSilo.bunkerSiloArea.sx then
-        local sx, sy, sz = bunkerSilo.bunkerSiloArea.sx, bunkerSilo.bunkerSiloArea.sy, bunkerSilo.bunkerSiloArea.sz
-        local wx, wy, wz = bunkerSilo.bunkerSiloArea.wx, bunkerSilo.bunkerSiloArea.wy, bunkerSilo.bunkerSiloArea.wz
-        local hx, hy, hz = bunkerSilo.bunkerSiloArea.hx, bunkerSilo.bunkerSiloArea.hy, bunkerSilo.bunkerSiloArea.hz
+    if bunkerSilo and bunkerSilo.bunkerSiloArea and bunkerSilo.bunkerSiloArea.inner.sx then
+        local sx, sy, sz = bunkerSilo.bunkerSiloArea.inner.sx, bunkerSilo.bunkerSiloArea.inner.sy, bunkerSilo.bunkerSiloArea.inner.sz
+        local wx, wy, wz = bunkerSilo.bunkerSiloArea.inner.wx, bunkerSilo.bunkerSiloArea.inner.wy, bunkerSilo.bunkerSiloArea.inner.wz
+        local hx, hy, hz = bunkerSilo.bunkerSiloArea.inner.hx, bunkerSilo.bunkerSiloArea.inner.hy, bunkerSilo.bunkerSiloArea.inner.hz
         local vx = hx + (wx - sx)
         local vy = hy + (wy - sy)
         local vz = hz + (wz - sz)
-        bunkerSilo.bunkerSiloArea.vx = vx
-        bunkerSilo.bunkerSiloArea.vy = vy
-        bunkerSilo.bunkerSiloArea.vz = vz
+        bunkerSilo.bunkerSiloArea.inner.vx = vx
+        bunkerSilo.bunkerSiloArea.inner.vy = vy
+        bunkerSilo.bunkerSiloArea.inner.vz = vz
         return true
     else
         return false
@@ -539,33 +539,33 @@ function ADTriggerManager.addBunkerSiloAreaV(bunkerSilo)
 end
 
 function ADTriggerManager.getBunkerSiloAreasConnectionType(bunkerSilo1, bunkerSilo2)
-    if bunkerSilo1 and bunkerSilo1.bunkerSiloArea and bunkerSilo1.bunkerSiloArea.vx and
-        bunkerSilo2 and bunkerSilo2.bunkerSiloArea and bunkerSilo2.bunkerSiloArea.vx then
-        if math.abs(bunkerSilo1.bunkerSiloArea.sx - bunkerSilo2.bunkerSiloArea.hx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.sz - bunkerSilo2.bunkerSiloArea.hz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.wx - bunkerSilo2.bunkerSiloArea.vx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.wz - bunkerSilo2.bunkerSiloArea.vz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
+    if bunkerSilo1 and bunkerSilo1.bunkerSiloArea and bunkerSilo1.bunkerSiloArea.inner.vx and
+        bunkerSilo2 and bunkerSilo2.bunkerSiloArea and bunkerSilo2.bunkerSiloArea.inner.vx then
+        if math.abs(bunkerSilo1.bunkerSiloArea.inner.sx - bunkerSilo2.bunkerSiloArea.inner.hx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.sz - bunkerSilo2.bunkerSiloArea.inner.hz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.wx - bunkerSilo2.bunkerSiloArea.inner.vx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.wz - bunkerSilo2.bunkerSiloArea.inner.vz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
                 -- bunkerSilo2 end to bunkerSilo1 start
             return 1
         end
-        if math.abs(bunkerSilo1.bunkerSiloArea.sx - bunkerSilo2.bunkerSiloArea.wx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.sz - bunkerSilo2.bunkerSiloArea.wz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.wx - bunkerSilo2.bunkerSiloArea.sx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.wz - bunkerSilo2.bunkerSiloArea.sz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
+        if math.abs(bunkerSilo1.bunkerSiloArea.inner.sx - bunkerSilo2.bunkerSiloArea.inner.wx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.sz - bunkerSilo2.bunkerSiloArea.inner.wz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.wx - bunkerSilo2.bunkerSiloArea.inner.sx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.wz - bunkerSilo2.bunkerSiloArea.inner.sz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
                 -- bunkerSilo2 start to bunkerSilo1 start
             return 2
         end
-        if math.abs(bunkerSilo1.bunkerSiloArea.vx - bunkerSilo2.bunkerSiloArea.hx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.vz - bunkerSilo2.bunkerSiloArea.hz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.hx - bunkerSilo2.bunkerSiloArea.vx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.hz - bunkerSilo2.bunkerSiloArea.vz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
+        if math.abs(bunkerSilo1.bunkerSiloArea.inner.vx - bunkerSilo2.bunkerSiloArea.inner.hx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.vz - bunkerSilo2.bunkerSiloArea.inner.hz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.hx - bunkerSilo2.bunkerSiloArea.inner.vx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.hz - bunkerSilo2.bunkerSiloArea.inner.vz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
                 -- bunkerSilo2 end to bunkerSilo1 end
             return 3
         end
-        if math.abs(bunkerSilo1.bunkerSiloArea.vx - bunkerSilo2.bunkerSiloArea.wx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.vz - bunkerSilo2.bunkerSiloArea.wz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.hx - bunkerSilo2.bunkerSiloArea.sx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
-            math.abs(bunkerSilo1.bunkerSiloArea.hz - bunkerSilo2.bunkerSiloArea.sz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
+        if math.abs(bunkerSilo1.bunkerSiloArea.inner.vx - bunkerSilo2.bunkerSiloArea.inner.wx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.vz - bunkerSilo2.bunkerSiloArea.inner.wz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.hx - bunkerSilo2.bunkerSiloArea.inner.sx) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE and
+            math.abs(bunkerSilo1.bunkerSiloArea.inner.hz - bunkerSilo2.bunkerSiloArea.inner.sz) < AutoDrive.BUNKERSILO_CONNECTED_DISTANCE then
                 -- bunkerSilo2 start to bunkerSilo1 end
             return 4
         end
@@ -575,59 +575,61 @@ end
 
 function ADTriggerManager.connectBunkerSilos(bunkerSilo1, bunkerSilo2, bunkerSiloConnectionType)
     local bunkerSilo = {}
+    bunkerSilo.bunkerSiloArea = {}
+    bunkerSilo.bunkerSiloArea.inner = {}
     local sx, sy, sz, wx, wy, wz, hx, hy, hz, vx, vy, vz, dwx, dwy, dwz, dhx, dhy, dhz
     if bunkerSiloConnectionType == 1 then
-        sx = bunkerSilo2.bunkerSiloArea.sx
-        sy = bunkerSilo2.bunkerSiloArea.sy
-        sz = bunkerSilo2.bunkerSiloArea.sz
-        wx = bunkerSilo2.bunkerSiloArea.wx
-        wy = bunkerSilo2.bunkerSiloArea.wy
-        wz = bunkerSilo2.bunkerSiloArea.wz
-        hx = bunkerSilo1.bunkerSiloArea.hx
-        hy = bunkerSilo1.bunkerSiloArea.hy
-        hz = bunkerSilo1.bunkerSiloArea.hz
-        vx = bunkerSilo1.bunkerSiloArea.vx
-        vy = bunkerSilo1.bunkerSiloArea.vy
-        vz = bunkerSilo1.bunkerSiloArea.vz
+        sx = bunkerSilo2.bunkerSiloArea.inner.sx
+        sy = bunkerSilo2.bunkerSiloArea.inner.sy
+        sz = bunkerSilo2.bunkerSiloArea.inner.sz
+        wx = bunkerSilo2.bunkerSiloArea.inner.wx
+        wy = bunkerSilo2.bunkerSiloArea.inner.wy
+        wz = bunkerSilo2.bunkerSiloArea.inner.wz
+        hx = bunkerSilo1.bunkerSiloArea.inner.hx
+        hy = bunkerSilo1.bunkerSiloArea.inner.hy
+        hz = bunkerSilo1.bunkerSiloArea.inner.hz
+        vx = bunkerSilo1.bunkerSiloArea.inner.vx
+        vy = bunkerSilo1.bunkerSiloArea.inner.vy
+        vz = bunkerSilo1.bunkerSiloArea.inner.vz
     elseif bunkerSiloConnectionType == 2 then
-        sx = bunkerSilo2.bunkerSiloArea.vx
-        sy = bunkerSilo2.bunkerSiloArea.vy
-        sz = bunkerSilo2.bunkerSiloArea.vz
-        wx = bunkerSilo2.bunkerSiloArea.hx
-        wy = bunkerSilo2.bunkerSiloArea.hy
-        wz = bunkerSilo2.bunkerSiloArea.hz
-        hx = bunkerSilo1.bunkerSiloArea.hx
-        hy = bunkerSilo1.bunkerSiloArea.hy
-        hz = bunkerSilo1.bunkerSiloArea.hz
-        vx = bunkerSilo1.bunkerSiloArea.vx
-        vy = bunkerSilo1.bunkerSiloArea.vy
-        vz = bunkerSilo1.bunkerSiloArea.vz
+        sx = bunkerSilo2.bunkerSiloArea.inner.vx
+        sy = bunkerSilo2.bunkerSiloArea.inner.vy
+        sz = bunkerSilo2.bunkerSiloArea.inner.vz
+        wx = bunkerSilo2.bunkerSiloArea.inner.hx
+        wy = bunkerSilo2.bunkerSiloArea.inner.hy
+        wz = bunkerSilo2.bunkerSiloArea.inner.hz
+        hx = bunkerSilo1.bunkerSiloArea.inner.hx
+        hy = bunkerSilo1.bunkerSiloArea.inner.hy
+        hz = bunkerSilo1.bunkerSiloArea.inner.hz
+        vx = bunkerSilo1.bunkerSiloArea.inner.vx
+        vy = bunkerSilo1.bunkerSiloArea.inner.vy
+        vz = bunkerSilo1.bunkerSiloArea.inner.vz
     elseif bunkerSiloConnectionType == 3 then
-        sx = bunkerSilo2.bunkerSiloArea.sx
-        sy = bunkerSilo2.bunkerSiloArea.sy
-        sz = bunkerSilo2.bunkerSiloArea.sz
-        wx = bunkerSilo2.bunkerSiloArea.wx
-        wy = bunkerSilo2.bunkerSiloArea.wy
-        wz = bunkerSilo2.bunkerSiloArea.wz
-        hx = bunkerSilo1.bunkerSiloArea.wx
-        hy = bunkerSilo1.bunkerSiloArea.wy
-        hz = bunkerSilo1.bunkerSiloArea.wz
-        vx = bunkerSilo1.bunkerSiloArea.sx
-        vy = bunkerSilo1.bunkerSiloArea.sy
-        vz = bunkerSilo1.bunkerSiloArea.sz
+        sx = bunkerSilo2.bunkerSiloArea.inner.sx
+        sy = bunkerSilo2.bunkerSiloArea.inner.sy
+        sz = bunkerSilo2.bunkerSiloArea.inner.sz
+        wx = bunkerSilo2.bunkerSiloArea.inner.wx
+        wy = bunkerSilo2.bunkerSiloArea.inner.wy
+        wz = bunkerSilo2.bunkerSiloArea.inner.wz
+        hx = bunkerSilo1.bunkerSiloArea.inner.wx
+        hy = bunkerSilo1.bunkerSiloArea.inner.wy
+        hz = bunkerSilo1.bunkerSiloArea.inner.wz
+        vx = bunkerSilo1.bunkerSiloArea.inner.sx
+        vy = bunkerSilo1.bunkerSiloArea.inner.sy
+        vz = bunkerSilo1.bunkerSiloArea.inner.sz
     elseif bunkerSiloConnectionType == 4 then
-        sx = bunkerSilo2.bunkerSiloArea.vx
-        sy = bunkerSilo2.bunkerSiloArea.vy
-        sz = bunkerSilo2.bunkerSiloArea.vz
-        wx = bunkerSilo2.bunkerSiloArea.hx
-        wy = bunkerSilo2.bunkerSiloArea.hy
-        wz = bunkerSilo2.bunkerSiloArea.hz
-        hx = bunkerSilo1.bunkerSiloArea.wx
-        hy = bunkerSilo1.bunkerSiloArea.wy
-        hz = bunkerSilo1.bunkerSiloArea.wz
-        vx = bunkerSilo1.bunkerSiloArea.sx
-        vy = bunkerSilo1.bunkerSiloArea.sy
-        vz = bunkerSilo1.bunkerSiloArea.sz
+        sx = bunkerSilo2.bunkerSiloArea.inner.vx
+        sy = bunkerSilo2.bunkerSiloArea.inner.vy
+        sz = bunkerSilo2.bunkerSiloArea.inner.vz
+        wx = bunkerSilo2.bunkerSiloArea.inner.hx
+        wy = bunkerSilo2.bunkerSiloArea.inner.hy
+        wz = bunkerSilo2.bunkerSiloArea.inner.hz
+        hx = bunkerSilo1.bunkerSiloArea.inner.wx
+        hy = bunkerSilo1.bunkerSiloArea.inner.wy
+        hz = bunkerSilo1.bunkerSiloArea.inner.wz
+        vx = bunkerSilo1.bunkerSiloArea.inner.sx
+        vy = bunkerSilo1.bunkerSiloArea.inner.sy
+        vz = bunkerSilo1.bunkerSiloArea.inner.sz
     else
         return nil
     end
@@ -637,7 +639,7 @@ function ADTriggerManager.connectBunkerSilos(bunkerSilo1, bunkerSilo2, bunkerSil
     dhx = hx - sx
     dhy = hy - sy
     dhz = hz - sz
-    bunkerSilo.bunkerSiloArea = {sx = sx, sy = sy, sz = sz, wx = wx, wy =wy, wz = wz, hx = hx, hy = hy, hz = hz, vx = vx, vy = vy, vz = vz, dwx = dwx, dwy = dwy, dwz = dwz, dhx = dhx, dhy = dhy, dhz = dhz}
+    bunkerSilo.bunkerSiloArea.inner = {sx = sx, sy = sy, sz = sz, wx = wx, wy =wy, wz = wz, hx = hx, hy = hy, hz = hz, vx = vx, vy = vy, vz = vz, dwx = dwx, dwy = dwy, dwz = dwz, dhx = dhx, dhy = dhy, dhz = dhz}
     bunkerSilo.interactionTriggerNode = bunkerSilo1.interactionTriggerNode
     return bunkerSilo
 end
@@ -672,7 +674,7 @@ function ADTriggerManager.addBunkerSilo(bunkerSilo)
                     bunkerSiloConnected = ADTriggerManager.connectBunkerSilos(bunkerSiloResult, bunkerSilo, bunkerSiloConnectionType)
                 end
                 if bunkerSiloConnected then
-                    local length = MathUtil.vector2Length(bunkerSiloConnected.bunkerSiloArea.hx - bunkerSiloConnected.bunkerSiloArea.sx, bunkerSiloConnected.bunkerSiloArea.hz - bunkerSiloConnected.bunkerSiloArea.sz)
+                    local length = MathUtil.vector2Length(bunkerSiloConnected.bunkerSiloArea.inner.hx - bunkerSiloConnected.bunkerSiloArea.inner.sx, bunkerSiloConnected.bunkerSiloArea.inner.hz - bunkerSiloConnected.bunkerSiloArea.inner.sz)
                     ADTriggerManager.maxBunkerSiloLength = math.max(ADTriggerManager.maxBunkerSiloLength, length)
                     table.removeValue(ADTriggerManager.bunkerSilosResult, bunkerSiloResult)
                     table.insert(ADTriggerManager.bunkerSilosResult, bunkerSiloConnected)
@@ -684,7 +686,7 @@ function ADTriggerManager.addBunkerSilo(bunkerSilo)
     end
 
     if not isConnected then
-        local length = MathUtil.vector2Length(bunkerSilo.bunkerSiloArea.hx - bunkerSilo.bunkerSiloArea.sx, bunkerSilo.bunkerSiloArea.hz - bunkerSilo.bunkerSiloArea.sz)
+        local length = MathUtil.vector2Length(bunkerSilo.bunkerSiloArea.inner.hx - bunkerSilo.bunkerSiloArea.inner.sx, bunkerSilo.bunkerSiloArea.inner.hz - bunkerSilo.bunkerSiloArea.inner.sz)
         ADTriggerManager.maxBunkerSiloLength = math.max(ADTriggerManager.maxBunkerSiloLength, length)
         table.insert(ADTriggerManager.bunkerSilosResult, bunkerSilo)
     end

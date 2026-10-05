@@ -58,6 +58,12 @@ function AutoDrive:checkIsConnected(toCheck, other)
     if toCheck == other then
         return true
     end
+    local vehicleHasObjectMounted = toCheck.getHasObjectMounted and toCheck:getHasObjectMounted(other)
+    if vehicleHasObjectMounted then
+        -- consider belt mounted objects
+        return true
+    end
+
     for _, implement in pairs(AutoDrive.getAllImplements(toCheck, true)) do
         if implement == other then
             return true
@@ -217,7 +223,7 @@ function AutoDrive.combineIsTurning(combine)
     local worldPosX, _, worldPosZ = getWorldTranslation(combine.components[1].node)
     local isOnField = AutoDrive.checkIsOnField(worldPosX, 0, worldPosZ)
     if isOnField then
-        local fieldLengthInFront = AutoDrive.getLengthOfFieldInFront(combine, false, 50, 5)
+        local fieldLengthInFront = AutoDrive.getLengthOfFieldInFront(combine, true, 50, 5)
         local fieldLengthBehind = math.abs(AutoDrive.getLengthOfFieldInFront(combine, false, 50, -5))
 
         if (fieldLengthInFront <= 20 or fieldLengthBehind <= 20) and combine.ad.noMovementTimer.elapsedTime < 5000 and not combine.ad.isChopper then
@@ -255,9 +261,9 @@ function AutoDrive.isVehicleInBunkerSiloArea(vehicle)
         local x, y, z = getWorldTranslation(vehicle.components[1].node)
         local tx, _, tz = x, y, z + 1
         if trigger ~= nil and trigger.bunkerSiloArea ~= nil then
-            local x1, z1 = trigger.bunkerSiloArea.sx, trigger.bunkerSiloArea.sz
-            local x2, z2 = trigger.bunkerSiloArea.wx, trigger.bunkerSiloArea.wz
-            local x3, z3 = trigger.bunkerSiloArea.hx, trigger.bunkerSiloArea.hz
+            local x1, z1 = trigger.bunkerSiloArea.inner.sx, trigger.bunkerSiloArea.inner.sz
+            local x2, z2 = trigger.bunkerSiloArea.inner.wx, trigger.bunkerSiloArea.inner.wz
+            local x3, z3 = trigger.bunkerSiloArea.inner.hx, trigger.bunkerSiloArea.inner.hz
             if MathUtil.hasRectangleLineIntersection2D(x1, z1, x2 - x1, z2 - z1, x3 - x1, z3 - z1, x, z, tx - x, tz - z) then
                 return true
             end

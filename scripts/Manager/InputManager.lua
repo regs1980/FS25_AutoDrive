@@ -60,7 +60,10 @@ ADInputManager.actionsToInputs = {
     {"ADToggleAutomaticUnloadTarget", "input_toggleAutomaticUnloadTarget", true, true},
     {"ADToggleAutomaticPickupTarget", "input_toggleAutomaticPickupTarget", true, true},
     {"ADToggleLoadByFillLevel", "input_toggleLoadByFillLevel", true, true},
-    {"ADRepairVehicle", "input_repairVehicle", false, true}
+    {"ADRepairVehicle", "input_repairVehicle", false, true},
+    {"ADCopySettings", "input_copySettings", false, true},
+    {"ADPasteSettings", "input_pasteSettings", false, true},
+    {"ADCreateFieldPoints", "input_createFieldPoints", false, true},
 }
 
 --[[
@@ -102,7 +105,7 @@ function ADInputManager.onActionCall(vehicle, actionName)
     end
 end
 
-function ADInputManager:onInputCall(vehicle, input, farmId, sendEvent)
+function ADInputManager:onInputCall(vehicle, input, farmId, uniqueUserId, sendEvent)
     local actualFarmId = farmId or 0
     if actualFarmId == 0 then
         actualFarmId = AutoDrive:getAIFrameFarmId() or 0
@@ -130,12 +133,10 @@ function ADInputManager:onInputCall(vehicle, input, farmId, sendEvent)
                 end
             end
 
-            func(ADInputManager, vehicle, actualFarmId)
+            func(ADInputManager, vehicle, actualFarmId, uniqueUserId)
             break
         end
     end
-
-
 end
 
 -- Sender only events
@@ -570,5 +571,42 @@ function ADInputManager:input_repairVehicle(vehicle, farmId)
         self:input_start_stop(vehicle, farmId)
     else
         AutoDriveMessageEvent.sendMessageOrNotification(vehicle, ADMessagesManager.messageTypes.ERROR, "$l10n_AD_Driver_of; %s $l10n_AD_No_Repair_Station;", 5000, vehicle.ad.stateModule:getName())
+    end
+end
+
+function ADInputManager:input_copySettings(vehicle, farmId, uniqueUserId)
+    ADUserDataManager:getSettingsClipboard(vehicle, uniqueUserId)
+end
+
+function ADInputManager:input_pasteSettings(vehicle, farmId, uniqueUserId)
+    ADUserDataManager:applySettingsClipboard(vehicle, uniqueUserId)
+end
+
+function ADInputManager:input_createFieldPoints(vehicle, farmId, uniqueUserId)
+    if vehicle == nil or vehicle.ad == nil or vehicle.ad.stateModule == nil then
+        return
+    end
+    local isOnField = vehicle.getIsOnField and vehicle:getIsOnField()
+    if isOnField and AutoDrive.isInExtendedEditorMode() then
+        local localFieldID
+        local vx, _, vz = getWorldTranslation(vehicle.components[1].node)
+        local farmland = g_farmlandManager:getFarmlandAtWorldPosition(vx, vz)
+        if farmland then
+            local field = farmland:getField()
+            if field then
+                localFieldID = field:getId()
+                if localFieldID then
+                    local deletedWaypoints = ADGraphManager:removeFieldWaypoints(localFieldID)
+                end
+            end
+        end
+        if localFieldID then
+            local wayPoints = FieldPointGenerator:getWayPointsForFieldID(ADGraphManager:getWayPoints(), localFieldID, -AutoDrive.getSetting("fieldPointOffset"), AutoDrive.getSetting("maxFieldPointDistance"))
+            if wayPoints and #wayPoints > 0 then
+                for _, wp in pairs(wayPoints) do
+                    ADGraphManager:createWayPointWithConnections(wp.x, AutoDrive:getTerrainHeightAtWorldPos(wp.x, wp.z), wp.z, wp.out, wp.incoming, AutoDrive.FLAG_FIELD_POINT, false, false, false, wp.fieldID)
+                end
+            end
+        end
     end
 end

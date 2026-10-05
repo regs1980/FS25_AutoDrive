@@ -72,6 +72,7 @@ source(Utils.getFilename("scripts/Utils/AutoDriveUtilFuncs.lua", g_currentModDir
 source(Utils.getFilename("scripts/Utils/SortedQueue.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Utils/DevFuncs.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Utils/TrafficSplineUtils.lua", g_currentModDirectory))
+source(Utils.getFilename("scripts/Utils/FieldPointGenerator.lua", g_currentModDirectory))
 
 source(Utils.getFilename("scripts/Manager/RoutesManager.lua", g_currentModDirectory))
 source(Utils.getFilename("scripts/Manager/DrawingManager.lua", g_currentModDirectory))

@@ -41,24 +41,23 @@ function AutoDrive.devPrintDebugQueue(vehicle)
     Logging.info("[AD] %s: debugPrintQueue end...", tostring(vehicle:getName()))
 end
 
-
 function AutoDrive.devOnDraw(vehicle)
     if not AutoDrive.enable_devOnDraw then
         return
     end
     for _, bunkerSilo in pairs(ADTriggerManager.getBunkerSilos()) do
         if bunkerSilo.bunkerSiloArea then
-            local y = bunkerSilo.bunkerSiloArea.sy + 3
-            local sx, sz = bunkerSilo.bunkerSiloArea.sx, bunkerSilo.bunkerSiloArea.sz
-            local wx, wz = bunkerSilo.bunkerSiloArea.wx, bunkerSilo.bunkerSiloArea.wz
-            local hx, hz = bunkerSilo.bunkerSiloArea.hx, bunkerSilo.bunkerSiloArea.hz
-            local vx = bunkerSilo.bunkerSiloArea.hx + (wx - sx)
-            local vz = bunkerSilo.bunkerSiloArea.hz + (wz - sz)
+            local y = bunkerSilo.bunkerSiloArea.inner.sy + 3
+            local sx, sz = bunkerSilo.bunkerSiloArea.inner.sx, bunkerSilo.bunkerSiloArea.inner.sz
+            local wx, wz = bunkerSilo.bunkerSiloArea.inner.wx, bunkerSilo.bunkerSiloArea.inner.wz
+            local hx, hz = bunkerSilo.bunkerSiloArea.inner.hx, bunkerSilo.bunkerSiloArea.inner.hz
+            local vx = bunkerSilo.bunkerSiloArea.inner.hx + (wx - sx)
+            local vz = bunkerSilo.bunkerSiloArea.inner.hz + (wz - sz)
 
-            DebugUtil.drawDebugLine(sx, y, sz, wx, y, wz, 1, 0, 0) -- front
-            DebugUtil.drawDebugLine(sx, y, sz, hx, y, hz, 0, 1, 0) -- right
-            DebugUtil.drawDebugLine(wx, y, wz, vx, y, vz, 1, 1, 0) -- left
-            DebugUtil.drawDebugLine(hx, y, hz, vx, y, vz, 0, 1, 1) -- back
+            DebugUtil.drawDebugLine(sx, y, sz, wx, y, wz, 1, 0, 0) -- front red
+            DebugUtil.drawDebugLine(sx, y, sz, hx, y, hz, 0, 1, 0) -- right green
+            DebugUtil.drawDebugLine(wx, y, wz, vx, y, vz, 1, 1, 0) -- left yellow
+            DebugUtil.drawDebugLine(hx, y, hz, vx, y, vz, 0, 1, 1) -- back cyan
         end
     end
 end

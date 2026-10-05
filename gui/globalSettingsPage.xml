@@ -9,23 +9,11 @@
 		</GuiElement>
 
 		<ScrollingLayout profile="fs25_settingsLayout" id="boxLayout">
-			<!-- <Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
-				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="lookAheadTurning" id="lookAheadTurning">
-					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_lookahead_turning_tooltip"/>
-				</MultiTextOption>
-				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_lookahead_turning"/>
-			</Bitmap> -->
 			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
 				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="mapMarkerDetour" id="mapMarkerDetour">
 					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_mapMarkerDetour_tooltip"/>
 				</MultiTextOption>
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_mapMarkerDetour"/>
-			</Bitmap>
-			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
-				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="continueOnEmptySilo" id="continueOnEmptySilo">
-					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_siloEmpty_tooltip"/>
-				</MultiTextOption>
-				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_siloEmpty"/>
 			</Bitmap>
 			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
 				<BinaryOption profile="fs25_settingsBinaryOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="autoConnectStart" id="autoConnectStart">
@@ -110,6 +98,18 @@
 					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_RecordOppositeDriveDirectionOffset_tooltip"/>
 				</MultiTextOption>
 				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_RecordOppositeDriveDirectionOffset"/>
+			</Bitmap>
+			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
+				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="fieldPointOffset" id="fieldPointOffset">
+					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_fieldPointOffset_tooltip"/>
+				</MultiTextOption>
+				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_fieldPointOffset"/>
+			</Bitmap>
+			<Bitmap profile="fs25_multiTextOptionContainer" onCreate="onCreateAutoDriveSettingRow">
+				<MultiTextOption profile="fs25_settingsMultiTextOption" onClick="onOptionChange" onCreate="onCreateAutoDriveSetting" name="maxFieldPointDistance" id="maxFieldPointDistance">
+					<Text profile="fs25_multiTextOptionTooltip" name="ignore" text="$l10n_gui_ad_maxFieldPointDistance_tooltip"/>
+				</MultiTextOption>
+				<Text profile="fs25_settingsMultiTextOptionTitle" text="$l10n_gui_ad_maxFieldPointDistance"/>
 			</Bitmap>
 		</ScrollingLayout>
 	</GuiElement>

@@ -445,6 +445,7 @@ function AutoDrive:onCpFinished()
                     AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:onCpFinished fillLevel > 0 %s", tostring(fillLevel))
                     -- unload before going to park
                     AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:onCpFinished unload before going to park - fillLevel %s", tostring(fillLevel))
+                    AutoDrive:setALDelay(self)
                     self.ad.stateModule:setMode(AutoDrive.MODE_DELIVERTO)
                     self.ad.stateModule:setFirstMarker(self.ad.stateModule:getSecondMarkerId())
                 else
@@ -484,6 +485,7 @@ function AutoDrive:handleCPFieldWorker(vehicle)
                         -- mode allowed to activate
                         vehicle.ad.restartCP = true
                         AutoDrive.debugPrint(vehicle, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:handleCPFieldWorker start AD")
+                        AutoDrive:setALDelay(vehicle)
                         vehicle.ad.stateModule:getCurrentMode():start()
                     else
                         -- deactivate CP button
@@ -538,6 +540,7 @@ function AutoDrive:onCpFuelEmpty() -- refuel
             if refuelDestination ~= nil and refuelDestination >= 1 then
                 if not self.ad.stateModule:isActive() then
                     AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:onCpFuelEmpty getCurrentMode() start %s", tostring(self.ad.stateModule:getCurrentMode()))
+                    AutoDrive:setALDelay(self)
                     self.ad.onRouteToRefuel = true
                     self.ad.restartCP = true
                     self.ad.stateModule:getCurrentMode():start()
@@ -566,6 +569,7 @@ function AutoDrive:onCpBroken() -- repair
             if repairDestinationMarkerNodeID ~= nil then
                 if not self.ad.stateModule:isActive() then
                     AutoDrive.debugPrint(self, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:onCpBroken getCurrentMode() start %s", tostring(self.ad.stateModule:getCurrentMode()))
+                    AutoDrive:setALDelay(self)
                     self.ad.onRouteToRepair = true
                     self.ad.restartCP = true
                     self.ad.stateModule:getCurrentMode():start()
@@ -608,9 +612,6 @@ function AutoDrive:getCanAdTakeControl()
 end
 
 -- Autoloader
---[[
-APalletAutoLoader:
-]]
 function AutoDrive:hasAL(object)
     if object == nil then
         return false
@@ -624,6 +625,27 @@ function AutoDrive:hasAL(object)
         end
     end
     return ret
+end
+
+function AutoDrive:setALDelay(vehicle)
+    if not vehicle then
+        return
+    end
+    local trailers, trailerCount = AutoDrive.getAllUnits(vehicle)
+    local hasAL = false
+    if trailers and trailerCount > 0 then
+        for _, trailer in pairs(trailers) do
+            hasAL = hasAL or AutoDrive:hasAL(trailer)
+        end
+    end
+    if vehicle.ad == nil then
+        vehicle.ad = {}
+    end
+    if hasAL then
+        vehicle.ad.ALDelayStartTime = g_time
+    else
+        vehicle.ad.ALDelayStartTime = 0
+    end
 end
 
 --[[
@@ -950,6 +972,7 @@ function AutoDrive:handleAIFinished(vehicle)
 
             if parkDestinationAtJobFinished >= 1 then
                 AutoDrive.debugPrint(vehicle, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:handleAIFinished drive to park position")
+                AutoDrive:setALDelay(vehicle)
                 vehicle.ad.onRouteToPark = true
                 vehicle.ad.stateModule:setMode(AutoDrive.MODE_DRIVETO)
                 vehicle.ad.stateModule:setFirstMarker(parkDestinationAtJobFinished)
@@ -982,6 +1005,7 @@ function AutoDrive:handleAIFieldWorker(vehicle)
                     if table.contains(AutoDrive.modesToStartFromCP, vehicle.ad.stateModule:getMode()) then
                         -- mode allowed to activate
                         AutoDrive.debugPrint(vehicle, AutoDrive.DC_EXTERNALINTERFACEINFO, "AutoDrive:handleAIFieldWorker start AD")
+                        AutoDrive:setALDelay(vehicle)
                         vehicle.ad.stateModule:getCurrentMode():start()
                     else
                         -- deactivate AI button

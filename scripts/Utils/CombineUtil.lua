@@ -275,25 +275,52 @@ end
 
 function AutoDrive.getLengthOfFieldInFront(vehicle, onlyWithFruit, maxRange, stepLength)
     local maxSearchRange = maxRange or 50
-    local acceptOnlyWithFruit = onlyWithFruit or false
-    local stepLength = stepLength or 5
-    
+    stepLength = stepLength or 5
     local length = 10
     local foundField = true
-    local fruitType = nil
+    local foundFruit = false
+    local foundCutFruit = false
+
+    local function findCutFruit(corners, fruitTypeIndex)
+        -- try to find a cut fruit
+        local fillType = DensityMapHeightUtil.getFillTypeAtArea(corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
+        if fillType ~= nil and AutoDrive.windrowCutFillTypes[fruitTypeIndex] == fillType then
+            local fillLevel, _, _ = DensityMapHeightUtil.getFillLevelAtArea(fillType, corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
+            if (fillLevel and fillLevel > 0.1) then
+                local value = DensityMapHeightUtil.getValueAtArea(corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z, true)
+                if (value and value > 0.1) then
+                    -- cut fruit found
+                    return true
+                end
+            end
+        end
+        return false
+    end
+
+
     while foundField do
         local worldPosX, _, worldPosZ = AutoDrive.localToWorld(vehicle, 0, 0, length + stepLength)
         foundField = AutoDrive.checkIsOnField(worldPosX, 0, worldPosZ)
 
-        if acceptOnlyWithFruit then
-            local foundFruit = false
-            local corners = AutoDrive.getCornersForAreaRelativeToVehicle(vehicle, 0, length, 3, stepLength)
-            if fruitType == nil then
-                foundFruit, fruitType = AutoDrive.checkForUnknownFruitInArea(corners)
-            else
-                foundFruit = AutoDrive.checkForFruitTypeInArea(corners, fruitType)
+        if onlyWithFruit and foundField then
+            local fruitTypeIndex, growthState = FSDensityMapUtil.getFruitTypeIndexAtWorldPos(worldPosX, worldPosZ)
+            if fruitTypeIndex and fruitTypeIndex ~= FruitType.MEADOW and growthState then
+                -- field has fruit
+                local fruit = g_fruitTypeManager:getFruitTypeByIndex(fruitTypeIndex)
+                if fruit then
+                    -- check for ground fruit
+                    foundField = true
+                    foundFruit = not fruit:getIsCut(growthState)
+                    foundField = foundField and foundFruit
+                    if fruit:getIsCut(growthState) and AutoDrive.windrowCutFillTypes[fruitTypeIndex] then
+                        -- fruit could be cut, try to find the cutted fruit
+                        foundField = true
+                        local corners = AutoDrive.getCornersForAreaRelativeToVehicle(vehicle, 0, length, 3, stepLength)
+                        foundCutFruit = findCutFruit(corners, fruitTypeIndex)
+                        foundField = foundField and foundCutFruit
+                    end
+                end
             end
-            foundField = foundField and foundFruit        
         end
 
         length = length + stepLength
@@ -301,7 +328,6 @@ function AutoDrive.getLengthOfFieldInFront(vehicle, onlyWithFruit, maxRange, ste
             foundField = false
         end
     end
-
     return length
 end
 

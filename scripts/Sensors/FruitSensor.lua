@@ -8,15 +8,6 @@ function ADFruitSensor:new(vehicle, sensorParameters)
     if sensorParameters.fruitType ~= nil then
         o.fruitType = sensorParameters.fruitType
     end
-
-    o.SWATH_TYPES = {
-        [FillType.GRASS_WINDROW] = true,
-        [FillType.BARLEY_CUT] = true,
-        [FillType.CANOLA_CUT] = true,
-        [FillType.OAT_CUT] = true,
-        [FillType.SOYBEAN_CUT] = true,
-        [FillType.WHEAT_CUT] = true,
-    }
     return o
 end
 
@@ -34,10 +25,10 @@ function ADFruitSensor:onUpdate(dt)
         end
     end
 
-    if AutoDrive.getSetting("detectSwath") then
-        local fillType = DensityMapHeightUtil.getFillTypeAtArea(corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
-        if fillType ~= nil and self.SWATH_TYPES[fillType] then
-            local fillLevel, _, _ = DensityMapHeightUtil.getFillLevelAtArea(fillType, corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
+    if self.swathDetection == true then
+        local fillTypeIndex = DensityMapHeightUtil.getFillTypeAtArea(corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
+        if fillTypeIndex ~= nil and table.contains(AutoDrive.windrowFillTypes, fillTypeIndex) then
+            local fillLevel, _, _ = DensityMapHeightUtil.getFillLevelAtArea(fillTypeIndex, corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z)
             if (fillLevel and fillLevel > 0.1) then
                 local value = DensityMapHeightUtil.getValueAtArea(corners[1].x, corners[1].z, corners[2].x, corners[2].z, corners[3].x, corners[3].z, true)
                 if (value and value > 0.1) then

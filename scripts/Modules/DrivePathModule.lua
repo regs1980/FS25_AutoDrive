@@ -22,7 +22,7 @@ function ADDrivePathModule:new(vehicle)
     return o
 end
 
-function ADDrivePathModule:reset()
+function ADDrivePathModule:reset(retainLastUsedWaypoint)
     if self.vehicle.spec_locomotive and self.vehicle.ad and self.vehicle.ad.trainModule then
         -- train
         self.vehicle.ad.trainModule:reset()
@@ -44,8 +44,10 @@ function ADDrivePathModule:reset()
     self.vehicle:setTurnLightState(Lights.TURNLIGHT_OFF)
     self.distanceToTarget = math.huge
     self.speedLimit = 0
-    self.lastUsedWayPoint = nil
-
+    -- skip resetting last used waypoint to resume looping courses from prior destination
+    if not retainLastUsedWaypoint then
+        self.lastUsedWayPoint = nil
+    end
     -- increase steering speed
     if self.vehicle.spec_aiJobVehicle ~= nil then
         self.vehicle.spec_aiJobVehicle.aiSteeringSpeed = 0.004
@@ -54,7 +56,7 @@ function ADDrivePathModule:reset()
 end
 
 function ADDrivePathModule:setPathTo(wayPointId)
-    self:reset()
+    self:reset(self.atTarget)
     self.wayPoints = ADGraphManager:getPathTo(self.vehicle, wayPointId, self.lastUsedWayPoint)
     local destination = ADGraphManager:getMapMarkerByWayPointId(self:getLastWayPointId())
     self.vehicle.ad.stateModule:setCurrentDestination(destination)
@@ -216,15 +218,21 @@ function ADDrivePathModule:isCloseToWaypoint()
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADDrivePathModule:isCloseToWaypoint - start, wpIdx=%d, maxSkip=%d"
         , self:getCurrentWayPointIndex(), maxSkipWayPoints)
     end
+    local min_distance = self.min_distance
+    if self.vehicle:getLastSpeed() > 100 then
+        min_distance = min_distance * 3
+    elseif self.vehicle:getLastSpeed() > 60 then
+        min_distance = min_distance * 2
+    end
 
     for i = 0, maxSkipWayPoints do
         if self.wayPoints[self:getCurrentWayPointIndex() + i] ~= nil then
             local distanceToCurrentWp = MathUtil.vector2Length(x - self.wayPoints[self:getCurrentWayPointIndex() + i].x, z - self.wayPoints[self:getCurrentWayPointIndex() + i].z)
             if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_PATHINFO) then
                 AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADDrivePathModule:isCloseToWaypoint(%d/%d) distanceToCurrentWp=%.1f min_distance=%.1f"
-                , i, maxSkipWayPoints, distanceToCurrentWp, self.min_distance)
+                , i, maxSkipWayPoints, distanceToCurrentWp, min_distance)
             end
-            if distanceToCurrentWp < self.min_distance then --and i == 0
+            if distanceToCurrentWp < min_distance then --and i == 0
                 if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_PATHINFO) then
                     AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADDrivePathModule:isCloseToWaypoint return true")
                 end
@@ -388,6 +396,7 @@ function ADDrivePathModule:handleReachedWayPoint()
     if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_PATHINFO) then
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADDrivePathModule:handleReachedWayPoint")
     end
+    -- while driving forward the lastUsedWayPoint could be used to continue in next drive
     self.lastUsedWayPoint = self:getCurrentWayPoint()
     if self:getNextWayPoint() ~= nil then
         self:switchToNextWayPoint()
@@ -399,6 +408,10 @@ end
 function ADDrivePathModule:reachedTarget()
     if AutoDrive.getDebugChannelIsSet(AutoDrive.DC_PATHINFO) then
         AutoDrive.debugPrint(self.vehicle, AutoDrive.DC_PATHINFO, "ADDrivePathModule:reachedTarget")
+    end
+    if self:getIsReversing() then
+        -- while driving reverse the lastUsedWayPoint might be far away or not feasable to continue, so do not use it
+        self.lastUsedWayPoint = nil
     end
     self.atTarget = true
     self.wayPoints = nil

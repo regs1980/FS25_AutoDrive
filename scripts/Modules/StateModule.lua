@@ -457,6 +457,22 @@ function ADStateModule:getUsedHelper()
     return self.usedHelper
 end
 
+function ADStateModule:setUsedHelper(usedHelper)
+    self.usedHelper = usedHelper
+    if self.usedHelper == nil then
+        if self.vehicle.cpStartStopDriver then
+            self.usedHelper = ADStateModule.HELPER_CP
+        elseif self.vehicle.acParameters then
+            self.usedHelper = ADStateModule.HELPER_AIVE
+        elseif self.vehicle.getLastJob then
+            self.usedHelper = ADStateModule.HELPER_AI
+        else
+            self.usedHelper = ADStateModule.HELPER_NONE
+        end
+    end
+    self:raiseDirtyFlag()
+end
+
 -- define helpers which may be restarted
 function ADStateModule:getCanRestartHelper()
     return self:getStartHelper() and (self:getUsedHelper() == ADStateModule.HELPER_AI
@@ -787,6 +803,10 @@ function ADStateModule:getLoopCounter()
     return self.loopCounter
 end
 
+function ADStateModule:setLoopCounter(loopCounter)
+    self.loopCounter = loopCounter or 0
+end
+
 function ADStateModule:changeLoopCounter(increment, fast, wheel)
     local newCounter = self.loopCounter
     local delta = fast and 10 or 1
@@ -940,12 +960,54 @@ function ADStateModule:getSelectedFillTypes()
     return self.selectedFillTypes
 end
 
-function ADStateModule:setFillType(fillType)
-    if fillType > 0 and self.fillType ~= fillType then
-        self.fillType = fillType
-        AutoDrive:setALFillType(self.vehicle, fillType)
-        if not table.contains(self.selectedFillTypes, fillType) then
-            self.selectedFillTypes = {fillType}
+-- must be called after setFillType !!!
+function ADStateModule:setSelectedFillTypes(selectedFillTypes)
+    if selectedFillTypes and #selectedFillTypes > 0 then
+        local supportedFillTypes, _ = AutoDrive.getValidSupportedFillTypesALfirst(self.vehicle)
+        if supportedFillTypes and #supportedFillTypes > 0 then
+            for _, selectedFillType in pairs(selectedFillTypes) do
+                -- remove not supported fillType
+                if not table.contains(supportedFillTypes, selectedFillType) then
+                    if table.contains(self.selectedFillTypes, selectedFillType) then
+                        table.removeValue(self.selectedFillTypes, selectedFillType)
+                    end
+                end
+                -- add missing fillType
+                if table.contains(supportedFillTypes, selectedFillType) then
+                    if not table.contains(self.selectedFillTypes, selectedFillType) then
+                        table.insert(self.selectedFillTypes, selectedFillType)
+                    end
+                end
+            end
+        end
+        self:raiseDirtyFlag()
+    end
+end
+
+function ADStateModule:setFillType(fillTypeID)
+    if fillTypeID > 0 and self.fillType ~= fillTypeID then
+        local supportedFillTypes, hasAL = AutoDrive.getValidSupportedFillTypesALfirst(self.vehicle)
+        if hasAL then
+            if fillTypeID == AutoDrive.UAL_FILLTYPE_ALL then
+                self.fillType = fillTypeID
+                self.selectedFillTypes = {}
+                AutoDrive:setALFillType(self.vehicle, fillTypeID)
+            elseif supportedFillTypes and #supportedFillTypes > 0 and table.contains(supportedFillTypes, fillTypeID) then
+                self.fillType = fillTypeID
+                self.selectedFillTypes = {fillTypeID}
+                AutoDrive:setALFillType(self.vehicle, fillTypeID)
+            end
+        else
+            if supportedFillTypes and #supportedFillTypes > 0 then
+                if table.contains(supportedFillTypes, fillTypeID) then
+                    self.fillType = fillTypeID
+                    if not table.contains(self.selectedFillTypes, fillTypeID) then
+                        self.selectedFillTypes = {fillTypeID}
+                    end
+                end
+            else
+                self.fillType = FillType.UNKNOWN
+            end
         end
         self:raiseDirtyFlag()
     end
