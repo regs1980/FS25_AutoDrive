@@ -374,7 +374,34 @@ function ADTrafficYieldModule:handle(dt, obstacleDetected)
         return true
     end
 
+    -- stopped face to face by a vehicle that the route comparison could not see
+    if self:checkBlockedWhilePassing(dt, obstacleDetected) then
+        return self:isControlling()
+    end
+
     return self:isControlling()
+end
+
+-- a vehicle passing inside a plan is stopped by its sensor face to face with another AD vehicle that is
+-- not part of the plan (e.g. started between both vehicles, already too close to be seen on the route):
+-- hand over to it with a standard plan instead of waiting for the pass timeout
+function ADTrafficYieldModule:checkBlockedWhilePassing(dt, obstacleDetected)
+    local passing = self.state == ADTrafficYieldModule.STATE_REVERSER_PASS or self.state == ADTrafficYieldModule.STATE_PARKER_PASS
+    local isStopped = ADTrafficYieldModule.getSpeedKmh(self.vehicle) < 1
+    local delay = (AutoDrive.getSetting("trafficYieldDelay") or 5) * 1000
+    if not self.blockedTimer:timer(passing and obstacleDetected and isStopped, delay, dt) then
+        return false
+    end
+    if (g_updateLoopIndex % AutoDrive.PERF_FRAMES) ~= 0 then
+        return false
+    end
+    local other = self:findHeadOnPartner(self.partner)
+    if other == nil then
+        return false
+    end
+    self:log("blocked face to face by %s while passing", ADTrafficYieldModule.getName(other))
+    self:handOverTo(other, true)
+    return true
 end
 
 -- a vehicle that drives during a plan (passing or approaching its partner) must still slow down and stop
@@ -432,7 +459,7 @@ end
 
 -- leaves the current plan to start a new one with another oncoming vehicle; the partner of the current
 -- plan, if parked or hidden, keeps waiting on its own until this vehicle has passed it
-function ADTrafficYieldModule:handOverTo(other)
+function ADTrafficYieldModule:handOverTo(other, faceToFace)
     local partner = self.partner
     if partner ~= nil and partner.ad ~= nil and partner.ad.trafficYieldModule ~= nil then
         local partnerModule = partner.ad.trafficYieldModule
@@ -462,7 +489,12 @@ function ADTrafficYieldModule:handOverTo(other)
     local myRouteIndex = self.reachedRouteIndex
     self:reset()
     ADTrafficYieldModule.resyncWayPoints(self.vehicle, myRouteIndex)
-    ADTrafficYieldModule.startEarlyPlan(self.vehicle, other)
+    if faceToFace then
+        -- already nose to nose: no room left to pull over in advance
+        ADTrafficYieldModule.startPlan(self.vehicle, other)
+    else
+        ADTrafficYieldModule.startEarlyPlan(self.vehicle, other)
+    end
 end
 
 function ADTrafficYieldModule:updateDetachedWait(dt)
@@ -1138,7 +1170,7 @@ function ADTrafficYieldModule:checkForHeadOnDeadlock(dt, obstacleDetected)
     end
 end
 
-function ADTrafficYieldModule:findHeadOnPartner()
+function ADTrafficYieldModule:findHeadOnPartner(excluded)
     local x, _, z = ADTrafficYieldModule.getPosition(self.vehicle)
     local dirX, dirZ = ADTrafficYieldModule.getDirection(self.vehicle)
     local myLength = ADTrafficYieldModule.getTotalLength(self.vehicle)
@@ -1147,7 +1179,7 @@ function ADTrafficYieldModule:findHeadOnPartner()
     local bestDistance = math.huge
 
     for _, other in pairs(AutoDrive.getAllVehicles()) do
-        if other ~= self.vehicle and other.ad ~= self.vehicle.ad and ADTrafficYieldModule.isAdVehicleUsable(other)
+        if other ~= self.vehicle and other ~= excluded and other.ad ~= self.vehicle.ad and ADTrafficYieldModule.isAdVehicleUsable(other)
             and not AutoDrive:checkIsConnected(self.vehicle, other) then
             local ox, _, oz = ADTrafficYieldModule.getPosition(other)
             local distance = MathUtil.vector2Length(ox - x, oz - z)
