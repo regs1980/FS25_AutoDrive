@@ -1477,6 +1477,9 @@ function ADTrafficYieldModule:findEscapeBranch()
     local lastX, lastZ = x, z
     local travelled = 0
     local index = currentIndex - 1
+    -- a waiting lane (dead end of the AutoDrive network) anywhere within reach is preferred to the
+    -- first ordinary side branch
+    local firstBranch = nil
     while index >= 2 and travelled < maxReverse do
         local wp = wayPoints[index]
         if wp == nil then
@@ -1496,7 +1499,11 @@ function ADTrafficYieldModule:findEscapeBranch()
                         if branch ~= nil then
                             branch.routeIndex = index
                             branch.junctionId = wp.id
-                            return branch
+                            branch.isWaitingLane = ADTrafficYieldModule.isDeadEnd(node, neighbourId, forbidden)
+                            if branch.isWaitingLane then
+                                return branch
+                            end
+                            firstBranch = firstBranch or branch
                         end
                     end
                 end
@@ -1504,7 +1511,48 @@ function ADTrafficYieldModule:findEscapeBranch()
         end
         index = index - 1
     end
-    return nil
+    return firstBranch
+end
+
+ADTrafficYieldModule.WAITING_LANE_MAX_LENGTH = 80 -- m, a dead end longer than this is a road, not a waiting lane
+
+-- waiting lane: the side branch starting at junction -> firstId ends in a dead end (no other way out)
+-- within WAITING_LANE_MAX_LENGTH metres
+function ADTrafficYieldModule.isDeadEnd(junction, firstId, forbidden)
+    local visited = {[junction.id] = true}
+    local current = ADGraphManager:getWayPointById(firstId)
+    local length = 0
+    local previous = junction
+    while current ~= nil do
+        if visited[current.id] or forbidden[current.id] then
+            return false -- loop back or back to the route: it is a way through
+        end
+        visited[current.id] = true
+        length = length + MathUtil.vector2Length(current.x - previous.x, current.z - previous.z)
+        if length > ADTrafficYieldModule.WAITING_LANE_MAX_LENGTH then
+            return false
+        end
+        local nextIds = {}
+        for _, id in pairs(current.out or {}) do
+            if not visited[id] then nextIds[id] = true end
+        end
+        for _, id in pairs(current.incoming or {}) do
+            if not visited[id] then nextIds[id] = true end
+        end
+        local nextId, count = nil, 0
+        for id, _ in pairs(nextIds) do
+            nextId, count = id, count + 1
+        end
+        if count == 0 then
+            return true
+        end
+        if count > 1 then
+            return false -- the branch forks: a small network, not a simple waiting lane
+        end
+        previous = current
+        current = ADGraphManager:getWayPointById(nextId)
+    end
+    return false
 end
 
 function ADTrafficYieldModule:walkBranch(junction, firstId, forbidden, neededDepth)
@@ -1587,6 +1635,11 @@ function ADTrafficYieldModule:updateReverserRetreat(dt)
     local plan = self.plan
     if self.reverseTargets == nil then
         self.escapeBranch = self:findEscapeBranch()
+        if self.escapeBranch ~= nil and self.escapeBranch.isWaitingLane then
+            -- a waiting lane behind me: I back into it, the other one does not look for a roadside spot
+            plan.mode = "branch"
+            self:log("waiting lane (dead end) behind me, I back into it")
+        end
         self.reverseTargets = self:buildReverseTargets()
         self.reverseTargetIndex = 1
         local x, y, z = ADTrafficYieldModule.getPosition(self.vehicle)
@@ -1625,7 +1678,7 @@ function ADTrafficYieldModule:updateReverserRetreat(dt)
         end
         self.reverseTargetIndex = self.reverseTargetIndex + 1
         -- at the junction and still no roadside spot for the parker: hide in the side branch
-        if target.isJunction and self.escapeBranch ~= nil and plan.parkSpot == nil then
+        if target.isJunction and self.escapeBranch ~= nil and (plan.parkSpot == nil or self.escapeBranch.isWaitingLane) then
             plan.mode = "branch"
             self.branchTargetIndex = 1
             self:setState(ADTrafficYieldModule.STATE_REVERSER_BRANCH)
