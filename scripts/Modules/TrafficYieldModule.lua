@@ -70,6 +70,7 @@ ADTrafficYieldModule.PATH_STEP = 2               -- m between two points of the 
 ADTrafficYieldModule.PATH_EXTRA = 8              -- m of parallel path after the parking point (alignment, aim)
 ADTrafficYieldModule.CANDIDATE_STEP = 5          -- m between two leaving points tested along the route
 ADTrafficYieldModule.YIELDER_SHARE = 0.65        -- part of the free distance given to the vehicle that pulls over
+ADTrafficYieldModule.SPOT_CLEARANCE = 6          -- m kept free between the oncoming vehicle and the end of the roadside path
 ADTrafficYieldModule.COOLDOWN_SUCCESS = 3000    -- ms, after a successful plan (another conflict may follow at once)
 ADTrafficYieldModule.GIVE_UP_TIME = 300000      -- ms, after two failed attempts the pair is left alone this long
 ADTrafficYieldModule.HISTORY_TIMEOUT = 600000   -- ms, a failure older than this is forgotten
@@ -126,6 +127,12 @@ function ADTrafficYieldModule.getName(vehicle)
         return vehicle.ad.stateModule:getName()
     end
     return "?"
+end
+
+-- sides to try when pulling over, in order: the right side first, the left one as a last resort.
+-- Local +x is left in GIANTS, so right is negative x
+function ADTrafficYieldModule.getSides()
+    return {{name = "right", sign = -1}, {name = "left", sign = 1}}
 end
 
 function ADTrafficYieldModule.isEnabled()
@@ -785,9 +792,22 @@ function ADTrafficYieldModule:isPathFree(points, width, roadY, py)
     return true, onField
 end
 
+-- the whole stretch on the driving side first, the other side only as a last resort
+function ADTrafficYieldModule:searchSpotBySides(maxAhead, keepClearOfPartner)
+    for _, side in ipairs(ADTrafficYieldModule.getSides()) do
+        local spot = self:searchSpotAlongRoute(maxAhead, side.name, keepClearOfPartner)
+        if spot ~= nil then
+            return spot
+        end
+    end
+    return nil
+end
+
 -- searches, along my route ahead, a point where I can leave the road and follow a path parallel to the
 -- route on the roadside, before reaching maxAhead metres. sideFilter: "right" / "left" / nil
-function ADTrafficYieldModule:searchSpotAlongRoute(maxAhead, sideFilter)
+-- keepClearOfPartner: the partner is still driving towards me (early plan), the end of the path must stay
+-- out of its way, braking distance included (otherwise I would stop half way with my trailer on the road)
+function ADTrafficYieldModule:searchSpotAlongRoute(maxAhead, sideFilter, keepClearOfPartner)
     local wayPoints, currentIndex = self.vehicle.ad.drivePathModule:getWayPoints()
     if wayPoints == nil or currentIndex == nil then
         return nil
@@ -807,10 +827,19 @@ function ADTrafficYieldModule:searchSpotAlongRoute(maxAhead, sideFilter)
     local pathLength = swerve + runOut + ADTrafficYieldModule.PATH_EXTRA
     local needed = swerve + runOut + parkerFront
     local laterals = {baseLateral, baseLateral + 1.0}
-    local sides = {{name = "right", sign = -1}, {name = "left", sign = 1}}
+    local sides = ADTrafficYieldModule.getSides()
 
     local lastX, py, lastZ = ADTrafficYieldModule.getPosition(parker)
     local roadY = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, lastX, py, lastZ)
+
+    local partnerX, partnerZ, partnerClearance
+    if keepClearOfPartner and reverser ~= nil then
+        local px, _, pz = ADTrafficYieldModule.getPosition(reverser)
+        local partnerFront = ADTrafficYieldModule.getTrainExtents(reverser)
+        local v = ADTrafficYieldModule.getSpeedKmh(reverser) / 3.6
+        partnerX, partnerZ = px, pz
+        partnerClearance = partnerFront + ADTrafficYieldModule.SPOT_CLEARANCE + v * v / (2 * ADTrafficYieldModule.ANTICIPATION_DECEL)
+    end
 
     for _, side in ipairs(sides) do
         if sideFilter == nil or side.name == sideFilter then
@@ -833,7 +862,12 @@ function ADTrafficYieldModule:searchSpotAlongRoute(maxAhead, sideFilter)
                     for _, lateral in ipairs(laterals) do
                         local lat = side.sign * lateral
                         local path = ADTrafficYieldModule.buildOffsetPath(wayPoints, i, lat, swerve, pathLength)
-                        if path ~= nil then
+                        local tooCloseToPartner = false
+                        if path ~= nil and partnerX ~= nil then
+                            local last = path[#path]
+                            tooCloseToPartner = MathUtil.vector2Length(last.x - partnerX, last.z - partnerZ) < partnerClearance
+                        end
+                        if path ~= nil and not tooCloseToPartner then
                             local free, onField = self:isPathFree(path, parkerWidth, roadY, py)
                             if free then
                                 local spot = ADTrafficYieldModule.makePathSpot(path, wp, distance, side.name, lat, swerve, runOut, onField, roadY)
@@ -966,7 +1000,7 @@ function ADTrafficYieldModule:updateYielderApproach(dt)
         if g_time - self.lastSearchTime >= ADTrafficYieldModule.SEARCH_INTERVAL and stopDistance ~= nil then
             self.lastSearchTime = g_time
             -- the whole stretch on the right first, the left side only as a last resort
-            plan.parkSpot = self:searchSpotAlongRoute(stopDistance + 2, "right") or self:searchSpotAlongRoute(stopDistance + 2, "left")
+            plan.parkSpot = self:searchSpotBySides(stopDistance + 2, true)
             if plan.parkSpot ~= nil then
                 self:log("early spot found: side=%s at %.0f m, field=%s", plan.parkSpot.side, plan.parkSpot.entryDistance, tostring(plan.parkSpot.onField))
             end
@@ -1003,6 +1037,23 @@ function ADTrafficYieldModule:updatePriorityApproach(dt)
     end
     -- keep the safe stopping distance until the other one has pulled over
     local holding = self:limitSpeedTowards(dt, self.partner, 1 - ADTrafficYieldModule.YIELDER_SHARE)
+    -- once the roadside spot is known, stop before the end of its path so the other train can line up completely
+    local spot = plan.parkSpot
+    if not holding and spot ~= nil and spot.aimX ~= nil then
+        local _, _, aimLocalZ = AutoDrive.worldToLocal(self.vehicle, spot.aimX, spot.y, spot.aimZ)
+        local myFront = ADTrafficYieldModule.getTrainExtents(self.vehicle)
+        local free = aimLocalZ - myFront - ADTrafficYieldModule.SPOT_CLEARANCE
+        if aimLocalZ > 0 and free <= 0.5 then
+            self:holdVehicle(dt)
+            return true
+        elseif aimLocalZ > 0 then
+            local allowedSpeed = math.sqrt(2 * ADTrafficYieldModule.ANTICIPATION_DECEL * free) * 3.6
+            local drivePathModule = self.vehicle.ad.drivePathModule
+            if drivePathModule.speedLimit ~= nil then
+                drivePathModule.speedLimit = math.min(drivePathModule.speedLimit, math.max(allowedSpeed, 3))
+            end
+        end
+    end
     return holding
 end
 
@@ -1661,7 +1712,7 @@ function ADTrafficYieldModule:searchParkingSpot()
     if gapEnd <= 0 then
         return nil
     end
-    return self:searchSpotAlongRoute(gapEnd, "right") or self:searchSpotAlongRoute(gapEnd, "left") or self:searchParkingSpotStraight()
+    return self:searchSpotBySides(gapEnd, false) or self:searchParkingSpotStraight()
 end
 
 function ADTrafficYieldModule:searchParkingSpotStraight()
@@ -1697,7 +1748,7 @@ function ADTrafficYieldModule:searchParkingSpotStraight()
 
     -- local +x is left in GIANTS, so right side is negative x
     -- right side of the road first (local +x is left in GIANTS, right is negative x), left only as a last resort
-    local sides = {{name = "right", sign = -1}, {name = "left", sign = 1}}
+    local sides = ADTrafficYieldModule.getSides()
     local laterals = {baseLateral, baseLateral + 1.0, baseLateral + 2.0}
     -- first pass: spot outside the fields (grass strip), second pass: spot may overlap a field
     -- every option on the right (grass, then field) before any option on the left
@@ -1897,6 +1948,9 @@ function ADTrafficYieldModule:updateParkerMove(dt)
 
     -- parallel path along the route (curves followed)
     if spot.path ~= nil then
+        if tooCloseToReverser then
+            self:log("parked early: %s too close in front, the train may not be aligned", ADTrafficYieldModule.getName(reverser))
+        end
         if tooCloseToReverser or self:followParkPath(dt, spot) or self.stateTimer:timer(true, 60000, dt) then
             self.pathIndex = nil
             plan.parked = true
