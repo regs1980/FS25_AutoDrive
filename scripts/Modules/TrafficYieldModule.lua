@@ -517,6 +517,47 @@ end
 
 -- returns the oncoming AD vehicle that will use a segment of my route in the opposite direction,
 -- and the distance between both vehicles along the route
+-- another AD vehicle drives ahead of me on my route, in my direction, before 'beforeDistance' metres:
+-- I am not the head of the convoy, the leader deals with the oncoming vehicle first
+function ADTrafficYieldModule:hasLeaderAhead(myDist, beforeDistance, excluded)
+    for _, other in pairs(AutoDrive.getAllVehicles()) do
+        if other ~= self.vehicle and other ~= excluded and other.ad ~= self.vehicle.ad and ADTrafficYieldModule.isAdVehicleUsable(other)
+            and not AutoDrive:checkIsConnected(self.vehicle, other) then
+            local wayPoints, currentIndex = other.ad.drivePathModule:getWayPoints()
+            if wayPoints ~= nil and currentIndex ~= nil and wayPoints[currentIndex] ~= nil and wayPoints[currentIndex + 1] ~= nil then
+                local here, nextId = wayPoints[currentIndex].id, wayPoints[currentIndex + 1].id
+                local dHere, dNext = myDist[here], myDist[nextId]
+                if dHere ~= nil and dNext ~= nil and dNext > dHere and dHere < beforeDistance then
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+-- another AD vehicle follows me closely on my route, in my direction (it would be in the way if I reversed)
+function ADTrafficYieldModule.hasFollowerBehind(vehicle, maxDistance, excluded)
+    local wayPoints, currentIndex = vehicle.ad.drivePathModule:getWayPoints()
+    if wayPoints == nil or currentIndex == nil or wayPoints[currentIndex] == nil or wayPoints[currentIndex + 1] == nil then
+        return false
+    end
+    local myId, myNextId = wayPoints[currentIndex].id, wayPoints[currentIndex + 1].id
+    if myId == nil or myNextId == nil then
+        return false
+    end
+    for _, other in pairs(AutoDrive.getAllVehicles()) do
+        if other ~= vehicle and other ~= excluded and other.ad ~= vehicle.ad and ADTrafficYieldModule.isAdVehicleUsable(other)
+            and not AutoDrive:checkIsConnected(vehicle, other) then
+            local _, otherDist = ADTrafficYieldModule.collectRouteAhead(other, maxDistance)
+            if otherDist[myId] ~= nil and otherDist[myNextId] ~= nil and otherDist[myNextId] > otherDist[myId] then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 function ADTrafficYieldModule:findOncomingConflict(excluded)
     if not self.vehicle.ad.drivePathModule:isOnRoadNetwork() then
         return nil, nil
@@ -540,7 +581,7 @@ function ADTrafficYieldModule:findOncomingConflict(excluded)
                     -- the other vehicle goes b -> a while I go a -> b: head-on on this segment
                     if da ~= nil and db ~= nil and db < da then
                         local gap = myDist[a] + da
-                        if gap < bestGap then
+                        if gap < bestGap and not self:hasLeaderAhead(myDist, myDist[a], other) then
                             bestGap = gap
                             bestOther = other
                         end
@@ -1172,6 +1213,13 @@ function ADTrafficYieldModule.startPlan(vehicleA, vehicleB)
         if history.failures == 1 and history.lastReverser == reverser then
             reverser, parker = parker, reverser
         end
+    end
+
+    -- a vehicle with another one right behind it cannot reverse: it parks, the other one reverses
+    local maxReverse = (AutoDrive.getSetting("trafficYieldMaxReverse") or 50) + 10
+    if ADTrafficYieldModule.hasFollowerBehind(reverser, maxReverse, parker) and not ADTrafficYieldModule.hasFollowerBehind(parker, maxReverse, reverser) then
+        reverser.ad.trafficYieldModule:log("a vehicle follows me, %s reverses instead", ADTrafficYieldModule.getName(parker))
+        reverser, parker = parker, reverser
     end
 
     local plan = {
