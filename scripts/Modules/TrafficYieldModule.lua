@@ -115,6 +115,8 @@ function ADTrafficYieldModule:reset()
     self.reverseBlockedTimer = AutoDriveTON:new()
     self.stateTimer = AutoDriveTON:new()
     self.lastSearchTime = 0
+    self.alignmentDone = nil
+    self.alignmentTime = 0
     self.blockedTimer:timer(false)
 end
 
@@ -444,6 +446,7 @@ function ADTrafficYieldModule:handOverTo(other)
                 partnerModule.waitDirX = partnerSpot and partnerSpot.dirX
                 partnerModule.waitDirZ = partnerSpot and partnerSpot.dirZ
                 partnerModule.waitFor = self.vehicle
+                partnerModule.waitSpot = partnerSpot
                 partnerModule.waitRouteIndex = reachedRouteIndex
                 partnerModule:setState(ADTrafficYieldModule.STATE_WAIT_DETACHED)
             else
@@ -463,12 +466,15 @@ function ADTrafficYieldModule:handOverTo(other)
 end
 
 function ADTrafficYieldModule:updateDetachedWait(dt)
-    self:holdVehicle(dt)
+    if not self:finishAlignment(dt, self.waitSpot, self.waitFor) then
+        self:holdVehicle(dt)
+    end
     local done = self:hasPassedMe(self.waitFor, self.waitDirX, self.waitDirZ)
     if done or self.stateTimer:timer(true, 180000, dt) then
         local routeIndex = self.waitRouteIndex
         self:reset()
         self.waitFor = nil
+        self.waitSpot = nil
         self.waitRouteIndex = nil
         self.cooldownUntil = g_time + ADTrafficYieldModule.COOLDOWN_SUCCESS
         self.vehicle.ad.specialDrivingModule:releaseVehicle()
@@ -2023,9 +2029,48 @@ function ADTrafficYieldModule:hasPassedMe(watched, dirX, dirZ)
     return false
 end
 
+-- a train stopped before being lined up on its roadside path (other vehicle too close in front) still blocks
+-- the road with its trailer: as soon as the way ahead is clear, it drives on along the path until aligned.
+-- Returns true while it drives (the caller must not hold the vehicle)
+function ADTrafficYieldModule:finishAlignment(dt, spot, watched)
+    if spot == nil or spot.path == nil or self.alignmentDone then
+        return false
+    end
+    if self:isRearOnPath(spot.path) then
+        self.alignmentDone = true
+        self.pathIndex = nil
+        return false
+    end
+    if watched ~= nil and watched.components ~= nil then
+        local wx, wy, wz = ADTrafficYieldModule.getPosition(watched)
+        local watchedLocalX, _, watchedLocalZ = AutoDrive.worldToLocal(self.vehicle, wx, wy, wz)
+        local myFront = ADTrafficYieldModule.getTrainExtents(self.vehicle)
+        local watchedFront = ADTrafficYieldModule.getTrainExtents(watched)
+        local sideBySide = math.abs(watchedLocalX) > (ADTrafficYieldModule.getWidth(self.vehicle) + ADTrafficYieldModule.getWidth(watched)) / 2
+        if not sideBySide and watchedLocalZ > 0 and (watchedLocalZ - watchedFront) - myFront < 3 then
+            return false
+        end
+    end
+    if self.vehicle.ad.sensors ~= nil and self.vehicle.ad.sensors.frontSensor ~= nil and self.vehicle.ad.sensors.frontSensor:pollInfo() then
+        return false
+    end
+    if (self.alignmentTime or 0) == 0 then
+        self:log("finishing the alignment on the roadside path")
+    end
+    self.alignmentTime = (self.alignmentTime or 0) + dt
+    if self.alignmentTime > 30000 or self:followParkPath(dt, spot) then
+        self.alignmentDone = true
+        self.pathIndex = nil
+        return false
+    end
+    return true
+end
+
 function ADTrafficYieldModule:updateParkerWait(dt)
     local plan = self.plan
-    self:holdVehicle(dt)
+    if not self:finishAlignment(dt, plan.parkSpot, self.partner) then
+        self:holdVehicle(dt)
+    end
     if plan.passed then
         self:endPlan("reverser passed", true)
         return
