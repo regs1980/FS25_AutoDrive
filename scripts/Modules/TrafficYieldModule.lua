@@ -380,11 +380,11 @@ end
 -- a vehicle that drives during a plan (passing or approaching its partner) must still slow down and stop
 -- for a third oncoming vehicle; returns true while held
 function ADTrafficYieldModule:holdForOtherOncoming(dt)
+    -- only once passing: during the approach both already brake for each other, and the partner must be
+    -- allowed to finish pulling over before a third vehicle is dealt with (else it is left half parked)
     local drivingStates = {
         [ADTrafficYieldModule.STATE_REVERSER_PASS] = true,
-        [ADTrafficYieldModule.STATE_PARKER_PASS] = true,
-        [ADTrafficYieldModule.STATE_PRIORITY_APPROACH] = true,
-        [ADTrafficYieldModule.STATE_YIELDER_APPROACH] = true
+        [ADTrafficYieldModule.STATE_PARKER_PASS] = true
     }
     if not drivingStates[self.state] then
         self.otherConflict = nil
@@ -519,9 +519,18 @@ end
 -- and the distance between both vehicles along the route
 -- another AD vehicle drives ahead of me on my route, in my direction, before 'beforeDistance' metres:
 -- I am not the head of the convoy, the leader deals with the oncoming vehicle first
+ADTrafficYieldModule.ON_ROUTE_STATES = {
+    [ADTrafficYieldModule.STATE_IDLE] = true,
+    [ADTrafficYieldModule.STATE_YIELDER_APPROACH] = true,
+    [ADTrafficYieldModule.STATE_PRIORITY_APPROACH] = true,
+    [ADTrafficYieldModule.STATE_REVERSER_PASS] = true,
+    [ADTrafficYieldModule.STATE_PARKER_PASS] = true
+}
+
 function ADTrafficYieldModule:hasLeaderAhead(myDist, beforeDistance, excluded)
     for _, other in pairs(AutoDrive.getAllVehicles()) do
         if other ~= self.vehicle and other ~= excluded and other.ad ~= self.vehicle.ad and ADTrafficYieldModule.isAdVehicleUsable(other)
+            and ADTrafficYieldModule.ON_ROUTE_STATES[other.ad.trafficYieldModule.state] -- a parked vehicle is not in the way
             and not AutoDrive:checkIsConnected(self.vehicle, other) then
             local wayPoints, currentIndex = other.ad.drivePathModule:getWayPoints()
             if wayPoints ~= nil and currentIndex ~= nil and wayPoints[currentIndex] ~= nil and wayPoints[currentIndex + 1] ~= nil then
@@ -581,7 +590,9 @@ function ADTrafficYieldModule:findOncomingConflict(excluded)
                     -- the other vehicle goes b -> a while I go a -> b: head-on on this segment
                     if da ~= nil and db ~= nil and db < da then
                         local gap = myDist[a] + da
-                        if gap < bestGap and not self:hasLeaderAhead(myDist, myDist[a], other) then
+                        -- only the heads of the convoys: nobody of mine in front of me, nobody of its own in front of it
+                        if gap < bestGap and not self:hasLeaderAhead(myDist, myDist[a], other)
+                            and not other.ad.trafficYieldModule:hasLeaderAhead(otherDist, da, self.vehicle) then
                             bestGap = gap
                             bestOther = other
                         end
