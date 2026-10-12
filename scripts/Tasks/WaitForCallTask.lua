@@ -18,7 +18,9 @@ function WaitForCallTask:setUp()
     self.vehicle.ad.specialDrivingModule:stopVehicle()
     self.state = WaitForCallTask.STATE_WAITING
     self.failedPathFinder = 0
-    if ADFieldPark ~= nil and ADFieldPark.isEnabled() and self.vehicle.ad.trafficYieldModule ~= nil then
+    -- not when Courseplay drives this vehicle: it only passes through and Courseplay takes it over in the field
+    local cpDriven = AutoDrive:getIsCPActive(self.vehicle) or self.vehicle.ad.restartCP == true
+    if ADFieldPark ~= nil and ADFieldPark.isEnabled() and self.vehicle.ad.trafficYieldModule ~= nil and not cpDriven then
         self.state = WaitForCallTask.STATE_CHECK
         self.checkTimer = AutoDriveTON:new()
     end
