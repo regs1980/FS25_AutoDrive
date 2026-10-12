@@ -131,10 +131,20 @@ function ADTrafficYieldModule.getName(vehicle)
     return "?"
 end
 
--- sides to try when pulling over, in order: the right side first, the left one as a last resort.
+-- side used when pulling over: the right side only (never against the traffic; without a free spot on that
+-- side, the vehicle reverses or the other one pulls over instead).
 -- Local +x is left in GIANTS, so right is negative x
 function ADTrafficYieldModule.getSides()
-    return {{name = "right", sign = -1}, {name = "left", sign = 1}}
+    return {{name = "right", sign = -1}}
+end
+
+-- straight run along the roadside after the swerve, for the towed units to line up behind the tractor:
+-- a trailer only converges onto the tractor's track after about twice its own length
+function ADTrafficYieldModule.getRunOut(trailLength)
+    if trailLength <= 0 then
+        return 2
+    end
+    return trailLength * 2 + 4
 end
 
 function ADTrafficYieldModule.isEnabled()
@@ -298,7 +308,9 @@ function ADTrafficYieldModule:ensureMotorStarted()
 end
 
 function ADTrafficYieldModule:holdVehicle(dt)
-    self.vehicle.ad.specialDrivingModule:stopVehicle(true)
+    -- a planned hold, not a blocked vehicle: isBlocked would make the unloader mode think it is stuck
+    -- after 10 s and reverse out of the road (CombineUnloaderMode:monitorTasks)
+    self.vehicle.ad.specialDrivingModule:stopVehicle(false)
     self.vehicle.ad.specialDrivingModule:update(dt)
 end
 
@@ -599,6 +611,45 @@ function ADTrafficYieldModule.hasFollowerBehind(vehicle, maxDistance, excluded)
     return false
 end
 
+-- head-on section between my route and the route of another vehicle: the consecutive segments I drive a -> b
+-- that it drives b -> a (a two-way road, the other one really drives that same segment backwards).
+-- Returns the distance along my route to the start of the section and along its route to the same point,
+-- nil when there is no such section or when one of them leaves it before the other one enters it
+-- (the first one simply goes first, nobody has to give way)
+function ADTrafficYieldModule.findHeadOnSection(vehicle, myList, myDist, other, otherList, otherDist)
+    local otherNext = {}
+    for k = 1, #otherList - 1 do
+        otherNext[otherList[k]] = otherList[k + 1]
+    end
+    for i = 1, #myList - 1 do
+        local a, b = myList[i], myList[i + 1]
+        if otherNext[b] == a then
+            -- extend the section as long as the other one drives my next segments backwards
+            local j = i + 1
+            while j < #myList and otherNext[myList[j + 1]] == myList[j] do
+                j = j + 1
+            end
+            local last = myList[j]
+            local myFront, myRear = ADTrafficYieldModule.getTrainExtents(vehicle)
+            local otherFront, otherRear = ADTrafficYieldModule.getTrainExtents(other)
+            local margin = ADTrafficYieldModule.ANTICIPATION_GAP
+            -- travel times at the current speeds (at least 2 m/s, a vehicle held for the other one restarts)
+            local mySpeed = math.max(ADTrafficYieldModule.getSpeedKmh(vehicle) / 3.6, 2)
+            local otherSpeed = math.max(ADTrafficYieldModule.getSpeedKmh(other) / 3.6, 2)
+            -- the other one is out of the section (its rear past a) before my front reaches a
+            if (otherDist[a] + otherRear + margin) / otherSpeed < (myDist[a] - myFront) / mySpeed then
+                return nil, nil
+            end
+            -- I am out of the section (my rear past 'last') before its front reaches 'last'
+            if (myDist[last] + myRear + margin) / mySpeed < (otherDist[last] - otherFront) / otherSpeed then
+                return nil, nil
+            end
+            return myDist[a], otherDist[a]
+        end
+    end
+    return nil, nil
+end
+
 function ADTrafficYieldModule:findOncomingConflict(excluded)
     if not self.vehicle.ad.drivePathModule:isOnRoadNetwork() then
         return nil, nil
@@ -615,20 +666,15 @@ function ADTrafficYieldModule:findOncomingConflict(excluded)
             and other.ad.drivePathModule:isOnRoadNetwork() and not AutoDrive:checkIsConnected(self.vehicle, other) then
             local ox, _, oz = ADTrafficYieldModule.getPosition(other)
             if MathUtil.vector2Length(ox - x, oz - z) < 2 * ADTrafficYieldModule.ANTICIPATION_DISTANCE then
-                local _, otherDist = ADTrafficYieldModule.collectRouteAhead(other, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
-                for i = 1, #myList - 1 do
-                    local a, b = myList[i], myList[i + 1]
-                    local da, db = otherDist[a], otherDist[b]
-                    -- the other vehicle goes b -> a while I go a -> b: head-on on this segment
-                    if da ~= nil and db ~= nil and db < da then
-                        local gap = myDist[a] + da
-                        -- only the heads of the convoys: nobody of mine in front of me, nobody of its own in front of it
-                        if gap < bestGap and not self:hasLeaderAhead(myDist, myDist[a], other)
-                            and not other.ad.trafficYieldModule:hasLeaderAhead(otherDist, da, self.vehicle) then
-                            bestGap = gap
-                            bestOther = other
-                        end
-                        break
+                local otherList, otherDist = ADTrafficYieldModule.collectRouteAhead(other, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
+                local mine, da = ADTrafficYieldModule.findHeadOnSection(self.vehicle, myList, myDist, other, otherList, otherDist)
+                if mine ~= nil then
+                    local gap = mine + da
+                    -- only the heads of the convoys: nobody of mine in front of me, nobody of its own in front of it
+                    if gap < bestGap and not self:hasLeaderAhead(myDist, mine, other)
+                        and not other.ad.trafficYieldModule:hasLeaderAhead(otherDist, da, self.vehicle) then
+                        bestGap = gap
+                        bestOther = other
                     end
                 end
             end
@@ -717,15 +763,12 @@ function ADTrafficYieldModule:getOncomingGap(other)
         return nil
     end
     local myList, myDist = ADTrafficYieldModule.collectRouteAhead(self.vehicle, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
-    local _, otherDist = ADTrafficYieldModule.collectRouteAhead(other, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
-    for i = 1, #myList - 1 do
-        local a, b = myList[i], myList[i + 1]
-        local da, db = otherDist[a], otherDist[b]
-        if da ~= nil and db ~= nil and db < da then
-            return myDist[a] + da
-        end
+    local otherList, otherDist = ADTrafficYieldModule.collectRouteAhead(other, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
+    local mine, da = ADTrafficYieldModule.findHeadOnSection(self.vehicle, myList, myDist, other, otherList, otherDist)
+    if mine == nil then
+        return nil
     end
-    return nil
+    return mine + da
 end
 
 -- speed limit / hold to stop before the oncoming partner (same rule as the anticipation)
@@ -882,7 +925,7 @@ function ADTrafficYieldModule:isPathFree(points, width, roadY, py)
     return true, onField
 end
 
--- the whole stretch on the driving side first, the other side only as a last resort
+-- the whole stretch on the driving side (see getSides)
 function ADTrafficYieldModule:searchSpotBySides(maxAhead, keepClearOfPartner)
     for _, side in ipairs(ADTrafficYieldModule.getSides()) do
         local spot = self:searchSpotAlongRoute(maxAhead, side.name, keepClearOfPartner)
@@ -911,8 +954,8 @@ function ADTrafficYieldModule:searchSpotAlongRoute(maxAhead, sideFilter, keepCle
     local margin = AutoDrive.getSetting("trafficYieldMargin") or ADTrafficYieldModule.LATERAL_MARGIN
     local baseLateral = (parkerWidth + reverserWidth) / 2 + margin
     local trailLength = math.max(0, parkerRear - tractorLength / 2)
-    local runOut = trailLength * 1.3 + 2
-    local swerve = math.max(8, tractorLength * 1.5, baseLateral * 2.5)
+    local runOut = ADTrafficYieldModule.getRunOut(trailLength)
+    local swerve = math.max(8, tractorLength * 1.5, baseLateral * 2.5, trailLength)
     -- the tractor stops at swerve + runOut; the path continues a bit for the alignment and the aim point
     local pathLength = swerve + runOut + ADTrafficYieldModule.PATH_EXTRA
     local needed = swerve + runOut + parkerFront
@@ -1888,8 +1931,8 @@ function ADTrafficYieldModule:searchParkingSpotStraight()
     local baseLateral = (parkerWidth + reverserWidth) / 2 + margin
     -- towed units need a straight run along the roadside after the swerve to line up behind the tractor
     local trailLength = math.max(0, parkerRear - tractorLength / 2)
-    local runOut = trailLength * 1.3 + 2
-    local minForward = math.max(8, tractorLength * 1.5, baseLateral * 2.5)
+    local runOut = ADTrafficYieldModule.getRunOut(trailLength)
+    local minForward = math.max(8, tractorLength * 1.5, baseLateral * 2.5, trailLength)
     local maxForward = gapEnd - parkerFront - runOut
 
     if maxForward < minForward then
@@ -1897,11 +1940,11 @@ function ADTrafficYieldModule:searchParkingSpotStraight()
     end
 
     -- local +x is left in GIANTS, so right side is negative x
-    -- right side of the road first (local +x is left in GIANTS, right is negative x), left only as a last resort
+    -- driving side only (see getSides)
     local sides = ADTrafficYieldModule.getSides()
     local laterals = {baseLateral, baseLateral + 1.0, baseLateral + 2.0}
     -- first pass: spot outside the fields (grass strip), second pass: spot may overlap a field
-    -- every option on the right (grass, then field) before any option on the left
+    -- every option on the driving side: grass first, then field
     for _, side in ipairs(sides) do
     for pass = 1, 2 do
     local allowField = pass == 2
