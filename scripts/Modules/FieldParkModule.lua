@@ -15,15 +15,20 @@ ADFieldPark.parked = {}                             -- vehicle -> spot where it 
 
 ADFieldPark.RADII = {45, 55, 65, 75, 85}            -- m, rings searched around the vehicle (beyond ENTRANCE_CLEARANCE)
 ADFieldPark.ANGLE_STEP = 10                         -- degrees between two candidates on a ring
-ADFieldPark.HEADING_STEP = 30                       -- degrees between two headings tried on each candidate
-ADFieldPark.EDGE_SEARCH = 10                        -- m looked at beside the train to find the field border
 ADFieldPark.ROAD_CLEARANCE = 4                      -- m between the parked train and any AutoDrive waypoint
 ADFieldPark.ENTRANCE_CLEARANCE = 40                 -- m between the parked train and the place where the unloader waits (field entrance)
 ADFieldPark.HARVESTER_RANGE = 400                   -- m around the unloader where its harvester is looked for
 ADFieldPark.PLANNING_TIMEOUT = 20000                -- ms given to the pathfinder for one spot
 ADFieldPark.RETRY_DELAY = 30000                     -- ms before looking again when no spot could be reached
 ADFieldPark.MIN_TURN_RADIUS = 6                     -- m, tightest turn tried for the direct path
-ADFieldPark.CROP_MARGIN = 0.25                      -- m added on each side of the train when checking the crop
+ADFieldPark.CROP_MARGIN = 0.7                       -- m added on each side of the train when checking the crop
+ADFieldPark.FIELD_MARGIN = 0.5                      -- m kept between the footprint (already 0.5 m wider than the train) and the field border
+ADFieldPark.BORDER_SEARCH = 25                      -- m looked at around a ring position to find the field border
+ADFieldPark.BORDER_RAY_STEP = 15                    -- degrees between two rays cast to find the border
+ADFieldPark.BORDER_BASE = 12                        -- m between the two border points that give its direction
+ADFieldPark.PARALLEL_TOLERANCE = 5                  -- degrees, a parked train within this angle of the border counts as parallel
+ADFieldPark.BORDER_GAPS = {0.5, 1, 1.5, 2, 3, 4}    -- m tried between the footprint (0.5 m wider than the train) and the border
+ADFieldPark.SAMPLE_STEP = 2                         -- m between two ground samples
 ADFieldPark.QUEUE_GAP = 3                           -- m between two unloaders parked one behind the other
 ADFieldPark.MAX_TRIES = 3                           -- spots tried in turn when no clean path leads to the previous one
 
@@ -49,7 +54,7 @@ function ADFieldPark.hasGrowingCrop(x, z)
     if fruit == nil then
         return false
     end
-    return not (fruit:getIsCut(growthState) or fruit:getIsWithered(growthState))
+    return not (fruit:getIsCut(growthState) or fruit:getIsWithered(growthState)), fruitTypeIndex
 end
 
 -- AutoDrive waypoints around a position (computed once per search)
@@ -78,16 +83,37 @@ end
 
 -- ground under the footprint of the train centred at (cx, cz) heading (dx, dz): on the field, no crop, flat,
 -- away from the roads. Returns the highest terrain height, or nil when the ground does not fit
-function ADFieldPark.isGroundFree(cx, cz, dx, dz, halfW, halfL, nearbyWayPoints, py)
-    local samples = {{0, 0}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}, {0, -1}, {0, 1}}
-    local minH, maxH = math.huge, -math.huge
-    for _, s in ipairs(samples) do
+-- points every ADFieldPark.SAMPLE_STEP on the outline of a footprint, plus its centre line
+function ADFieldPark.getOutline(cx, cz, dx, dz, halfW, halfL)
+    local points = {}
+    local function add(across, along)
         -- GIANTS local +x (left) of the heading is (dz, -dx)
-        local x = cx + dz * s[1] * halfW + dx * s[2] * halfL
-        local z = cz - dx * s[1] * halfW + dz * s[2] * halfL
-        local h = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, x, py, z)
+        table.insert(points, {cx + dz * across + dx * along, cz - dx * across + dz * along})
+    end
+    local n = math.max(1, math.ceil(2 * halfL / ADFieldPark.SAMPLE_STEP))
+    for i = 0, n do
+        local along = -halfL + 2 * halfL * i / n
+        add(-halfW, along)
+        add(0, along)
+        add(halfW, along)
+    end
+    local m = math.max(1, math.ceil(2 * halfW / ADFieldPark.SAMPLE_STEP))
+    for i = 1, m - 1 do
+        local across = -halfW + 2 * halfW * i / m
+        add(across, -halfL)
+        add(across, halfL)
+    end
+    return points
+end
+
+function ADFieldPark.isGroundFree(cx, cz, dx, dz, halfW, halfL, nearbyWayPoints, py)
+    local minH, maxH = math.huge, -math.huge
+    -- the whole outline on the field with a margin, on harvested ground (no crop of any kind)
+    local margin = ADFieldPark.FIELD_MARGIN
+    for _, p in ipairs(ADFieldPark.getOutline(cx, cz, dx, dz, halfW + margin, halfL + margin)) do
+        local h = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, p[1], py, p[2])
         minH, maxH = math.min(minH, h), math.max(maxH, h)
-        if not AutoDrive.checkIsOnField(x, h, z) or ADFieldPark.hasGrowingCrop(x, z) then
+        if not AutoDrive.checkIsOnField(p[1], h, p[2]) or ADFieldPark.hasGrowingCrop(p[1], p[2]) then
             return nil
         end
     end
@@ -101,36 +127,6 @@ function ADFieldPark.isGroundFree(cx, cz, dx, dz, halfW, halfL, nearbyWayPoints,
         end
     end
     return maxH
-end
-
--- free ground between one side of the footprint and the field border, at a point of the train (along = -1 rear, 1 front)
-function ADFieldPark.getEdgeDistance(cx, cz, dx, dz, halfW, halfL, sideSign, along, py)
-    local bx = cx + dx * along * halfL * 0.8
-    local bz = cz + dz * along * halfL * 0.8
-    for d = 1, ADFieldPark.EDGE_SEARCH do
-        local x = bx + dz * sideSign * (halfW + d)
-        local z = bz - dx * sideSign * (halfW + d)
-        if not AutoDrive.checkIsOnField(x, py, z) then
-            return d - 1
-        end
-    end
-    return ADFieldPark.EDGE_SEARCH
-end
-
--- how well the footprint lines up along the field border (lower is better): both ends of the train close to
--- the border on the same side, so it stays on the edge of the field, out of the harvester's way
-function ADFieldPark.getEdgeCost(cx, cz, dx, dz, halfW, halfL, py)
-    local best, bestSide, bestGap = math.huge, 1, 0
-    for _, sideSign in ipairs({1, -1}) do
-        local front = ADFieldPark.getEdgeDistance(cx, cz, dx, dz, halfW, halfL, sideSign, 1, py)
-        local rear = ADFieldPark.getEdgeDistance(cx, cz, dx, dz, halfW, halfL, sideSign, -1, py)
-        local cost = front + rear + 2 * math.abs(front - rear)
-        if cost < best then
-            best, bestSide, bestGap = cost, sideSign, math.min(front, rear)
-        end
-    end
-    -- returns also the side of the border and the free gap left between the train and it
-    return best, bestSide, bestGap
 end
 
 -- true when the current position is already a good waiting place
@@ -148,7 +144,17 @@ function ADFieldPark.isGoodWaitingPlace(vehicle)
             return false
         end
     end
-    return AutoDrive.checkIsOnField(cx, py, cz)
+    for _, p in ipairs(ADFieldPark.getOutline(cx, cz, dx, dz, halfW, length / 2 + 0.5)) do
+        if not AutoDrive.checkIsOnField(p[1], py, p[2]) then
+            return false
+        end
+    end
+    -- and parked parallel to the border, close to it
+    local bx, bz, tx, tz, nx, nz = ADFieldPark.findBorder(cx, cz, py)
+    if bx == nil or math.abs(dx * tx + dz * tz) < math.cos(math.rad(ADFieldPark.PARALLEL_TOLERANCE)) then
+        return false
+    end
+    return (bx - cx) * nx + (bz - cz) * nz - halfW < ADFieldPark.BORDER_GAPS[#ADFieldPark.BORDER_GAPS] + 0.5
 end
 
 -- harvester the unloader works with: same field marker first, otherwise the closest registered harvester
@@ -278,6 +284,68 @@ function ADFieldPark.isSpotAllowed(search, cx, cz, dx, dz)
 end
 
 -- all the headings of the train centred on one point of a ring
+-- distance from (x, z) to the field border along (nx, nz), nil when the border is farther than maxDistance
+function ADFieldPark.castToBorder(x, z, nx, nz, maxDistance, py)
+    for d = 0.5, maxDistance, 0.5 do
+        if not AutoDrive.checkIsOnField(x + nx * d, py, z + nz * d) then
+            -- narrowed down to a few centimeters, the direction of the border depends on it
+            local inside, outside = d - 0.5, d
+            for _ = 1, 4 do
+                local mid = (inside + outside) / 2
+                if AutoDrive.checkIsOnField(x + nx * mid, py, z + nz * mid) then
+                    inside = mid
+                else
+                    outside = mid
+                end
+            end
+            return (inside + outside) / 2
+        end
+    end
+    return nil
+end
+
+-- border of the field near (cx, cz): a point on it, its direction (tx, tz) and the normal (nx, nz) pointing out
+-- of the field, measured on the ground so that the train can be parked exactly parallel to it
+function ADFieldPark.findBorder(cx, cz, py)
+    local best, nx, nz = nil, 0, 0
+    for a = 0, 345, ADFieldPark.BORDER_RAY_STEP do
+        local rx, rz = math.sin(math.rad(a)), math.cos(math.rad(a))
+        local d = ADFieldPark.castToBorder(cx, cz, rx, rz, ADFieldPark.BORDER_SEARCH, py)
+        if d ~= nil and (best == nil or d < best) then
+            best, nx, nz = d, rx, rz
+        end
+    end
+    if best == nil then
+        return nil
+    end
+    -- two points of the border, on each side, give its direction; done twice to settle on the real normal
+    local half = ADFieldPark.BORDER_BASE / 2
+    local px, pz, tx, tz
+    for _ = 1, 2 do
+        tx, tz = nz, -nx
+        local d1 = ADFieldPark.castToBorder(cx + tx * half, cz + tz * half, nx, nz, ADFieldPark.BORDER_SEARCH * 2, py)
+        local d2 = ADFieldPark.castToBorder(cx - tx * half, cz - tz * half, nx, nz, ADFieldPark.BORDER_SEARCH * 2, py)
+        if d1 == nil or d2 == nil then
+            return nil
+        end
+        local x1, z1 = cx + tx * half + nx * d1, cz + tz * half + nz * d1
+        local x2, z2 = cx - tx * half + nx * d2, cz - tz * half + nz * d2
+        local length = MathUtil.vector2Length(x1 - x2, z1 - z2)
+        if length < 0.1 then
+            return nil
+        end
+        tx, tz = (x1 - x2) / length, (z1 - z2) / length
+        -- normal pointing out of the field (same side as the first ray)
+        local mx, mz = -tz, tx
+        if mx * nx + mz * nz < 0 then
+            mx, mz = -mx, -mz
+        end
+        nx, nz = mx, mz
+        px, pz = (x1 + x2) / 2, (z1 + z2) / 2
+    end
+    return px, pz, tx, tz, nx, nz
+end
+
 function ADFieldPark.addCandidates(search, radius, angle)
     local halfW, halfL, py = search.halfW, search.halfL, search.py
     local a = math.rad(angle)
@@ -285,27 +353,25 @@ function ADFieldPark.addCandidates(search, radius, angle)
     if not AutoDrive.checkIsOnField(cx, py, cz) then
         return
     end
-    for heading = 0, 359, ADFieldPark.HEADING_STEP do
-        local h = math.rad(heading)
-        local dx, dz = math.sin(h), math.cos(h)
-        local px, pz = cx, cz
-        local maxH = ADFieldPark.isSpotAllowed(search, px, pz, dx, dz) and ADFieldPark.isGroundFree(px, pz, dx, dz, halfW, halfL, search.nearby, py) or nil
-        if maxH ~= nil then
-            local edgeCost, side, gap = ADFieldPark.getEdgeCost(px, pz, dx, dz, halfW, halfL, py)
-            -- the rings are coarse: slide the train sideways to about 1 m from the border when the ground allows it
-            if gap > 1 and gap < ADFieldPark.EDGE_SEARCH then
-                local sx, sz = px + dz * side * (gap - 1), pz - dx * side * (gap - 1)
-                local slidMaxH = ADFieldPark.isSpotAllowed(search, sx, sz, dx, dz) and ADFieldPark.isGroundFree(sx, sz, dx, dz, halfW, halfL, search.nearby, py) or nil
-                if slidMaxH ~= nil then
-                    px, pz, maxH = sx, sz, slidMaxH
-                    edgeCost = ADFieldPark.getEdgeCost(px, pz, dx, dz, halfW, halfL, py)
-                end
+    -- always parallel to the border: the heading is the direction of the border itself, the train
+    -- stands about 1 m away from it
+    local bx, bz, tx, tz, nx, nz = ADFieldPark.findBorder(cx, cz, py)
+    if bx == nil then
+        return
+    end
+    for _, sign in ipairs({1, -1}) do
+        local dx, dz = tx * sign, tz * sign
+        for _, gap in ipairs(ADFieldPark.BORDER_GAPS) do
+            local px, pz = bx - nx * (halfW + gap), bz - nz * (halfW + gap)
+            local maxH = ADFieldPark.isSpotAllowed(search, px, pz, dx, dz) and ADFieldPark.isGroundFree(px, pz, dx, dz, halfW, halfL, search.nearby, py) or nil
+            if maxH ~= nil then
+                -- nose pointing away from the entrance: the train drives straight in along the border
+                local ox, oz = px - search.x, pz - search.z
+                local away = (dx * ox + dz * oz) / math.max(MathUtil.vector2Length(ox, oz), 0.1)
+                local cost = 3 * gap + 0.2 * radius - 2 * (dx * search.vdx + dz * search.vdz) - 3 * away
+                table.insert(search.candidates, {cx = px, cz = pz, dx = dx, dz = dz, maxH = maxH, cost = cost})
+                break
             end
-            -- nose pointing away from the entrance: the train drives straight in along the border
-            local ox, oz = px - search.x, pz - search.z
-            local away = (dx * ox + dz * oz) / math.max(MathUtil.vector2Length(ox, oz), 0.1)
-            local cost = edgeCost + 0.2 * radius - 2 * (dx * search.vdx + dz * search.vdz) - 3 * away
-            table.insert(search.candidates, {cx = px, cz = pz, dx = dx, dz = dz, maxH = maxH, cost = cost})
         end
     end
 end
@@ -360,6 +426,21 @@ function ADFieldPark.findDirectPath(vehicle, spot)
             table.insert(radii, radius)
         end
     end
+    -- fields the path may cross: the one of the spot and the one the unloader stands on, identified like the
+    -- AutoDrive pathfinder does in strict mode (map field outline, farmland as a fallback)
+    local fieldRule = nil
+    if g_farmlandManager ~= nil and PathFinderModule ~= nil and PathFinderModule.isFieldPositionAllowed ~= nil and PathFinderModule.getFieldAtPosition ~= nil then
+        fieldRule = {strictField = true, allowedFields = {}, allowedFarmlands = {}}
+        for _, pos in ipairs({{x = spot.x, z = spot.z}, {x = x, z = z}}) do
+            if AutoDrive.checkIsOnField(pos.x, 0, pos.z) then
+                local field = PathFinderModule.getFieldAtPosition(pos.x, pos.z)
+                if field ~= nil then
+                    fieldRule.allowedFields[field] = true
+                end
+                fieldRule.allowedFarmlands[g_farmlandManager:getFarmlandIdAtWorldPosition(pos.x, pos.z)] = true
+            end
+        end
+    end
     local dubins = ADDubins:new()
     local reasons = nil
     for _, radius in ipairs(radii) do
@@ -375,7 +456,7 @@ function ADFieldPark.findDirectPath(vehicle, spot)
             if result == ADDubins.EDUBOK
                 and dubins:dubins_path_sample_many(ADDubins.DubinsPath, 1, dubins.createWayPoints) == ADDubins.EDUBOK
                 and #dubins.outPath > 1 then
-                local blocked, bx, bz, index = ADFieldPark.isPathClear(vehicle, dubins.outPath, halfW)
+                local blocked, bx, bz, index = ADFieldPark.isPathClear(vehicle, dubins.outPath, halfW, fieldRule)
                 if blocked == nil then
                     vehicle.ad.trafficYieldModule:log("field park: direct path with a turn radius of %.1f m", radius)
                     return dubins.outPath
@@ -391,21 +472,36 @@ function ADFieldPark.findDirectPath(vehicle, spot)
     return nil
 end
 
-function ADFieldPark.isPathClear(vehicle, path, halfW)
+function ADFieldPark.isCropIsland(fruitTypeIndex, x, z, cache)
+    if PathFinderModule == nil or PathFinderModule.isFruitIsland == nil or AutoDrive.getFruitValue == nil then
+        return false
+    end
+    return PathFinderModule.isFruitIsland({islandCache = cache}, fruitTypeIndex, x, z)
+end
+
+function ADFieldPark.isPathClear(vehicle, path, halfW, fieldRule)
+    local islandCache = {}
     for i = 1, #path - 1 do
         local p, n = path[i], path[i + 1]
         local dx, dz = n.x - p.x, n.z - p.z
         local length = MathUtil.vector2Length(dx, dz)
         if length > 0.01 then
             dx, dz = dx / length, dz / length
-            -- centre and both sides of the train (GIANTS local +x (left) of the heading is (dz, -dx))
-            for _, side in ipairs({0, -1, 1}) do
-                if ADFieldPark.hasGrowingCrop(p.x + dz * side * halfW, p.z - dx * side * halfW) then
-                    return "crop", p.x, p.z, i
+            -- across the whole width of the train (GIANTS local +x (left) of the heading is (dz, -dx))
+            for _, side in ipairs({0, -0.5, 0.5, -1, 1}) do
+                local x, z = p.x + dz * side * halfW, p.z - dx * side * halfW
+                local crop, fruitTypeIndex = ADFieldPark.hasGrowingCrop(x, z)
+                -- small patches forgotten by the harvester may be driven over, like the AutoDrive pathfinder does
+                if crop and not ADFieldPark.isCropIsland(fruitTypeIndex, x, z, islandCache) then
+                    return "crop", x, z, i
+                end
+                -- grass and verges are fine, another field is not
+                if fieldRule ~= nil and not PathFinderModule.isFieldPositionAllowed(fieldRule, x, z) then
+                    return "other field", x, z, i
                 end
             end
-            -- obstacles (walls, poles, trees...) under the tractor, every 4 m, away from the start
-            if i > 6 and i % 4 == 0 and vehicle.ad.trafficYieldModule:overlapHit(p.x, p.y + 1.9, p.z, math.atan2(dx, dz), halfW, 1.3, 2.5) then
+            -- obstacles (hedges, walls, poles, trees...) under the tractor, every 2 m
+            if i > 2 and i % 2 == 0 and vehicle.ad.trafficYieldModule:overlapHit(p.x, (p.y or 0) + 1.9, p.z, math.atan2(dx, dz), halfW, 1.3, 2.5) then
                 return "obstacle", p.x, p.z, i
             end
         end
