@@ -70,6 +70,9 @@ ADTrafficYieldModule.PATH_STEP = 2               -- m between two points of the 
 ADTrafficYieldModule.PATH_EXTRA = 8              -- m of parallel path after the parking point (alignment, aim)
 ADTrafficYieldModule.CANDIDATE_STEP = 5          -- m between two leaving points tested along the route
 ADTrafficYieldModule.YIELDER_SHARE = 0.65        -- part of the free distance given to the vehicle that pulls over
+ADTrafficYieldModule.DETOUR_MAX = 400            -- m, longest detour taken to avoid meeting an oncoming vehicle
+ADTrafficYieldModule.DETOUR_MIN_AHEAD = 15       -- m, the detour must leave the route before the head-on section
+ADTrafficYieldModule.DETOUR_PENALTY = 1000000    -- added weight of the head-on section waypoints when looking for a detour
 ADTrafficYieldModule.SPOT_CLEARANCE = 6          -- m kept free between the oncoming vehicle and the end of the roadside path
 ADTrafficYieldModule.COOLDOWN_SUCCESS = 3000    -- ms, after a successful plan (another conflict may follow at once)
 ADTrafficYieldModule.GIVE_UP_TIME = 300000      -- ms, after two failed attempts the pair is left alone this long
@@ -644,7 +647,11 @@ function ADTrafficYieldModule.findHeadOnSection(vehicle, myList, myDist, other, 
             if (myDist[last] + myRear + margin) / mySpeed < (otherDist[last] - otherFront) / otherSpeed then
                 return nil, nil
             end
-            return myDist[a], otherDist[a]
+            local section = {}
+            for k = i, j do
+                table.insert(section, myList[k])
+            end
+            return myDist[a], otherDist[a], section
         end
     end
     return nil, nil
@@ -709,6 +716,11 @@ function ADTrafficYieldModule:updateAnticipation(dt)
     -- first choice: one of them pulls over in advance on its own route (early yield)
     local partnerModuleEarly = partner.ad.trafficYieldModule
     if not self:isBusy() and not partnerModuleEarly:isBusy() then
+        -- better still: another way to my destination that avoids the head-on section, if the detour is short
+        if self:tryDetour(partner) then
+            self.conflictPartner = nil
+            return false
+        end
         local history = ADTrafficYieldModule.pairHistory[ADTrafficYieldModule.getPairKey(self.vehicle, partner)]
         local earlyRecentlyFailed = history ~= nil and history.earlyTried ~= nil and g_time - history.earlyTried < 60000
         if not earlyRecentlyFailed then
@@ -756,6 +768,86 @@ end
 -- early yield: as soon as an oncoming vehicle is seen on the route, the yielding vehicle looks for a
 -- roadside spot ahead on its own route and pulls over there in advance; the other one does not stop
 ------------------------------------------------------------------------------------------------
+
+-- length of a list of waypoints from index 'from'
+function ADTrafficYieldModule.getPathLength(points, from)
+    local length = 0
+    for k = math.max(from, 1), #points - 1 do
+        length = length + MathUtil.vector2Length(points[k + 1].x - points[k].x, points[k + 1].z - points[k].z)
+    end
+    return length
+end
+
+-- looks for another way to my destination that avoids the head-on section with 'partner'; when one exists and
+-- is at most DETOUR_MAX longer, my route is changed to it and the passing is not needed. Tried once per partner
+function ADTrafficYieldModule:tryDetour(partner)
+    if self.detourPartner == partner and g_time < (self.detourRetryTime or 0) then
+        return false
+    end
+    self.detourPartner = partner
+    self.detourRetryTime = g_time + 20000
+    local drivePathModule = self.vehicle.ad.drivePathModule
+    local wayPoints, currentIndex = drivePathModule:getWayPoints()
+    if wayPoints == nil or currentIndex == nil or wayPoints[currentIndex] == nil or wayPoints[currentIndex + 1] == nil then
+        return false
+    end
+    local startWp, nextWp, lastWp = wayPoints[currentIndex], wayPoints[currentIndex + 1], wayPoints[#wayPoints]
+    if startWp.id == nil or nextWp.id == nil or lastWp.id == nil or ADPathCalculator == nil then
+        return false
+    end
+    local myList, myDist = ADTrafficYieldModule.collectRouteAhead(self.vehicle, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
+    local otherList, otherDist = ADTrafficYieldModule.collectRouteAhead(partner, ADTrafficYieldModule.ANTICIPATION_DISTANCE)
+    local mine, _, section = ADTrafficYieldModule.findHeadOnSection(self.vehicle, myList, myDist, partner, otherList, otherDist)
+    if mine == nil or mine < ADTrafficYieldModule.DETOUR_MIN_AHEAD then
+        return false
+    end
+    local avoid = {}
+    for _, id in ipairs(section) do
+        avoid[id] = true
+    end
+    if avoid[startWp.id] then
+        return false
+    end
+
+    -- AutoDrive route calculation with the head-on section made very expensive
+    local originalWeights = ADPathCalculator.getDetourWeights
+    ADPathCalculator.getDetourWeights = function(calculator)
+        local weights = originalWeights(calculator)
+        for id in pairs(avoid) do
+            weights[id] = (weights[id] or 0) + ADTrafficYieldModule.DETOUR_PENALTY
+        end
+        return weights
+    end
+    local ok, path = pcall(ADGraphManager.pathFromTo, ADGraphManager, startWp.id, lastWp.id, {nextWp.id})
+    ADPathCalculator.getDetourWeights = originalWeights
+    if not ok or path == nil or #path < 2 or path[1].id ~= startWp.id or path[#path].id ~= lastWp.id then
+        return false
+    end
+    for _, wp in ipairs(path) do
+        if avoid[wp.id] then
+            self:log("no other way to avoid %s", ADTrafficYieldModule.getName(partner))
+            return false
+        end
+    end
+    local detour = ADTrafficYieldModule.getPathLength(path, 1) - ADTrafficYieldModule.getPathLength(wayPoints, currentIndex)
+    if detour > ADTrafficYieldModule.DETOUR_MAX then
+        self:log("other way to avoid %s is %.0f m longer, too long", ADTrafficYieldModule.getName(partner), detour)
+        return false
+    end
+
+    -- keep the waypoints already driven, then the new way from the current waypoint on
+    local newWayPoints = {}
+    for k = 1, currentIndex - 1 do
+        newWayPoints[k] = wayPoints[k]
+    end
+    for _, wp in ipairs(path) do
+        table.insert(newWayPoints, wp)
+    end
+    drivePathModule.wayPoints = newWayPoints
+    drivePathModule:setCurrentWayPointIndex(currentIndex)
+    self:log("detour of %.0f m to avoid meeting %s", math.max(detour, 0), ADTrafficYieldModule.getName(partner))
+    return true
+end
 
 -- distance between me and a given vehicle along both routes when it comes towards me, nil otherwise
 function ADTrafficYieldModule:getOncomingGap(other)
