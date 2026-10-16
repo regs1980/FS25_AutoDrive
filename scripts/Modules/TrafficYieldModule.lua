@@ -1250,7 +1250,19 @@ function ADTrafficYieldModule:updateYielderApproach(dt)
         self:setState(ADTrafficYieldModule.STATE_PARKER_MOVE)
         return false
     end
-    return holding
+    -- slow down so the swerve starts at park speed (no skid into the ditch at full speed)
+    local parkSpeed = ADTrafficYieldModule.PARK_SPEED / 3.6
+    local allowedSpeed = math.sqrt(parkSpeed * parkSpeed + 2 * ADTrafficYieldModule.ANTICIPATION_DECEL * math.max(entryLocalZ - 2, 0)) * 3.6
+    local drivePathModule = self.vehicle.ad.drivePathModule
+    if drivePathModule.speedLimit ~= nil then
+        drivePathModule.speedLimit = math.min(drivePathModule.speedLimit, allowedSpeed)
+    end
+    if holding then
+        -- the spot is known and the partner waits until we are parked: never stop before reaching it
+        self.vehicle.ad.specialDrivingModule:releaseVehicle()
+        self:ensureMotorStarted()
+    end
+    return false
 end
 
 function ADTrafficYieldModule:updatePriorityApproach(dt)
