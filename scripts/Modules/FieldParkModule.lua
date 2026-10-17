@@ -26,6 +26,7 @@ ADFieldPark.FIELD_MARGIN = 0.5                      -- m kept between the footpr
 ADFieldPark.BORDER_SEARCH = 25                      -- m looked at around a ring position to find the field border
 ADFieldPark.BORDER_RAY_STEP = 15                    -- degrees between two rays cast to find the border
 ADFieldPark.BORDER_BASE = 12                        -- m between the two border points that give its direction
+ADFieldPark.NOSE_SEARCH = 30                        -- m looked at ahead of the tractor to find the field it waits at
 ADFieldPark.PARALLEL_TOLERANCE = 5                  -- degrees, a parked train within this angle of the border counts as parallel
 ADFieldPark.BORDER_GAPS = {0.5, 1, 1.5, 2, 3, 4}    -- m tried between the footprint (0.5 m wider than the train) and the border
 ADFieldPark.SAMPLE_STEP = 2                         -- m between two ground samples
@@ -106,6 +107,24 @@ function ADFieldPark.getOutline(cx, cz, dx, dz, halfW, halfL)
     return points
 end
 
+-- field ground of the harvester: the ground connected to it, as the AutoDrive pathfinder sees it, so that a
+-- neighbouring field (another number, behind a hedge or a grass strip) never counts as this field
+function ADFieldPark.getHarvesterArea(hx, hz)
+    if PathFinderModule ~= nil and PathFinderModule.getConnectedFieldArea ~= nil and PathFinderModule.isInFieldArea ~= nil then
+        return PathFinderModule.getConnectedFieldArea(hx, hz)
+    end
+    return nil
+end
+
+-- on the field of the harvester being looked at (ADFieldPark.area), or on any field when it is not known
+function ADFieldPark.isOnField(x, y, z)
+    if not AutoDrive.checkIsOnField(x, y, z) then
+        return false
+    end
+    local area = ADFieldPark.area
+    return area == nil or area.capped or PathFinderModule.isInFieldArea(area, x, z)
+end
+
 function ADFieldPark.isGroundFree(cx, cz, dx, dz, halfW, halfL, nearbyWayPoints, py)
     local minH, maxH = math.huge, -math.huge
     -- the whole outline on the field with a margin, on harvested ground (no crop of any kind)
@@ -113,7 +132,7 @@ function ADFieldPark.isGroundFree(cx, cz, dx, dz, halfW, halfL, nearbyWayPoints,
     for _, p in ipairs(ADFieldPark.getOutline(cx, cz, dx, dz, halfW + margin, halfL + margin)) do
         local h = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, p[1], py, p[2])
         minH, maxH = math.min(minH, h), math.max(maxH, h)
-        if not AutoDrive.checkIsOnField(p[1], h, p[2]) or ADFieldPark.hasGrowingCrop(p[1], p[2]) then
+        if not ADFieldPark.isOnField(p[1], h, p[2]) or ADFieldPark.hasGrowingCrop(p[1], p[2]) then
             return nil
         end
     end
@@ -132,6 +151,12 @@ end
 -- true when the current position is already a good waiting place
 function ADFieldPark.isGoodWaitingPlace(vehicle)
     local x, py, z = ADTrafficYieldModule.getPosition(vehicle)
+    ADFieldPark.area = nil
+    local harvester = ADFieldPark.findHarvester(vehicle, x, z)
+    if harvester ~= nil then
+        local hx, _, hz = getWorldTranslation(harvester.components[1].node)
+        ADFieldPark.area = ADFieldPark.getHarvesterArea(hx, hz)
+    end
     local dx, dz = ADTrafficYieldModule.getDirection(vehicle)
     local front, rear = ADTrafficYieldModule.getTrainExtents(vehicle)
     local length = front + rear
@@ -145,7 +170,7 @@ function ADFieldPark.isGoodWaitingPlace(vehicle)
         end
     end
     for _, p in ipairs(ADFieldPark.getOutline(cx, cz, dx, dz, halfW, length / 2 + 0.5)) do
-        if not AutoDrive.checkIsOnField(p[1], py, p[2]) then
+        if not ADFieldPark.isOnField(p[1], py, p[2]) then
             return false
         end
     end
@@ -209,6 +234,21 @@ function ADFieldPark.newSearch(vehicle)
         search.result = "harvester not in the field yet"
         return search
     end
+    -- the field to park in is the one the nose of the tractor points to (it waits at its entrance); the
+    -- harvester must work in that one, otherwise the unloader waits for it at the entrance
+    local noseArea = nil
+    for d = 2, ADFieldPark.NOSE_SEARCH, 2 do
+        local fx, fz = search.x + search.vdx * d, search.z + search.vdz * d
+        if AutoDrive.checkIsOnField(fx, search.py, fz) then
+            noseArea = ADFieldPark.getHarvesterArea(fx, fz)
+            break
+        end
+    end
+    search.area = noseArea or ADFieldPark.getHarvesterArea(hx, hz)
+    if noseArea ~= nil and not noseArea.capped and not PathFinderModule.isInFieldArea(noseArea, hx, hz) then
+        search.result = "harvester not in the field ahead"
+        return search
+    end
     -- GIANTS local +x (left) of the heading is (dz, -dx)
     local lateral = (hx - search.x) * search.vdz - (hz - search.z) * search.vdx
     if math.abs(lateral) > 5 then
@@ -254,6 +294,7 @@ function ADFieldPark.searchStep(search)
     if search.result ~= nil then
         return {}
     end
+    ADFieldPark.area = search.area
     if not search.queueDone then
         search.queueDone = true
         ADFieldPark.addQueueCandidates(search)
@@ -287,12 +328,12 @@ end
 -- distance from (x, z) to the field border along (nx, nz), nil when the border is farther than maxDistance
 function ADFieldPark.castToBorder(x, z, nx, nz, maxDistance, py)
     for d = 0.5, maxDistance, 0.5 do
-        if not AutoDrive.checkIsOnField(x + nx * d, py, z + nz * d) then
+        if not ADFieldPark.isOnField(x + nx * d, py, z + nz * d) then
             -- narrowed down to a few centimeters, the direction of the border depends on it
             local inside, outside = d - 0.5, d
             for _ = 1, 4 do
                 local mid = (inside + outside) / 2
-                if AutoDrive.checkIsOnField(x + nx * mid, py, z + nz * mid) then
+                if ADFieldPark.isOnField(x + nx * mid, py, z + nz * mid) then
                     inside = mid
                 else
                     outside = mid
@@ -350,7 +391,7 @@ function ADFieldPark.addCandidates(search, radius, angle)
     local halfW, halfL, py = search.halfW, search.halfL, search.py
     local a = math.rad(angle)
     local cx, cz = search.x + math.sin(a) * radius, search.z + math.cos(a) * radius
-    if not AutoDrive.checkIsOnField(cx, py, cz) then
+    if not ADFieldPark.isOnField(cx, py, cz) then
         return
     end
     -- always parallel to the border: the heading is the direction of the border itself, the train
@@ -427,12 +468,16 @@ function ADFieldPark.findDirectPath(vehicle, spot)
         end
     end
     -- fields the path may cross: the one of the spot and the one the unloader stands on, identified like the
-    -- AutoDrive pathfinder does in strict mode (map field outline, farmland as a fallback)
+    -- AutoDrive pathfinder does in strict mode (connected field ground, then map field outline, then farmland)
     local fieldRule = nil
     if g_farmlandManager ~= nil and PathFinderModule ~= nil and PathFinderModule.isFieldPositionAllowed ~= nil and PathFinderModule.getFieldAtPosition ~= nil then
-        fieldRule = {strictField = true, allowedFields = {}, allowedFarmlands = {}}
+        fieldRule = {strictField = true, allowedFields = {}, allowedFarmlands = {}, allowedAreas = {}}
         for _, pos in ipairs({{x = spot.x, z = spot.z}, {x = x, z = z}}) do
             if AutoDrive.checkIsOnField(pos.x, 0, pos.z) then
+                local area = ADFieldPark.getHarvesterArea(pos.x, pos.z)
+                if area ~= nil then
+                    fieldRule.allowedAreas[area] = true
+                end
                 local field = PathFinderModule.getFieldAtPosition(pos.x, pos.z)
                 if field ~= nil then
                     fieldRule.allowedFields[field] = true
