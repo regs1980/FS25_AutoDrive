@@ -283,7 +283,7 @@ function ADPathCalculator.getWheelsWidth(vehicle)
         return nil
     end
     local width = maxX - minX
-    if vehicle.adLastWheelsWidth == nil or math.abs(vehicle.adLastWheelsWidth - width) > 0.05 then
+    if vehicle.adLastWheelsWidth == nil or math.abs(vehicle.adLastWheelsWidth - width) > 0.1 then
         vehicle.adLastWheelsWidth = width
         print(string.format("[AD-Width] %s: width at the tyres %.2f m (vehicle file %.2f m)", tostring(vehicle:getName()), width, vehicle.size ~= nil and vehicle.size.width or 0))
     end
@@ -325,16 +325,40 @@ function ADPathCalculator.isSectionNarrow(a, b, halfWidth)
         return false
     end
     local cx, cz = (a.x + b.x) / 2, (a.z + b.z) / 2
-    local y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, cx, 1, cz)
+    -- height of the network line (road or bridge deck), not of the terrain under a bridge
+    local y
+    if type(a.y) == "number" and type(b.y) == "number" and a.y ~= -1 and b.y ~= -1 then
+        y = (a.y + b.y) / 2
+    else
+        y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, cx, 1, cz)
+    end
     local low, high = ADPathCalculator.WIDTH_CHECK_LOW, ADPathCalculator.WIDTH_CHECK_HIGH
     ADPathCalculator.widthHits = 0
     overlapBox(cx, y + (low + high) / 2, cz, 0, math.atan2(dx, dz), 0, halfWidth, (high - low) / 2, length / 2, "widthCheckCallback", ADPathCalculator, ADPathCalculator.widthMask, true, true, true, true)
     return ADPathCalculator.widthHits > 0
 end
 
+function ADPathCalculator.isMapBorder(node)
+    for _ = 1, 2 do
+        if node == nil or node == 0 then
+            return false
+        end
+        local ok, name = pcall(getName, node)
+        if ok and type(name) == "string" and string.find(string.lower(name), "border", 1, true) ~= nil then
+            return true
+        end
+        local okParent, parent = pcall(getParent, node)
+        node = okParent and parent or nil
+    end
+    return false
+end
+
 function ADPathCalculator:widthCheckCallback(transformId)
     if transformId == 0 or transformId == g_currentMission.terrainRootNode then
         return true
+    end
+    if ADPathCalculator.isMapBorder(transformId) then
+        return true -- invisible wall at the map edge
     end
     local object = g_currentMission:getNodeObject(transformId)
     if object ~= nil and (object.rootVehicle ~= nil or object.isa ~= nil and object:isa(Vehicle)) then
