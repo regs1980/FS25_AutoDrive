@@ -213,7 +213,7 @@ end
 
 -- route width check ------------------------------------------------------------------------------
 ADPathCalculator.NARROW_WEIGHT = 100000        -- added to a too narrow section: used only if there is no other way
-ADPathCalculator.WIDTH_MARGIN = 0.2            -- m free on each side of the train
+ADPathCalculator.WIDTH_MARGIN = 0.05           -- m free on each side of the train
 ADPathCalculator.WIDTH_CHECK_LOW = 0.3         -- m above ground: curbs and verges are ignored
 ADPathCalculator.WIDTH_CHECK_HIGH = 3.0        -- m above ground
 ADPathCalculator.widthMask = CollisionFlag.DEFAULT + CollisionFlag.STATIC_OBJECT + CollisionFlag.TREE + CollisionFlag.BUILDING
