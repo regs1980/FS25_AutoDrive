@@ -215,6 +215,7 @@ end
 ADPathCalculator.NARROW_WEIGHT = 100000        -- added to a too narrow section: used only if there is no other way
 ADPathCalculator.WIDTH_MARGIN = 0.05           -- m free on each side of the train
 ADPathCalculator.WIDTH_CHECK_LOW = 0.3         -- m above ground: curbs and verges are ignored
+ADPathCalculator.SURFACE_MAX_RISE = 1.0         -- m, driven surface searched above the line height
 ADPathCalculator.WIDTH_CHECK_HIGH = 3.0        -- m above ground
 ADPathCalculator.widthMask = CollisionFlag.DEFAULT + CollisionFlag.STATIC_OBJECT + CollisionFlag.TREE + CollisionFlag.BUILDING
 ADPathCalculator.widthCache = {}               -- [halfWidth][fromId][toId] = true when too narrow, false when fine
@@ -331,6 +332,11 @@ function ADPathCalculator.isSectionNarrow(a, b, halfWidth)
         y = (a.y + b.y) / 2
     else
         y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, cx, 1, cz)
+    end
+    -- the surface really driven on (bridge deck, slab) can be above the stored line height
+    local surfaceY = AutoDrive:getTerrainHeightAtWorldPos(cx, cz, y)
+    if surfaceY ~= nil and surfaceY > y and surfaceY < y + ADPathCalculator.SURFACE_MAX_RISE then
+        y = surfaceY
     end
     local low, high = ADPathCalculator.WIDTH_CHECK_LOW, ADPathCalculator.WIDTH_CHECK_HIGH
     ADPathCalculator.widthHits = 0
