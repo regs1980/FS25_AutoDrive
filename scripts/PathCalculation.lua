@@ -2,11 +2,15 @@ ADPathCalculator = {}
 
 ADPathCalculator.MAX_ITERATIONS = 10000000
 
-function ADPathCalculator:GetPath(startID, targetID, preferredStartIds)
+-- vehicle (optional): sections where its train does not fit (wall, tree, post, building, bridge railing
+-- closer than half its width + margin) get a big extra weight, so another route is taken when one exists
+function ADPathCalculator:GetPath(startID, targetID, preferredStartIds, vehicle)
 	local count = 0
 	local countIterations = 0
+    local narrowWeight = self:getNarrowWeightFunc(vehicle)
 
     if not ADGraphManager:areWayPointsPrepared() then
+        ADPathCalculator.widthCache = {} -- network changed: measure again
 		AutoDrive.checkWaypointsLinkedtothemselve(true)		-- find WP linked to themselve, with parameter true issues will be fixed
 		AutoDrive.checkWaypointsMultipleSameOut(true)		-- find WP with multiple same out ID, with parameter true issues will be fixed
         ADGraphManager:prepareWayPoints()
@@ -115,7 +119,7 @@ function ADPathCalculator:GetPath(startID, targetID, preferredStartIds)
                             end
                             --candidates:enqueue({p=outPoint, distance=(distance + (distanceFunc(outPoint.x - point.x, outPoint.z - point.z) + (addedWeights[outPoint.id] or 0)) * factor + preventTurnaroundWeight), pre=point.id})
                             --candidates:enqueue({p=outPoint, distance=(distance + (distanceFunc(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor + preventTurnaroundWeight), pre=point.id})
-                            candidates:enqueue({p=outPoint, distance=(distance + (distanceFunc2(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor + preventTurnaroundWeight), pre=point.id})
+                            candidates:enqueue({p=outPoint, distance=(distance + (distanceFunc2(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor + preventTurnaroundWeight + narrowWeight(point, outPoint)), pre=point.id})
                         end
                     end
                     point = nil
@@ -138,7 +142,7 @@ function ADPathCalculator:GetPath(startID, targetID, preferredStartIds)
 
                         --distance = distance + (distanceFunc(outPoint.x - point.x, outPoint.z - point.z) + (addedWeights[outPoint.id] or 0)) * factor
                         --distance = distance + (distanceFunc(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor
-                        distance = distance + (distanceFunc2(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor
+                        distance = distance + (distanceFunc2(point, outPoint, previousPoint) + (addedWeights[outPoint.id] or 0)) * factor + narrowWeight(point, outPoint)
                         
                         previousPoint = point.id
                         point = outPoint
@@ -181,6 +185,18 @@ function ADPathCalculator:GetPath(startID, targetID, preferredStartIds)
         path[count-i] = inversePath[i+1]
     end
 
+    if vehicle ~= nil then
+        local narrow = 0
+        for i = 1, #path - 1 do
+            if narrowWeight(path[i], path[i + 1]) > 0 then
+                narrow = narrow + 1
+            end
+        end
+        if narrow > 0 then
+            AutoDrive.debugPrint(vehicle, AutoDrive.DC_PATHINFO, "ADPathCalculator:GetPath no wide enough route, %d narrow section(s) kept (needs %.1f m)", narrow, ADPathCalculator.lastNeededWidth or 0)
+        end
+    end
+
     return path
 end
 
@@ -193,4 +209,74 @@ function ADPathCalculator:getDetourWeights()
         end
     end
     return addedWeights
+end
+
+-- route width check ------------------------------------------------------------------------------
+ADPathCalculator.NARROW_WEIGHT = 100000        -- added to a too narrow section: used only if there is no other way
+ADPathCalculator.WIDTH_MARGIN = 0.2            -- m free on each side of the train
+ADPathCalculator.WIDTH_CHECK_LOW = 0.3         -- m above ground: curbs and verges are ignored
+ADPathCalculator.WIDTH_CHECK_HIGH = 3.0        -- m above ground
+ADPathCalculator.widthMask = CollisionFlag.DEFAULT + CollisionFlag.STATIC_OBJECT + CollisionFlag.TREE + CollisionFlag.BUILDING
+ADPathCalculator.widthCache = {}               -- [halfWidth][fromId][toId] = true when too narrow, false when fine
+
+function ADPathCalculator:getNarrowWeightFunc(vehicle)
+    if vehicle == nil or g_currentMission == nil or g_currentMission.terrainRootNode == nil then
+        return function() return 0 end
+    end
+    local width = 3
+    local units = AutoDrive.getAllUnits(vehicle)
+    if units ~= nil then
+        for _, unit in pairs(units) do
+            if unit.size ~= nil and unit.size.width ~= nil then
+                width = math.max(width, unit.size.width)
+            end
+        end
+    end
+    -- rounded to 10 cm so vehicles of about the same width share the measures
+    local halfWidth = math.ceil((width / 2 + ADPathCalculator.WIDTH_MARGIN) * 10) / 10
+    ADPathCalculator.lastNeededWidth = halfWidth * 2
+    ADPathCalculator.widthCache[halfWidth] = ADPathCalculator.widthCache[halfWidth] or {}
+    local cache = ADPathCalculator.widthCache[halfWidth]
+    return function(a, b)
+        local fromCache = cache[a.id]
+        if fromCache == nil then
+            fromCache = {}
+            cache[a.id] = fromCache
+        end
+        local narrow = fromCache[b.id]
+        if narrow == nil then
+            narrow = ADPathCalculator.isSectionNarrow(a, b, halfWidth)
+            fromCache[b.id] = narrow
+        end
+        if narrow then
+            return ADPathCalculator.NARROW_WEIGHT
+        end
+        return 0
+    end
+end
+
+function ADPathCalculator.isSectionNarrow(a, b, halfWidth)
+    local dx, dz = b.x - a.x, b.z - a.z
+    local length = math.sqrt(dx * dx + dz * dz)
+    if length < 0.1 then
+        return false
+    end
+    local cx, cz = (a.x + b.x) / 2, (a.z + b.z) / 2
+    local y = getTerrainHeightAtWorldPos(g_currentMission.terrainRootNode, cx, 1, cz)
+    local low, high = ADPathCalculator.WIDTH_CHECK_LOW, ADPathCalculator.WIDTH_CHECK_HIGH
+    ADPathCalculator.widthHits = 0
+    overlapBox(cx, y + (low + high) / 2, cz, 0, math.atan2(dx, dz), 0, halfWidth, (high - low) / 2, length / 2, "widthCheckCallback", ADPathCalculator, ADPathCalculator.widthMask, true, true, true, true)
+    return ADPathCalculator.widthHits > 0
+end
+
+function ADPathCalculator:widthCheckCallback(transformId)
+    if transformId == 0 or transformId == g_currentMission.terrainRootNode then
+        return true
+    end
+    local object = g_currentMission:getNodeObject(transformId)
+    if object ~= nil and (object.rootVehicle ~= nil or object.isa ~= nil and object:isa(Vehicle)) then
+        return true -- vehicles move, they are not part of the road width
+    end
+    ADPathCalculator.widthHits = ADPathCalculator.widthHits + 1
+    return false
 end
