@@ -367,16 +367,7 @@ function PathFinderModule:getFreeStartDistance(vehicleWorldX, vehicleWorldZ, dir
             table.insert(distances, d)
         end
     end
-    local trainWidth = 3
-    local units = AutoDrive.getAllUnits(self.vehicle)
-    if units ~= nil then
-        for _, unit in pairs(units) do
-            if unit.size ~= nil and unit.size.width ~= nil then
-                trainWidth = math.max(trainWidth, unit.size.width)
-            end
-        end
-    end
-    local halfWidth = trainWidth / 2 + 0.5
+    local halfWidth = ADPathCalculator.getPassageWidth(self.vehicle) / 2 + 0.5
     local angleRad = math.atan2(dirX, dirZ)
     local height = self.vehicleMinHeight or 6
     -- from the front of the vehicle, so its own wheels and body are not in the box

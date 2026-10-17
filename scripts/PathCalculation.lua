@@ -219,19 +219,82 @@ ADPathCalculator.WIDTH_CHECK_HIGH = 3.0        -- m above ground
 ADPathCalculator.widthMask = CollisionFlag.DEFAULT + CollisionFlag.STATIC_OBJECT + CollisionFlag.TREE + CollisionFlag.BUILDING
 ADPathCalculator.widthCache = {}               -- [halfWidth][fromId][toId] = true when too narrow, false when fine
 
-function ADPathCalculator:getNarrowWeightFunc(vehicle)
-    if vehicle == nil or g_currentMission == nil or g_currentMission.terrainRootNode == nil then
-        return function() return 0 end
-    end
-    local width = 3
+ADPathCalculator.FOLDED_TOOL_WIDTH = 2.4        -- m, transport width counted for a foldable tool
+
+-- width the train needs to pass: tractor measured at its tyres, trailers at their size, foldable tools at their transport
+-- width (their declared size is often the unfolded one)
+function ADPathCalculator.getPassageWidth(vehicle)
+    local width = 0
     local units = AutoDrive.getAllUnits(vehicle)
     if units ~= nil then
         for _, unit in pairs(units) do
             if unit.size ~= nil and unit.size.width ~= nil then
-                width = math.max(width, unit.size.width)
+                local unitWidth = unit.size.width
+                local foldable = unit.spec_foldable
+                if unit == vehicle then
+                    unitWidth = ADPathCalculator.getWheelsWidth(vehicle) or unitWidth
+                elseif foldable ~= nil and foldable.foldingParts ~= nil and #foldable.foldingParts > 0 then
+                    unitWidth = math.min(unitWidth, ADPathCalculator.FOLDED_TOOL_WIDTH)
+                end
+                width = math.max(width, unitWidth)
             end
         end
     end
+    if width <= 0 then
+        width = 3
+    end
+    return width
+end
+
+-- width from the outside of the left tyre to the outside of the right tyre, mounted (visible) dual
+-- wheels included; nil when it cannot be measured
+function ADPathCalculator.getWheelsWidth(vehicle)
+    local wheels = vehicle.spec_wheels ~= nil and vehicle.spec_wheels.wheels or nil
+    local root = vehicle.rootNode or (vehicle.components ~= nil and vehicle.components[1] ~= nil and vehicle.components[1].node)
+    if wheels == nil or root == nil or root == 0 then
+        return nil
+    end
+    local minX, maxX = math.huge, -math.huge
+    local function add(node, width)
+        if node == nil or node == 0 or type(width) ~= "number" or width <= 0 then
+            return
+        end
+        local ok, visible = pcall(getEffectiveVisibility, node)
+        if ok and visible == false then
+            return -- dual wheel not mounted
+        end
+        local okPos, x = pcall(localToLocal, node, root, 0, 0, 0)
+        if okPos and type(x) == "number" then
+            minX = math.min(minX, x - width / 2)
+            maxX = math.max(maxX, x + width / 2)
+        end
+    end
+    for _, wheel in ipairs(wheels) do
+        local physicsWidth = wheel.physics ~= nil and wheel.physics.width or nil
+        if wheel.visualWheels ~= nil and #wheel.visualWheels > 0 then
+            for _, visualWheel in ipairs(wheel.visualWheels) do
+                add(visualWheel.node, visualWheel.width or physicsWidth)
+            end
+        else
+            add(wheel.repr or wheel.driveNode or wheel.node, physicsWidth)
+        end
+    end
+    if maxX <= minX or maxX - minX < 1 or maxX - minX > 10 then
+        return nil
+    end
+    local width = maxX - minX
+    if vehicle.adLastWheelsWidth == nil or math.abs(vehicle.adLastWheelsWidth - width) > 0.05 then
+        vehicle.adLastWheelsWidth = width
+        print(string.format("[AD-Width] %s: width at the tyres %.2f m (vehicle file %.2f m)", tostring(vehicle:getName()), width, vehicle.size ~= nil and vehicle.size.width or 0))
+    end
+    return width
+end
+
+function ADPathCalculator:getNarrowWeightFunc(vehicle)
+    if vehicle == nil or g_currentMission == nil or g_currentMission.terrainRootNode == nil then
+        return function() return 0 end
+    end
+    local width = ADPathCalculator.getPassageWidth(vehicle)
     -- rounded to 10 cm so vehicles of about the same width share the measures
     local halfWidth = math.ceil((width / 2 + ADPathCalculator.WIDTH_MARGIN) * 10) / 10
     ADPathCalculator.lastNeededWidth = halfWidth * 2
