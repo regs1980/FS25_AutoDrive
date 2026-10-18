@@ -120,6 +120,7 @@ function PathFinderModule:reset()
     self.fruitAreas = {}
     self.goingToNetwork  = false
     self.goingToPipe = false
+    self.noFallback = false -- set by the caller after reset(): never lift field / fruit restrictions, fail instead
     self.chasingVehicle = false
     self.isSecondChasingVehicle = false
     self.pathFinderTime = AutoDrive.getSetting("pathFinderTime")
@@ -200,8 +201,41 @@ function PathFinderModule:startPathPlanningToNetwork(destinationId)
         )
     )
     local closest = self.vehicle:getClosestWayPoint()
+    local fieldExit = self:getFieldExitWayPoint(destinationId)
+    if fieldExit ~= nil then
+        PathFinderModule.debugMsg(self.vehicle, "PathFinderModule:startPathPlanningToNetwork - leaving the field by its network point %s first", tostring(fieldExit))
+        closest = fieldExit
+    end
     self:startPathPlanningToWayPoint(closest, destinationId)
     self.goingToNetwork = true
+end
+
+PathFinderModule.FIELD_EXIT_MAX_DISTANCE = 500 -- m, field point of the harvester mode used to leave the field
+
+-- in harvester mode, a vehicle on a field leaves it by the field's network point (the field set as
+-- first destination) instead of the closest point, which can be past the crop or on another field
+function PathFinderModule:getFieldExitWayPoint(destinationId)
+    local stateModule = self.vehicle.ad.stateModule
+    if stateModule:getMode() ~= AutoDrive.MODE_UNLOAD then
+        return nil
+    end
+    local fieldWayPointId = stateModule:getFirstWayPoint()
+    local fieldWayPoint = fieldWayPointId ~= nil and ADGraphManager:getWayPointById(fieldWayPointId) or nil
+    if fieldWayPoint == nil or fieldWayPointId == destinationId then
+        return nil
+    end
+    local x, y, z = getWorldTranslation(self.vehicle.components[1].node)
+    if not AutoDrive.checkIsOnField(x, y, z) then
+        return nil
+    end
+    if MathUtil.vector2Length(fieldWayPoint.x - x, fieldWayPoint.z - z) > PathFinderModule.FIELD_EXIT_MAX_DISTANCE then
+        return nil
+    end
+    local route = ADGraphManager:pathFromTo(fieldWayPointId, destinationId)
+    if route == nil or #route < 2 then
+        return nil
+    end
+    return fieldWayPointId
 end
 
 function PathFinderModule:startPathPlanningToWayPoint(wayPointId, destinationId)
@@ -720,10 +754,10 @@ function PathFinderModule:update(dt)
             d) 'update target location and reinvoke pathfinder if target has moved'
             e) 'try different field exit strategy'
         --]]
-        -- Only allow fallback if we are not heading for a moving vehicle
-        local fallBackModeAllowed1 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode1)    -- disable restrict to field
-        local fallBackModeAllowed2 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode2)    -- disable restrict to field border
-        local fallBackModeAllowed3 = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.avoidFruitSetting) and (not self.fallBackMode3)    -- disable avoid fruit
+        -- Only allow fallback if we are not heading for a moving vehicle, and not when the caller asked to keep the restrictions
+        local fallBackModeAllowed1 = (not self.noFallback) and (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode1)    -- disable restrict to field
+        local fallBackModeAllowed2 = (not self.noFallback) and (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.restrictToField) and (not self.fallBackMode2)    -- disable restrict to field border
+        local fallBackModeAllowed3 = (not self.noFallback) and (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.avoidFruitSetting) and (not self.fallBackMode3)    -- disable avoid fruit
         local increaseStepsAllowed = (not self.chasingVehicle) and (not self.isSecondChasingVehicle) and (self.max_pathfinder_steps < PathFinderModule.MAX_PATHFINDER_STEPS_TOTAL * self.pathFinderTime)    -- increase number of steps if possible
 
         -- Only allow auto restart when planning path to network and we can adjust target wayPoint
